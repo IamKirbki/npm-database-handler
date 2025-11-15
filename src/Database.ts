@@ -3,7 +3,7 @@ import Table from "./Table";
 import Query from "./Query";
 
 export default class Database {
-  private readonly db: SqliteDatabaseType;
+  public readonly db: SqliteDatabaseType;
 
   constructor(dbPath: string) {
     this.db = new SqliteDatabase(dbPath);
