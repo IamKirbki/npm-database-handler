@@ -74,8 +74,8 @@ export default class Query {
   private ValidateQuery(): boolean {
     return (
       this.query.split("").filter((char) => char === "?").length ===
-      this.Parameters.length
-    );
+      Object.keys(this.Parameters).length
+    ) || (Object.keys(this.Parameters).length < 0 && Object.keys(this.Parameters).length <= 0);
   }
 
   private ValidateParameters(): boolean {
