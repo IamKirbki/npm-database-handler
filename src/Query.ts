@@ -99,8 +99,8 @@ export default class Query {
     const sortedParameters: QueryValues[] = [];
 
     for (const word of queryWords) {
-      if (this.Parameters[word]) {
-        sortedParameters.push(this.Parameters[word]);
+      if (this.Parameters[word.replace("(", "").replace(")", "")]) {
+        sortedParameters.push(this.Parameters[word.replace("(", "").replace(")", "")]);
       }
     }
 

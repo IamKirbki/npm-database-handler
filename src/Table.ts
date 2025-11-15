@@ -148,15 +148,15 @@ export default class Table {
      */
     public Insert(values: QueryParameters | QueryParameters[]) {
         const isMultiple = Array.isArray(values);
-        const records = isMultiple ? values : [values];
-        
+        const records: QueryParameters[] = isMultiple ? values : [values];
+
         if (records.length === 0) {
             throw new Error("Cannot insert empty array");
         }
 
         // Get columns from first record
         const columns = Object.keys(records[0]);
-        
+
         if (columns.length === 0) {
             throw new Error("Cannot insert record with no columns");
         }
