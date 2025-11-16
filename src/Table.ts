@@ -5,11 +5,39 @@ import {
     TableColumnInfo,
 } from "../types/index";
 import Query from "./Query";
+import Record from "./Record";
 
+/**
+ * Table class for interacting with a specific database table
+ * Provides methods for querying, inserting, and retrieving table metadata
+ * 
+ * @example
+ * ```typescript
+ * const users = db.Table('users');
+ * 
+ * // Get all records
+ * const allUsers = users.Records();
+ * 
+ * // Get filtered records
+ * const activeUsers = users.Records({ 
+ *   where: { status: 'active' } 
+ * });
+ * 
+ * // Insert a record
+ * users.Insert({ name: 'John', email: 'john@example.com' });
+ * ```
+ */
 export default class Table {
     private readonly name: string;
     private readonly db: SqliteDatabaseType;
 
+    /**
+     * Creates a Table instance
+     * 
+     * @param name - Name of the table
+     * @param db - Database connection instance
+     * @throws Error if the table does not exist in the database
+     */
     constructor(name: string, db: SqliteDatabaseType) {
         this.name = name;
         this.db = db;
@@ -21,16 +49,43 @@ export default class Table {
         }
     }
 
+    /**
+     * Get the name of the table
+     * 
+     * @returns The table name
+     */
     public get Name(): string {
         return this.name;
     }
 
+    /**
+     * Get raw column information from SQLite PRAGMA
+     * 
+     * @returns Array of column metadata from SQLite
+     * 
+     * @example
+     * ```typescript
+     * const columns = table.TableColumnInformation;
+     * // [{ cid: 0, name: 'id', type: 'INTEGER', notnull: 0, dflt_value: null, pk: 1 }, ...]
+     * ```
+     */
     public get TableColumnInformation(): TableColumnInfo[] {
         return this.db
             .prepare(`PRAGMA table_info(${this.name});`)
             .all() as TableColumnInfo[];
     }
 
+    /**
+     * Get readable, formatted column information
+     * 
+     * @returns Array of formatted column metadata with readable properties
+     * 
+     * @example
+     * ```typescript
+     * const columns = table.ReadableTableColumnInformation;
+     * // [{ name: 'id', type: 'INTEGER', nullable: false, isPrimaryKey: true, defaultValue: null }, ...]
+     * ```
+     */
     public get ReadableTableColumnInformation(): ReadableTableColumnInfo[] {
         return this.TableColumnInformation.map((col) => ({
             name: col.name,
@@ -71,7 +126,7 @@ export default class Table {
         orderBy?: string;
         limit?: number;
         offset?: number;
-    }): any[] {
+    }): Record[] {
         const select = options?.select || "*";
         const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
 
@@ -95,35 +150,68 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
+        let results: any[];
+        
         if (!options?.where || Object.keys(options.where).length === 0) {
-            const query = new Query(this.name, queryStr, this.db);
-            return query.All();
+            const query = new Query(this, queryStr, this.db);
+            results = query.All();
+        } else {
+            const query = new Query(this, queryStr, this.db);
+            query.Parameters = options.where;
+            results = query.All();
         }
 
-        const query = new Query(this.name, queryStr, this.db);
-        query.Parameters = options.where;
-
-        return query.All();
+        // Wrap each result in a Record object
+        return results.map(row => new Record(row, this.db, this.name));
     }
 
     /**
      * Fetch a single record from the table
-     * @param options Query options (same as Records but returns first match)
-     * @returns Single record or undefined if not found
+     * 
+     * @param options - Query options for selecting a record
+     * @param options.select - Columns to select (default: "*")
+     * @param options.where - Filter conditions as key-value pairs
+     * @param options.orderBy - SQL ORDER BY clause (e.g., "created_at DESC")
+     * @returns Single Record instance or undefined if not found
+     * 
+     * @example
+     * ```typescript
+     * // Get record by ID
+     * const user = table.Record({ where: { id: 1 } });
+     * 
+     * // Get most recent record
+     * const latest = table.Record({ orderBy: 'created_at DESC' });
+     * 
+     * // Update the record
+     * user?.update({ status: 'inactive' });
+     * ```
      */
     public Record(options?: {
         select?: string;
         where?: QueryParameters;
         orderBy?: string;
-    }): any | undefined {
-        return this.Records({
+    }): Record | undefined {
+        const results = this.Records({
             select: options?.select,
             where: options?.where,
             orderBy: options?.orderBy,
             limit: 1
-        })
+        });
+        
+        return results[0];
     }
 
+    /**
+     * Get the total count of records in the table
+     * 
+     * @returns Number of records in the table
+     * 
+     * @example
+     * ```typescript
+     * const totalUsers = table.RecordsCount;
+     * console.log(`Total users: ${totalUsers}`);
+     * ```
+     */
     public get RecordsCount(): number {
         return this.db
             .prepare(`SELECT COUNT(*) as count FROM ${this.name};`)
@@ -132,19 +220,25 @@ export default class Table {
 
     /**
      * Insert one or multiple records into the table
-     * @param values Single object or array of objects to insert
+     * Validates data types against table schema before insertion
+     * 
+     * @param values - Single object or array of objects to insert
      * @returns Insert result with lastInsertRowid and changes count
+     * @throws Error if values is empty or contains no columns
+     * @throws Error if validation fails (wrong types, missing required fields)
      * 
      * @example
+     * ```typescript
      * // Insert single record
-     * table.Insert({ name: 'John', age: 30 });
+     * const result = table.Insert({ name: 'John', age: 30 });
+     * console.log(`Inserted row ID: ${result.lastInsertRowid}`);
      * 
-     * @example
-     * // Insert multiple records
+     * // Insert multiple records (uses transaction for atomicity)
      * table.Insert([
      *   { name: 'John', age: 30 },
      *   { name: 'Jane', age: 25 }
      * ]);
+     * ```
      */
     public Insert(values: QueryParameters | QueryParameters[]) {
         const isMultiple = Array.isArray(values);
@@ -171,11 +265,11 @@ export default class Table {
 
         // Use transaction for multiple records, direct run for single
         if (isMultiple && records.length > 1) {
-            const query = new Query(this.name, queryStr, this.db);
+            const query = new Query(this, queryStr, this.db);
             return query.Transaction(records);
         } else {
             // Single insert
-            const query = new Query(this.name, queryStr, this.db);
+            const query = new Query(this, queryStr, this.db);
             query.Parameters = records[0];
             return query.Run();
         }
