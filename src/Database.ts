@@ -72,9 +72,16 @@ export default class Database {
    * // Table 'posts' now exists with an 'id' column
    * ```
    */
-  public CreateTable(name: string): Table {
+  //@TODO: Add ability to define additional columns during table creation
+  public CreateTable(name: string, columns?: object): Table {
+    const names = Object.keys(columns || {});
+    const colsDef = ", " + names.map(colName => {
+      const colType = (columns as Record<string, string>)[colName];
+      return `${colName} ${colType}`;
+    }).join(", ");
+
     const stmt = this.db.prepare(
-      `CREATE TABLE IF NOT EXISTS ${name} (id INTEGER PRIMARY KEY AUTOINCREMENT);`
+      `CREATE TABLE IF NOT EXISTS ${name} (id INTEGER PRIMARY KEY AUTOINCREMENT${colsDef !== ', ' ? colsDef : ''});`
     );
 
     stmt.run();

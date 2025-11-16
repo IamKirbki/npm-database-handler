@@ -130,9 +130,9 @@ export default class Table {
         const select = options?.select || "*";
         const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
 
-        // Build WHERE clause with ? placeholders
+        // Build WHERE clause with column names and ? placeholders
         if (options?.where && Object.keys(options.where).length > 0) {
-            const whereConditions = Object.keys(options.where).map(() => "?");
+            const whereConditions = Object.keys(options.where).map(key => `${key} = ?`);
             queryParts.push(`WHERE ${whereConditions.join(" AND ")}`);
         }
 
@@ -213,9 +213,10 @@ export default class Table {
      * ```
      */
     public get RecordsCount(): number {
-        return this.db
+        const count = this.db
             .prepare(`SELECT COUNT(*) as count FROM ${this.name};`)
-            .get() as number;
+            .get() as { count: number };
+        return count.count || 0;
     }
 
     /**

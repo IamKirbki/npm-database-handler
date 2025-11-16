@@ -178,10 +178,18 @@ export default class Query {
         (col) => col.name === key
       );
 
-      if (
-        (!val && tableColumn?.notnull === 1) ||
-        (!this.CompareTypes(tableColumn?.type, typeof val) && val)
-      ) {
+      // Check if column exists in table
+      if (!tableColumn) {
+        return false;
+      }
+
+      // Check NOT NULL constraint (only null/undefined are invalid, not 0 or '')
+      if ((val === null || val === undefined) && tableColumn.notnull === 1) {
+        return false;
+      }
+
+      // Check type compatibility (skip if value is null/undefined)
+      if (val !== null && val !== undefined && !this.CompareTypes(tableColumn.type, typeof val)) {
         return false;
       }
     }
@@ -220,21 +228,40 @@ export default class Query {
       return false;
     }
 
-    switch (columnType.toLowerCase()) {
-      case "varchar":
-        return parameterType === "string";
-      case "integer":
-        return parameterType === "number";
-      case "boolean":
-        return parameterType === "boolean";
-      case "uuid":
-        return (
-          parameterType.match(
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-          ) !== null
-        );
-      default:
-        return false;
+    const lowerType = columnType.toLowerCase();
+    
+    // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
+    if (lowerType.includes('text') || lowerType.includes('varchar') || lowerType.includes('char')) {
+      return parameterType === 'string';
     }
+    
+    // SQLite integer types (INTEGER, INT, TINYINT, SMALLINT, etc.)
+    if (lowerType.includes('int')) {
+      return parameterType === 'number';
+    }
+    
+    // SQLite real/float types (REAL, FLOAT, DOUBLE, etc.)
+    if (lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
+      return parameterType === 'number';
+    }
+    
+    // Boolean
+    if (lowerType.includes('bool')) {
+      return parameterType === 'boolean';
+    }
+    
+    // BLOB types
+    if (lowerType.includes('blob')) {
+      return parameterType === 'object'; // Buffer or Uint8Array
+    }
+    
+    // UUID with validation
+    if (lowerType === 'uuid' && parameterType === 'string') {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parameterType);
+    }
+    
+    // Default: allow any type if not explicitly restricted
+    // This handles custom SQLite types gracefully
+    return true;
   }
 }
