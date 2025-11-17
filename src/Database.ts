@@ -62,6 +62,7 @@ export default class Database {
     return new Table(name, this.db);
   }
 
+  // TODO Make primary key required
   /**
    * Create a new table with specified columns
    * Validates table name, column names, and column types before creation
