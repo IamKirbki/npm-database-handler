@@ -32,11 +32,13 @@ describe('Database', () => {
   describe('CreateTable', () => {
     it('should create a new table with id column', () => {
       const db = new Database(testDbPath);
-      const table = db.CreateTable('users');
-      
+      const table = db.CreateTable('users', {
+        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      });
+
       expect(table).toBeDefined();
       expect(table.Name).toBe('users');
-      
+
       const columns = table.TableColumnInformation;
       expect(columns.length).toBeGreaterThan(0);
       expect(columns[0].name).toBe('id');
@@ -45,9 +47,13 @@ describe('Database', () => {
 
     it('should not fail when creating table that already exists', () => {
       const db = new Database(testDbPath);
-      const table1 = db.CreateTable('users');
-      const table2 = db.CreateTable('users');
-      
+      const table1 = db.CreateTable('users', {
+        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      });
+      const table2 = db.CreateTable('users', {
+        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      });
+
       expect(table1.Name).toBe(table2.Name);
     });
   });
@@ -55,15 +61,17 @@ describe('Database', () => {
   describe('Table', () => {
     it('should get an existing table', () => {
       const db = new Database(testDbPath);
-      db.CreateTable('users');
-      
+      db.CreateTable('users', {
+        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      });
+
       const table = db.Table('users');
       expect(table.Name).toBe('users');
     });
 
     it('should throw error for non-existent table', () => {
       const db = new Database(testDbPath);
-      
+
       expect(() => {
         db.Table('nonexistent');
       }).toThrow();
@@ -73,8 +81,10 @@ describe('Database', () => {
   describe('Query', () => {
     it('should create a query object', () => {
       const db = new Database(testDbPath);
-      const table = db.CreateTable('users');
-      
+      const table = db.CreateTable('users', {
+        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      });
+
       const query = db.Query(table, 'SELECT * FROM users');
       expect(query).toBeDefined();
       expect(query.Table).toBe(table);

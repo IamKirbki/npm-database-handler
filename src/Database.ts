@@ -1,6 +1,7 @@
 import SqliteDatabase, { Database as SqliteDatabaseType } from "better-sqlite3";
 import Table from "./Table";
 import Query from "./Query";
+import Validator from "./Validator";
 
 /**
  * Main Database class for interacting with SQLite databases
@@ -57,6 +58,7 @@ export default class Database {
    * ```
    */
   public Table(name: string): Table {
+    Validator.ValidateTableName(name);
     return new Table(name, this.db);
   }
 
@@ -73,15 +75,22 @@ export default class Database {
    * ```
    */
   // TODO Add ability to specify primary key type
-  public CreateTable(name: string, columns?: object): Table {
-    const names = Object.keys(columns || {});
-    const colsDef = ", " + names.map(colName => {
+  public CreateTable(name: string, columns: object): Table {
+    Validator.ValidateTableName(name);
+
+    const names = Object.keys(columns || {}).map((colName) => {
+      Validator.ValidateColumnName(colName);
+      return colName;
+    });
+
+    const colsDef = names.map(colName => {
       const colType = (columns as Record<string, string>)[colName];
+      Validator.ValidateColumnType(colType);
       return `${colName} ${colType}`;
     }).join(", ");
 
     const stmt = this.db.prepare(
-      `CREATE TABLE IF NOT EXISTS ${name} (id INTEGER PRIMARY KEY AUTOINCREMENT${colsDef !== ', ' ? colsDef : ''});`
+      `CREATE TABLE IF NOT EXISTS ${name} (${colsDef});`
     );
 
     stmt.run();

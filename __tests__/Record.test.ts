@@ -20,6 +20,7 @@ describe('Record', () => {
     beforeEach(() => {
         db = new Database(testDbPath);
         db.CreateTable('users', {
+            id: "INTEGER PRIMARY KEY AUTOINCREMENT",
             name: 'TEXT NOT NULL',
             email: 'TEXT',
             age: 'INTEGER'
