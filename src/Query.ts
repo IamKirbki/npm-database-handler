@@ -77,10 +77,10 @@ export default class Query {
    * const results = query.All();
    * ```
    */
-  public All<TEntity>(): TEntity[] {
+  public All<Type>(): Type[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.all(...this.SortParameters()) as TEntity[];
+    return stmt.all(...this.SortParameters()) as Type[];
   }
 
   /**
