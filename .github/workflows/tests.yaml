@@ -2,17 +2,17 @@ name: Test Checks
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
 
 jobs:
   build:
     name: Test Checks
-    runs-on: ubunut-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: ['24.x']
+        node-version: ["24.x"]
 
     steps:
       - uses: actions/checkout@v3

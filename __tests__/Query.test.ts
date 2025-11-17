@@ -47,7 +47,7 @@ describe('Query', () => {
             const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
             query.Parameters = { name: 'John' };
 
-            const results = query.All();
+            const results = query.All<{ id: number; name: string; email: string; age: number }>();
             expect(results).toHaveLength(1);
             expect(results[0].name).toBe('John');
         });
@@ -64,9 +64,9 @@ describe('Query', () => {
             const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
             query.Parameters = { name: 'John' };
 
-            const result = query.Get();
+            const result = query.Get<{ id: number; name: string; email: string; age: number }>();
             expect(result).toBeDefined();
-            expect(result.name).toBe('John');
+            expect(result?.name).toBe('John');
         });
 
         it('should return undefined for no match', () => {
@@ -85,7 +85,7 @@ describe('Query', () => {
             const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (?, ?, ?)');
             query.Parameters = { name: 'John', email: 'john@example.com', age: 30 };
 
-            const result = query.Run();
+            const result = query.Run<{ changes: number; lastInsertRowid: number }>();
             expect(result.changes).toBe(1);
             expect(result.lastInsertRowid).toBeDefined();
         });
@@ -97,7 +97,7 @@ describe('Query', () => {
             const query = db.Query(table, 'UPDATE users SET age = ? WHERE name = ?');
             query.Parameters = { age: 31, name: 'John' };
 
-            const result = query.Run();
+            const result = query.Run<{ changes: number; lastInsertRowid: number }>();
             expect(result.changes).toBe(1);
         });
 
@@ -108,7 +108,7 @@ describe('Query', () => {
             const query = db.Query(table, 'DELETE FROM users WHERE name = ?');
             query.Parameters = { name: 'John' };
 
-            const result = query.Run();
+            const result = query.Run<{ changes: number; lastInsertRowid: number }>();
             expect(result.changes).toBe(1);
         });
     });
