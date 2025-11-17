@@ -1,3 +1,6 @@
+import { QueryParameters } from "../types/query";
+import { TableColumnInfo } from "../types/table";
+
 export default class Validator {
     static ValidateTableName(name: string): void {
         if (!name || typeof name !== "string") {
@@ -70,5 +73,101 @@ export default class Validator {
         if (!validTypes.includes(cleanedType)) {
             throw new Error(`Invalid column type "${type}". Valid types are: ${validTypes.join(", ")}.`);
         }
+    }
+
+    static ValidateQuery(query: string, TableColumnInformation: TableColumnInfo[]): void {
+        if (!query || typeof query !== "string") {
+            throw new Error("Query must be a non-empty string.");
+        }
+
+        const lowerQuery = query.toLowerCase();
+
+        const forbiddenPatterns = [
+            /;\s*drop\s+table/gi,
+            /;\s*delete\s+from/gi,
+            /;\s*update\s+/gi,
+            /;\s*insert\s+into/gi,
+            /;\s*alter\s+table/gi
+        ];
+
+        for (const pattern of forbiddenPatterns) {
+            if (pattern.test(lowerQuery)) {
+                throw new Error("Query contains forbidden operations.");
+            }
+        }
+
+        const fieldPattern = /@([a-zA-Z0-9_]+)/g;
+        let match;
+
+        while ((match = fieldPattern.exec(query)) !== null) {
+            const fieldName = match[1];
+            const found = TableColumnInformation.some(col => col.name === fieldName);
+
+            if (!found) {
+                throw new Error(`Query references unknown field "@${fieldName}".`);
+            }
+        }
+    }
+
+    static ValidateQueryParameters(
+        parameters: QueryParameters,
+        TableColumnInformation: TableColumnInfo[]
+    ): void {
+        for (const [key, value] of Object.entries(parameters)) {
+            const columnInfo = TableColumnInformation.find(col => col.name === key);
+            if (!columnInfo) {
+                throw new Error(`Parameter "${key}" does not match any column in the table.`);
+            }
+
+            const parameterType = typeof value;
+            const columnType = columnInfo.type;
+
+            const isValidType = Validator.CompareTypes(columnType, parameterType);
+            if (!isValidType) {
+                throw new Error(`Parameter "${key}" has type "${parameterType}" which does not match column type "${columnType}".`);
+            }
+        }
+    }
+
+    static CompareTypes(columnType?: string, parameterType?: string): boolean {
+        if (!columnType || !parameterType) {
+            return false;
+        }
+
+        const lowerType = columnType.toLowerCase();
+
+        // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
+        if (lowerType.includes('text') || lowerType.includes('char')) {
+            return parameterType === 'string';
+        }
+
+        // SQLite integer types (INTEGER, INT, TINYINT, SMALLINT, etc.)
+        if (lowerType.includes('int')) {
+            return parameterType === 'number';
+        }
+
+        // SQLite real/float types (REAL, FLOAT, DOUBLE, etc.)
+        if (lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
+            return parameterType === 'number';
+        }
+
+        // Boolean
+        if (lowerType.includes('bool')) {
+            return parameterType === 'boolean';
+        }
+
+        // BLOB types
+        if (lowerType.includes('blob')) {
+            return parameterType === 'object'; // Buffer or Uint8Array
+        }
+
+        // UUID with validation
+        if (lowerType === 'uuid' && parameterType === 'string') {
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parameterType);
+        }
+
+        // Default: allow any type if not explicitly restricted
+        // This handles custom SQLite types gracefully
+        return true;
     }
 }

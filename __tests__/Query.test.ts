@@ -45,12 +45,12 @@ describe('Query', () => {
 
         it('should work with parameters', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
+            const query = db.Query(table, 'SELECT * FROM users WHERE name = @name');
             query.Parameters = { name: 'John' };
 
             const results = query.All<{ id: number; name: string; email: string; age: number }>();
             expect(results).toHaveLength(1);
-            expect(results[0].name).toBe('John');
+            expect(results[0].values.name).toBe('John');
         });
     });
 
@@ -62,17 +62,17 @@ describe('Query', () => {
 
         it('should return single row', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
+            const query = db.Query(table, 'SELECT * FROM users WHERE name = @name');
             query.Parameters = { name: 'John' };
 
             const result = query.Get<{ id: number; name: string; email: string; age: number }>();
             expect(result).toBeDefined();
-            expect(result?.name).toBe('John');
+            expect(result?.values.name).toBe('John');
         });
 
         it('should return undefined for no match', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
+            const query = db.Query(table, 'SELECT * FROM users WHERE name = @name');
             query.Parameters = { name: 'NonExistent' };
 
             const result = query.Get();
@@ -83,7 +83,7 @@ describe('Query', () => {
     describe('Run', () => {
         it('should execute INSERT query', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (?, ?, ?)');
+            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
             query.Parameters = { name: 'John', email: 'john@example.com', age: 30 };
 
             const result = query.Run<{ changes: number; lastInsertRowid: number }>();
@@ -95,7 +95,7 @@ describe('Query', () => {
             const table = db.Table('users');
             table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
 
-            const query = db.Query(table, 'UPDATE users SET age = ? WHERE name = ?');
+            const query = db.Query(table, 'UPDATE users SET age = @age WHERE name = @name');
             query.Parameters = { age: 31, name: 'John' };
 
             const result = query.Run<{ changes: number; lastInsertRowid: number }>();
@@ -106,7 +106,7 @@ describe('Query', () => {
             const table = db.Table('users');
             table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
 
-            const query = db.Query(table, 'DELETE FROM users WHERE name = ?');
+            const query = db.Query(table, 'DELETE FROM users WHERE name = @name');
             query.Parameters = { name: 'John' };
 
             const result = query.Run<{ changes: number; lastInsertRowid: number }>();
@@ -117,7 +117,7 @@ describe('Query', () => {
     describe('Transaction', () => {
         it('should execute multiple queries in transaction', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (?, ?, ?)');
+            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
 
             query.Transaction([
                 { name: 'John', email: 'john@example.com', age: 30 },
@@ -130,14 +130,14 @@ describe('Query', () => {
     });
 
     describe('Validation', () => {
-        it('should throw error for mismatched parameter count', () => {
+        it('should throw error for invalid parameter', () => {
             const table = db.Table('users');
-            const query = db.Query(table, 'SELECT * FROM users WHERE name = ?');
+            const query = db.Query(table, 'SELECT * FROM users WHERE name = @name');
             query.Parameters = { name: 'John', extra: 'param' };
 
             expect(() => {
                 query.Validate();
-            }).toThrow('Query is not valid');
+            }).toThrow('Parameter "extra" does not match any column in the table.');
         });
     });
 });

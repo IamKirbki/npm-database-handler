@@ -1,6 +1,8 @@
 import Table from "./Table";
-import { QueryParameters, QueryValues } from "../types/index";
+import { QueryParameters } from "../types/index";
 import { Database as SqliteDatabaseType } from "better-sqlite3";
+import Record from "./Record";
+import Validator from "./Validator";
 
 /**
  * Query class for executing custom SQL queries with parameter validation
@@ -11,7 +13,7 @@ import { Database as SqliteDatabaseType } from "better-sqlite3";
  * const users = db.Table('users');
  * const query = db.Query(users, 'SELECT * FROM users WHERE age > ? AND status = ?');
  * 
- * query.Parameters = { age: 18, status: 'active' };
+ * query.Parameters = { age: 18, status: 'active' };`
  * const results = query.All();
  * ```
  */
@@ -61,7 +63,7 @@ export default class Query {
   public Run<Type>(): Type {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.run(...this.SortParameters()) as Type;
+    return stmt.run(this.Parameters) as Type;
   }
 
   /**
@@ -77,10 +79,11 @@ export default class Query {
    * const results = query.All();
    * ```
    */
-  public All<Type>(): Type[] {
+  public All<Type extends { id: number | string }>(): Record<Type>[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.all(...this.SortParameters()) as Type[];
+    const results = stmt.all(this.Parameters) as Type[];
+    return results.map(res => new Record<Type>(res, this.db, this.Table.Name));
   }
 
   /**
@@ -96,10 +99,11 @@ export default class Query {
    * const user = query.Get();
    * ```
    */
-  public Get<Type>(): Type | undefined {
+  public Get<Type extends { id: number | string }>(): Record<Type> | undefined {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.get(...this.SortParameters()) as Type | undefined;
+    const results = stmt.get(this.Parameters) as Type | undefined;
+    return results ? new Record<Type>(results, this.db, this.Table.Name) : undefined;
   }
 
   /**
@@ -132,7 +136,7 @@ export default class Query {
         this.Validate();
 
         // Run with sorted parameters
-        stmt.run(...this.SortParameters());
+        stmt.run(this.Parameters);
       }
     });
 
@@ -146,122 +150,7 @@ export default class Query {
    * @throws Error if parameters don't match table schema
    */
   public Validate() {
-    if (!this.ValidateQuery()) {
-      throw new Error("Query is not valid.");
-    }
-
-    if (!this.ValidateParameters()) {
-      throw new Error("Parameters are not valid.");
-    }
-  }
-
-  /**
-   * Validate that the number of ? placeholders matches the number of parameters
-   * 
-   * @returns true if valid, false otherwise
-   */
-  private ValidateQuery(): boolean {
-    return (
-      this.query.split("").filter((char) => char === "?").length ===
-      Object.keys(this.Parameters).length
-    ) || (Object.keys(this.Parameters).length < 0 && Object.keys(this.Parameters).length <= 0);
-  }
-
-  /**
-   * Validate parameter types and required fields against table schema
-   * 
-   * @returns true if all parameters are valid, false otherwise
-   */
-  private ValidateParameters(): boolean {
-    for (const [key, val] of Object.entries(this.Parameters)) {
-      const tableColumn = this.Table.TableColumnInformation.find(
-        (col) => col.name === key
-      );
-
-      // Check if column exists in table
-      if (!tableColumn) {
-        return false;
-      }
-
-      // Check NOT NULL constraint (only null/undefined are invalid, not 0 or '')
-      if ((val === null || val === undefined) && tableColumn.notnull === 1) {
-        return false;
-      }
-
-      // Check type compatibility (skip if value is null/undefined)
-      if (val !== null && val !== undefined && !this.CompareTypes(tableColumn.type, typeof val)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Extract parameter values in the correct order to match ? placeholders
-   * Searches the query for column names and extracts corresponding values
-   * 
-   * @returns Array of parameter values in order
-   */
-  private SortParameters(): QueryValues[] {
-    const queryWords = this.query.split(" ");
-    const sortedParameters: QueryValues[] = [];
-
-    for (const word of queryWords) {
-      const paramKey = word.replace(/[(),]/g, "");
-      if (this.Parameters[paramKey]) {
-        sortedParameters.push(this.Parameters[paramKey]);
-      }
-    }
-
-    return sortedParameters;
-  }
-
-  /**
-   * Compare a database column type with a JavaScript parameter type
-   * 
-   * @param columnType - SQLite column type (VARCHAR, INTEGER, etc.)
-   * @param parameterType - JavaScript typeof result (string, number, etc.)
-   * @returns true if types are compatible, false otherwise
-   */
-  private CompareTypes(columnType?: string, parameterType?: string): boolean {
-    if (!columnType || !parameterType) {
-      return false;
-    }
-
-    const lowerType = columnType.toLowerCase();
-
-    // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
-    if (lowerType.includes('text') ||  lowerType.includes('char')) {
-      return parameterType === 'string';
-    }
-
-    // SQLite integer types (INTEGER, INT, TINYINT, SMALLINT, etc.)
-    if (lowerType.includes('int')) {
-      return parameterType === 'number';
-    }
-
-    // SQLite real/float types (REAL, FLOAT, DOUBLE, etc.)
-    if (lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
-      return parameterType === 'number';
-    }
-
-    // Boolean
-    if (lowerType.includes('bool')) {
-      return parameterType === 'boolean';
-    }
-
-    // BLOB types
-    if (lowerType.includes('blob')) {
-      return parameterType === 'object'; // Buffer or Uint8Array
-    }
-
-    // UUID with validation
-    if (lowerType === 'uuid' && parameterType === 'string') {
-      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parameterType);
-    }
-
-    // Default: allow any type if not explicitly restricted
-    // This handles custom SQLite types gracefully
-    return true;
+    Validator.ValidateQuery(this.query, this.Table.TableColumnInformation);
+    Validator.ValidateQueryParameters(this.Parameters, this.Table.TableColumnInformation);
   }
 }

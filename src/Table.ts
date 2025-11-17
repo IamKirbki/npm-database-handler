@@ -120,19 +120,19 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type extends object>(options?: {
+    public Records<Type extends { id: number | string }>(options?: {
         select?: string;
         where?: QueryParameters;
         orderBy?: string;
         limit?: number;
         offset?: number;
-    }): Record[] {
+    }): Record<Type>[] {
         const select = options?.select || "*";
         const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
 
         // Build WHERE clause with column names and ? placeholders
         if (options?.where && Object.keys(options.where).length > 0) {
-            const whereConditions = Object.keys(options.where).map(key => `${key} = ?`);
+            const whereConditions = Object.keys(options.where).map(key => `${key} = @${key}`);
             queryParts.push(`WHERE ${whereConditions.join(" AND ")}`);
         }
 
@@ -150,8 +150,8 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
-        let results: Type[];
-        
+        let results: Record<Type>[];
+
         if (!options?.where || Object.keys(options.where).length === 0) {
             const query = new Query(this, queryStr, this.db);
             results = query.All();
@@ -162,7 +162,7 @@ export default class Table {
         }
 
         // Wrap each result in a Record object
-        return results.map(row => new Record(row, this.db, this.name));
+        return results;
     }
 
     /**
@@ -186,19 +186,19 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record(options?: {
+    public Record<Type extends { id: number | string }>(options?: {
         select?: string;
         where?: QueryParameters;
         orderBy?: string;
-    }): Record | undefined {
+    }): Record<Type> | undefined {
         const results = this.Records({
             select: options?.select,
             where: options?.where,
             orderBy: options?.orderBy,
             limit: 1
         });
-        
-        return results[0];
+
+        return results[0] as Record<Type> | undefined;
     }
 
     /**
@@ -260,7 +260,7 @@ export default class Table {
         const queryParts: string[] = [`INSERT INTO ${this.name}`];
         queryParts.push(`(${columns.join(", ")})`);
         queryParts.push("VALUES");
-        queryParts.push(`(${columns.map(() => "?").join(", ")})`);
+        queryParts.push(`(${columns.map(col => `@${col}`).join(", ")})`);
 
         const queryStr = queryParts.join(" ");
 

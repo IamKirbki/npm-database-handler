@@ -22,9 +22,9 @@ import { inspect } from "util";
  * console.log(JSON.stringify(user)); // {"id": 1, "name": "John Doe", ...}
  * ```
  */
-export default class Record {
+export default class Record<ColumnValuesType extends { id: number | string }> {
     private _db: SqliteDatabaseType;
-    private _values: object = {};
+    private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _tableName: string = "";
 
     /**
@@ -34,7 +34,7 @@ export default class Record {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: object, db: SqliteDatabaseType, tableName: string) {
+    constructor(values: ColumnValuesType, db: SqliteDatabaseType, tableName: string) {
         this._values = values;
         this._db = db;
         this._tableName = tableName;
@@ -51,7 +51,7 @@ export default class Record {
      * console.log(user?.values); // { id: 1, name: 'John', email: 'john@example.com' }
      * ```
      */
-    public get values(): object {
+    public get values(): ColumnValuesType {
         return this._values;
     };
 
@@ -70,7 +70,7 @@ export default class Record {
      * // Database is updated and user.values reflects the changes
      * ```
      */
-    public Update<Type extends {id: number | string}>(newValues: object): void {
+    public Update(newValues: object): void {
         const setClauses = Object.keys(newValues)
             .map(key => `${key} = @${key}`)
             .join(", ");
@@ -78,8 +78,8 @@ export default class Record {
         const query = `UPDATE ${this._tableName} SET ${setClauses} WHERE id = @id;`;
 
         const stmt = this._db.prepare(query);
-        stmt.run({ ...newValues, id: (this._values as Type).id });
-        
+        stmt.run({ ...newValues, id: (this._values as ColumnValuesType).id });
+
         this._values = { ...this._values, ...newValues };
     }
 
@@ -97,10 +97,10 @@ export default class Record {
      * ```
      */
     // TODO Where clause with primary key other than 'id'
-    public Delete<Type extends {id: number | string}>(): void {
+    public Delete(): void {
         const query = `DELETE FROM ${this._tableName} WHERE id = @id;`;
         const stmt = this._db.prepare(query);
-        stmt.run({ id: (this._values as Type).id });
+        stmt.run({ id: (this._values as ColumnValuesType).id });
     }
 
     /**
