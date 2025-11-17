@@ -1,3 +1,4 @@
+import { Database as SqliteDatabaseType } from "better-sqlite3";
 import { inspect } from "util";
 
 /**
@@ -22,7 +23,7 @@ import { inspect } from "util";
  * ```
  */
 export default class Record {
-    private _db: any;
+    private _db: SqliteDatabaseType;
     private _values: object = {};
     private readonly _tableName: string = "";
 
@@ -33,7 +34,7 @@ export default class Record {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: object, db: any, tableName: string) {
+    constructor(values: object, db: SqliteDatabaseType, tableName: string) {
         this._values = values;
         this._db = db;
         this._tableName = tableName;
@@ -93,6 +94,7 @@ export default class Record {
      * // Record is permanently deleted from the database
      * ```
      */
+    // TODO Where clause with primary key other than 'id'
     public Delete(): void {
         const query = `DELETE FROM ${this._tableName} WHERE id = @id;`;
         const stmt = this._db.prepare(query);

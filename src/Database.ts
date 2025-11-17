@@ -72,7 +72,7 @@ export default class Database {
    * // Table 'posts' now exists with an 'id' column
    * ```
    */
-  //@TODO: Add ability to define additional columns during table creation
+  // TODO Add ability to specify primary key type
   public CreateTable(name: string, columns?: object): Table {
     const names = Object.keys(columns || {});
     const colsDef = ", " + names.map(colName => {
