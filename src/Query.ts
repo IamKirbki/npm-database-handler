@@ -96,10 +96,10 @@ export default class Query {
    * const user = query.Get();
    * ```
    */
-  public Get<TEntity>(): TEntity | undefined {
+  public Get<Type>(): Type | undefined {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.get(...this.SortParameters()) as TEntity | undefined;
+    return stmt.get(...this.SortParameters()) as Type | undefined;
   }
 
   /**
