@@ -97,10 +97,10 @@ export default class Record {
      * ```
      */
     // TODO Where clause with primary key other than 'id'
-    public Delete<TEntity extends {id: number | string}>(): void {
+    public Delete<Type extends {id: number | string}>(): void {
         const query = `DELETE FROM ${this._tableName} WHERE id = @id;`;
         const stmt = this._db.prepare(query);
-        stmt.run({ id: (this._values as TEntity).id });
+        stmt.run({ id: (this._values as Type).id });
     }
 
     /**
