@@ -120,7 +120,7 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<TEntity extends object>(options?: {
+    public Records<Type extends object>(options?: {
         select?: string;
         where?: QueryParameters;
         orderBy?: string;
