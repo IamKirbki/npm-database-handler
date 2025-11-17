@@ -3,7 +3,7 @@ export type TableColumnInfo = {
     name: string;
     type: string;
     notnull: number;
-    dflt_value: any | null;
+    dflt_value: unknown;
     pk: number;
 };
 
@@ -11,6 +11,6 @@ export type ReadableTableColumnInfo = {
     name: string;
     type: string;
     nullable: boolean;
-    defaultValue: any | null;
+    defaultValue: unknown;
     isPrimaryKey: boolean;
 };
