@@ -150,7 +150,7 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
-        let results: TEntity[];
+        let results: Type[];
         
         if (!options?.where || Object.keys(options.where).length === 0) {
             const query = new Query(this, queryStr, this.db);
