@@ -58,10 +58,10 @@ export default class Query {
    * console.log(`Inserted ID: ${result.lastInsertRowid}`);
    * ```
    */
-  public Run<TEntity>(): TEntity {
+  public Run<Type>(): Type {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.run(...this.SortParameters()) as TEntity;
+    return stmt.run(...this.SortParameters()) as Type;
   }
 
   /**
