@@ -63,15 +63,28 @@ export default class Database {
   }
 
   /**
-   * Create a new table with an auto-incrementing ID column
+   * Create a new table with specified columns
+   * Validates table name, column names, and column types before creation
+   * Uses CREATE TABLE IF NOT EXISTS to avoid errors if table already exists
    * 
    * @param name - Name of the table to create
+   * @param columns - Object mapping column names to their type definitions
    * @returns Table instance for the newly created table
+   * @throws Error if table name, column names, or column types are invalid
    * 
    * @example
    * ```typescript
-   * const posts = db.CreateTable('posts');
-   * // Table 'posts' now exists with an 'id' column
+   * // Create a users table
+   * const users = db.CreateTable('users', {
+   *   id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+   *   name: 'TEXT NOT NULL',
+   *   email: 'TEXT UNIQUE',
+   *   age: 'INTEGER',
+   *   created_at: 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+   * });
+   * 
+   * // Table is now ready to use
+   * users.Insert({ name: 'John', email: 'john@example.com', age: 30 });
    * ```
    */
   public CreateTable(name: string, columns: object): Table {

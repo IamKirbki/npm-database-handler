@@ -6,15 +6,33 @@ import Validator from "./Validator";
 
 /**
  * Query class for executing custom SQL queries with parameter validation
- * Validates parameter types against table schema before execution
+ * 
+ * Features:
+ * - Validates parameter types against table schema before execution
+ * - Prevents SQL injection through query structure validation
+ * - Supports named parameters using @fieldName syntax
+ * - Provides type-safe query execution (Run, All, Get)
+ * - Transaction support for atomic multi-insert/update operations
  * 
  * @example
  * ```typescript
  * const users = db.Table('users');
- * const query = db.Query(users, 'SELECT * FROM users WHERE age > ? AND status = ?');
  * 
- * query.Parameters = { age: 18, status: 'active' };`
+ * // SELECT query with parameters
+ * const query = db.Query(users, 'SELECT * FROM users WHERE age > @age AND status = @status');
+ * query.Parameters = { age: 18, status: 'active' };
  * const results = query.All();
+ * 
+ * // INSERT query
+ * const insert = db.Query(users, 'INSERT INTO users (name, email) VALUES (@name, @email)');
+ * insert.Parameters = { name: 'John', email: 'john@example.com' };
+ * insert.Run();
+ * 
+ * // Transaction for multiple inserts
+ * insert.Transaction([
+ *   { name: 'John', email: 'john@example.com' },
+ *   { name: 'Jane', email: 'jane@example.com' }
+ * ]);
  * ```
  */
 export default class Query {
@@ -24,19 +42,24 @@ export default class Query {
   public Parameters: QueryParameters = {};
 
   /**
-   * Creates a Query instance
+   * Creates a Query instance (usually called via db.Query() method)
    * 
    * @param Table - Table instance for validation context
-   * @param Query - SQL query string with ? placeholders for parameters
+   * @param Query - SQL query string with @fieldName placeholders for parameters
    * @param DB - Database connection instance
    * 
    * @example
    * ```typescript
+   * // Direct instantiation (not recommended - use db.Query() instead)
    * const query = new Query(
    *   usersTable, 
-   *   'SELECT * FROM users WHERE id = ?',
+   *   'SELECT * FROM users WHERE id = @id',
    *   db
    * );
+   * query.Parameters = { id: 1 };
+   * 
+   * // Recommended approach
+   * const query = db.Query(usersTable, 'SELECT * FROM users WHERE id = @id');
    * query.Parameters = { id: 1 };
    * ```
    */
@@ -48,16 +71,27 @@ export default class Query {
 
   /**
    * Execute a query that modifies data (INSERT, UPDATE, DELETE)
+   * Validates query and parameters before execution
    * 
+   * @template Type - Expected return type (typically { lastInsertRowid: number, changes: number })
    * @returns Result object with lastInsertRowid and changes count
-   * @throws Error if query or parameters are invalid
+   * @throws Error if query validation fails
+   * @throws Error if parameter types don't match column types
+   * @throws Error if required parameters are missing
    * 
    * @example
    * ```typescript
-   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (?, ?)');
+   * // INSERT query
+   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (@name, @age)');
    * query.Parameters = { name: 'John', age: 30 };
-   * const result = query.Run();
+   * const result = query.Run<{ lastInsertRowid: number, changes: number }>();
    * console.log(`Inserted ID: ${result.lastInsertRowid}`);
+   * 
+   * // UPDATE query
+   * const update = db.Query(users, 'UPDATE users SET age = @age WHERE id = @id');
+   * update.Parameters = { age: 31, id: 1 };
+   * const updateResult = update.Run<{ changes: number }>();
+   * console.log(`Updated ${updateResult.changes} rows`);
    * ```
    */
   public Run<Type>(): Type {
@@ -67,16 +101,31 @@ export default class Query {
   }
 
   /**
-   * Execute a SELECT query and return all matching rows
+   * Execute a SELECT query and return all matching rows as Record objects
+   * Each row is wrapped in a Record instance for convenient updates/deletes
    * 
-   * @returns Array of row objects
-   * @throws Error if query or parameters are invalid
+   * @template Type - Expected row type (must include id: number | string)
+   * @returns Array of Record objects containing the query results
+   * @throws Error if query validation fails
+   * @throws Error if parameter types don't match column types
    * 
    * @example
    * ```typescript
-   * const query = db.Query(users, 'SELECT * FROM users WHERE age > ?');
+   * interface User {
+   *   id: number;
+   *   name: string;
+   *   age: number;
+   * }
+   * 
+   * const query = db.Query(users, 'SELECT * FROM users WHERE age > @age');
    * query.Parameters = { age: 18 };
-   * const results = query.All();
+   * const results = query.All<User>();
+   * 
+   * // Each result is a Record object
+   * results.forEach(user => {
+   *   console.log(user.values); // { id: 1, name: 'John', age: 30 }
+   *   user.Update({ age: 31 }); // Can update directly
+   * });
    * ```
    */
   public All<Type extends { id: number | string }>(): Record<Type>[] {
@@ -87,16 +136,30 @@ export default class Query {
   }
 
   /**
-   * Execute a SELECT query and return the first matching row
+   * Execute a SELECT query and return the first matching row as a Record object
+   * Returns undefined if no rows match the query
    * 
-   * @returns Single row object or undefined if no match
-   * @throws Error if query or parameters are invalid
+   * @template Type - Expected row type (must include id: number | string)
+   * @returns Single Record object or undefined if no match found
+   * @throws Error if query validation fails
+   * @throws Error if parameter types don't match column types
    * 
    * @example
    * ```typescript
-   * const query = db.Query(users, 'SELECT * FROM users WHERE id = ?');
+   * interface User {
+   *   id: number;
+   *   name: string;
+   *   email: string;
+   * }
+   * 
+   * const query = db.Query(users, 'SELECT * FROM users WHERE id = @id');
    * query.Parameters = { id: 1 };
-   * const user = query.Get();
+   * const user = query.Get<User>();
+   * 
+   * if (user) {
+   *   console.log(user.values); // { id: 1, name: 'John', email: 'john@example.com' }
+   *   user.Update({ email: 'newemail@example.com' });
+   * }
    * ```
    */
   public Get<Type extends { id: number | string }>(): Record<Type> | undefined {
@@ -108,20 +171,33 @@ export default class Query {
 
   /**
    * Execute the query for multiple parameter sets in an atomic transaction
-   * All operations succeed or all fail together
+   * All operations succeed or all fail together (rollback on any error)
+   * Each parameter set is validated before execution
    * 
-   * @param items - Array of parameter objects, one for each execution
-   * @returns Transaction result
-   * @throws Error if any validation fails
+   * Performance: Significantly faster than individual inserts for bulk operations
+   * 
+   * @param items - Array of parameter objects, one for each query execution
+   * @throws Error if any validation fails for any parameter set
+   * @throws Error if any query execution fails (triggers rollback)
    * 
    * @example
    * ```typescript
-   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (?, ?)');
+   * // Bulk insert users
+   * const query = db.Query(users, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
    * query.Transaction([
-   *   { name: 'John', age: 30 },
-   *   { name: 'Jane', age: 25 }
+   *   { name: 'John', email: 'john@example.com', age: 30 },
+   *   { name: 'Jane', email: 'jane@example.com', age: 25 },
+   *   { name: 'Bob', email: 'bob@example.com', age: 35 }
    * ]);
-   * // Both inserts succeed or both fail
+   * // All 3 users inserted, or none if any fails
+   * 
+   * // Bulk update
+   * const update = db.Query(users, 'UPDATE users SET status = @status WHERE id = @id');
+   * update.Transaction([
+   *   { id: 1, status: 'active' },
+   *   { id: 2, status: 'inactive' },
+   *   { id: 3, status: 'active' }
+   * ]);
    * ```
    */
   public Transaction(items: QueryParameters[]): void {
@@ -145,9 +221,36 @@ export default class Query {
 
   /**
    * Validate both the query structure and parameter types
+   * Called automatically by Run(), All(), Get(), and Transaction()
+   * Can also be called manually to check validity before execution
    * 
-   * @throws Error if query has wrong number of ? placeholders
+   * Validations performed:
+   * - Query is a non-empty string
+   * - No SQL injection patterns (semicolon followed by DROP/DELETE/UPDATE/INSERT/ALTER)
+   * - All @fieldName references exist in the table schema
+   * - All required (NOT NULL) fields are provided for INSERT queries
+   * - All parameter keys match column names in the table
+   * - All parameter values match their column types (string for TEXT, number for INTEGER, etc.)
+   * - No null/undefined values for NOT NULL columns
+   * 
+   * @throws Error if query structure is invalid or contains forbidden operations
    * @throws Error if parameters don't match table schema
+   * @throws Error if parameter types don't match column types
+   * @throws Error if required fields are missing
+   * 
+   * @example
+   * ```typescript
+   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (@name, @age)');
+   * query.Parameters = { name: 'John', age: 30 };
+   * 
+   * // Validate without executing
+   * try {
+   *   query.Validate();
+   *   console.log('Query is valid');
+   * } catch (error) {
+   *   console.error('Validation failed:', error.message);
+   * }
+   * ```
    */
   public Validate() {
     Validator.ValidateQuery(this.query, this.Table.TableColumnInformation);
