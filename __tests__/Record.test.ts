@@ -6,6 +6,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+interface UserRecord {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+}
+
 describe('Record', () => {
     const testDbPath = path.join(__dirname, '..', 'test-record.db');
     let db: Database;
@@ -48,10 +55,8 @@ describe('Record', () => {
             record?.Update({ name: 'John Doe', age: 31 });
 
             const updated = table.Record({ where: { name: 'John Doe' } });
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((updated?.values as any).name).toBe('John Doe');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((updated?.values as any).age).toBe(31);
+            expect((updated?.values as UserRecord).name).toBe('John Doe');
+            expect((updated?.values as UserRecord).age).toBe(31);
         });
 
         it('should update local values', () => {
@@ -60,8 +65,7 @@ describe('Record', () => {
 
             record?.Update({ age: 31 });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((record?.values as any).age).toBe(31);
+            expect((record?.values as UserRecord).age).toBe(31);
         });
     });
 

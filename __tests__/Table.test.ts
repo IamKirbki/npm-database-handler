@@ -6,6 +6,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+interface UserRecord {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+}
+
 describe('Table', () => {
     const testDbPath = path.join(__dirname, '..', 'test-table.db');
     let db: Database;
@@ -54,10 +61,11 @@ describe('Table', () => {
     describe('Insert', () => {
         it('should insert a single record', () => {
             const table = db.Table('users');
-            const result = table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            const records = table.Records();
+            expect(records.length).toBe(1);
+            expect((records[0].values as UserRecord).name).toBe('John');
 
-            expect(result.lastInsertRowid).toBeDefined();
-            expect(result.changes).toBe(1);
         });
 
         it('should insert multiple records', () => {
@@ -102,8 +110,7 @@ describe('Table', () => {
             const records = table.Records({ where: { name: 'John' } });
 
             expect(records.length).toBe(1);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((records[0].values as any).name).toBe('John');
+            expect((records[0].values as UserRecord).name).toBe('John');
         });
 
         it('should limit records', () => {
@@ -117,10 +124,8 @@ describe('Table', () => {
             const table = db.Table('users');
             const records = table.Records({ orderBy: 'age DESC' });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((records[0].values as any).age).toBe(35);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((records[2].values as any).age).toBe(25);
+            expect((records[0].values as UserRecord).age).toBe(35);
+            expect((records[2].values as UserRecord).age).toBe(25);
         });
 
         it('should select specific columns', () => {
@@ -144,8 +149,7 @@ describe('Table', () => {
             const record = table.Record({ where: { name: 'John' } });
 
             expect(record).toBeDefined();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((record?.values as any).name).toBe('John');
+            expect((record?.values as UserRecord).name).toBe('John');
         });
 
         it('should return undefined for non-existent record', () => {

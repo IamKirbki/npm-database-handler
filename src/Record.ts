@@ -59,6 +59,7 @@ export default class Record {
      * Update this record in the database
      * Updates both the database and the local values
      * 
+     * @template TEntity - Record type that must include an 'id' property (number or string)
      * @param newValues - Object with column names and new values to update
      * @throws Error if the record doesn't have an 'id' field
      * 
@@ -69,7 +70,7 @@ export default class Record {
      * // Database is updated and user.values reflects the changes
      * ```
      */
-    public Update(newValues: object): void {
+    public Update<TEntity extends {id: number | string}>(newValues: object): void {
         const setClauses = Object.keys(newValues)
             .map(key => `${key} = @${key}`)
             .join(", ");
@@ -77,7 +78,7 @@ export default class Record {
         const query = `UPDATE ${this._tableName} SET ${setClauses} WHERE id = @id;`;
 
         const stmt = this._db.prepare(query);
-        stmt.run({ ...newValues, id: (this._values as any).id });
+        stmt.run({ ...newValues, id: (this._values as TEntity).id });
         
         this._values = { ...this._values, ...newValues };
     }
@@ -85,6 +86,7 @@ export default class Record {
     /**
      * Delete this record from the database
      * 
+     * @template TEntity - Record type that must include an 'id' property (number or string)
      * @throws Error if the record doesn't have an 'id' field
      * 
      * @example
@@ -95,10 +97,10 @@ export default class Record {
      * ```
      */
     // TODO Where clause with primary key other than 'id'
-    public Delete(): void {
+    public Delete<TEntity extends {id: number | string}>(): void {
         const query = `DELETE FROM ${this._tableName} WHERE id = @id;`;
         const stmt = this._db.prepare(query);
-        stmt.run({ id: (this._values as any).id });
+        stmt.run({ id: (this._values as TEntity).id });
     }
 
     /**

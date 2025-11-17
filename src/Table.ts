@@ -120,7 +120,7 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records(options?: {
+    public Records<TEntity extends object>(options?: {
         select?: string;
         where?: QueryParameters;
         orderBy?: string;
@@ -150,7 +150,7 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
-        let results: any[];
+        let results: TEntity[];
         
         if (!options?.where || Object.keys(options.where).length === 0) {
             const query = new Query(this, queryStr, this.db);
@@ -241,7 +241,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public Insert(values: QueryParameters | QueryParameters[]) {
+    public Insert(values: QueryParameters | QueryParameters[]): void {
         const isMultiple = Array.isArray(values);
         const records: QueryParameters[] = isMultiple ? values : [values];
 
@@ -267,12 +267,12 @@ export default class Table {
         // Use transaction for multiple records, direct run for single
         if (isMultiple && records.length > 1) {
             const query = new Query(this, queryStr, this.db);
-            return query.Transaction(records);
+            query.Transaction(records);
         } else {
             // Single insert
             const query = new Query(this, queryStr, this.db);
             query.Parameters = records[0];
-            return query.Run();
+            query.Run();
         }
     }
 }
