@@ -58,10 +58,10 @@ export default class Query {
    * console.log(`Inserted ID: ${result.lastInsertRowid}`);
    * ```
    */
-  public Run(): any {
+  public Run<TEntity>(): TEntity {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.run(...this.SortParameters());
+    return stmt.run(...this.SortParameters()) as TEntity;
   }
 
   /**
@@ -77,10 +77,10 @@ export default class Query {
    * const results = query.All();
    * ```
    */
-  public All(): any {
+  public All<TEntity>(): TEntity[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.all(...this.SortParameters());
+    return stmt.all(...this.SortParameters()) as TEntity[];
   }
 
   /**
@@ -96,10 +96,10 @@ export default class Query {
    * const user = query.Get();
    * ```
    */
-  public Get(): any {
+  public Get<TEntity>(): TEntity | undefined {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    return stmt.get(...this.SortParameters());
+    return stmt.get(...this.SortParameters()) as TEntity | undefined;
   }
 
   /**
@@ -120,23 +120,23 @@ export default class Query {
    * // Both inserts succeed or both fail
    * ```
    */
-  public Transaction(items: QueryParameters[]): any {
+  public Transaction(items: QueryParameters[]): void {
     const stmt = this.db.prepare(this.query);
-    
+
     const transactionFn = this.db.transaction((items: QueryParameters[]) => {
       for (const item of items) {
         // Set parameters for this item
         this.Parameters = item;
-        
+
         // Validate each item
         this.Validate();
-        
+
         // Run with sorted parameters
         stmt.run(...this.SortParameters());
       }
     });
-    
-    return transactionFn(items);
+
+    transactionFn(items);
   }
 
   /**
@@ -229,37 +229,37 @@ export default class Query {
     }
 
     const lowerType = columnType.toLowerCase();
-    
+
     // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
     if (lowerType.includes('text') || lowerType.includes('varchar') || lowerType.includes('char')) {
       return parameterType === 'string';
     }
-    
+
     // SQLite integer types (INTEGER, INT, TINYINT, SMALLINT, etc.)
     if (lowerType.includes('int')) {
       return parameterType === 'number';
     }
-    
+
     // SQLite real/float types (REAL, FLOAT, DOUBLE, etc.)
     if (lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
       return parameterType === 'number';
     }
-    
+
     // Boolean
     if (lowerType.includes('bool')) {
       return parameterType === 'boolean';
     }
-    
+
     // BLOB types
     if (lowerType.includes('blob')) {
       return parameterType === 'object'; // Buffer or Uint8Array
     }
-    
+
     // UUID with validation
     if (lowerType === 'uuid' && parameterType === 'string') {
       return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parameterType);
     }
-    
+
     // Default: allow any type if not explicitly restricted
     // This handles custom SQLite types gracefully
     return true;
