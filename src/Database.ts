@@ -74,7 +74,6 @@ export default class Database {
    * // Table 'posts' now exists with an 'id' column
    * ```
    */
-  // TODO Add ability to specify primary key type
   public CreateTable(name: string, columns: object): Table {
     Validator.ValidateTableName(name);
 
