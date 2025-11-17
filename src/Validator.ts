@@ -76,28 +76,29 @@ export default class Validator {
     }
 
     static ValidateQuery(query: string, TableColumnInformation: TableColumnInfo[]): void {
-        if (!query || typeof query !== "string") {
+        if (!query || typeof query !== "string" || query.trim() === "") {
             throw new Error("Query must be a non-empty string.");
         }
 
-        const lowerQuery = query.toLowerCase();
-
         const forbiddenPatterns = [
-            /;\s*drop\s+table/gi,
-            /;\s*delete\s+from/gi,
-            /;\s*update\s+/gi,
-            /;\s*insert\s+into/gi,
-            /;\s*alter\s+table/gi
+            /;\s*drop\s+table/i,
+            /;\s*delete\s+from/i,
+            /;\s*update\s+/i,
+            /;\s*insert\s+into/i,
+            /;\s*alter\s+table/i
         ];
 
         for (const pattern of forbiddenPatterns) {
-            if (pattern.test(lowerQuery)) {
+            if (pattern.test(query)) {
                 throw new Error("Query contains forbidden operations.");
             }
         }
 
         const fieldPattern = /@([a-zA-Z0-9_]+)/g;
         let match;
+
+        let requiredFields = TableColumnInformation
+            .filter(col => col.notnull === 1);
 
         while ((match = fieldPattern.exec(query)) !== null) {
             const fieldName = match[1];
@@ -106,10 +107,18 @@ export default class Validator {
             if (!found) {
                 throw new Error(`Query references unknown field "@${fieldName}".`);
             }
+
+            requiredFields = requiredFields.filter(col => col.name != fieldName)
+        }
+
+        if (requiredFields.length > 0 && /insert\s+into/i.test(query)) {
+            const fieldNames = requiredFields.map(col => col.name).join(", ");
+            throw new Error(`Query is missing required fields: ${fieldNames}.`);
         }
     }
 
     static ValidateQueryParameters(
+        query: string,
         parameters: QueryParameters,
         TableColumnInformation: TableColumnInfo[]
     ): void {
@@ -119,12 +128,29 @@ export default class Validator {
                 throw new Error(`Parameter "${key}" does not match any column in the table.`);
             }
 
+            // Check for null/undefined in NOT NULL columns
+            if (columnInfo.notnull === 1 && (value === null || value === undefined)) {
+                throw new Error(`Parameter "${key}" cannot be null or undefined for a NOT NULL column.`);
+            }
+
             const parameterType = typeof value;
             const columnType = columnInfo.type;
 
             const isValidType = Validator.CompareTypes(columnType, parameterType);
             if (!isValidType) {
                 throw new Error(`Parameter "${key}" has type "${parameterType}" which does not match column type "${columnType}".`);
+            }
+
+            const fieldPattern = /@([a-zA-Z0-9_]+)/g;
+            let match;
+
+            while ((match = fieldPattern.exec(query)) !== null) {
+                const fieldName = match[1];
+                const found = parameters[fieldName] !== undefined;
+
+                if (!found) {
+                    throw new Error(`Missing parameter for column "${fieldName}".`);
+                }
             }
         }
     }

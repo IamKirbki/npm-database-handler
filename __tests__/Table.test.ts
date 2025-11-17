@@ -177,4 +177,51 @@ describe('Table', () => {
             expect(table.RecordsCount).toBe(0);
         });
     });
+
+    describe('Insert Validation', () => {
+        it('should throw error when inserting without required field', () => {
+            const table = db.Table('users');
+            expect(() => {
+                table.Insert({ email: 'john@example.com', age: 30 });
+            }).toThrow('Query is missing required fields: name.');
+        });
+
+        it('should throw error when inserting with wrong type', () => {
+            const table = db.Table('users');
+            expect(() => {
+                table.Insert({ name: 'John', email: 'john@example.com', age: 'thirty' });
+            }).toThrow('Parameter "age" has type "string" which does not match column type "INTEGER".');
+        });
+
+        it('should throw error for object with no columns', () => {
+            const table = db.Table('users');
+            expect(() => {
+                table.Insert({});
+            }).toThrow('Cannot insert record with no columns');
+        });
+
+        it('should throw error when inserting invalid column', () => {
+            const table = db.Table('users');
+            expect(() => {
+                table.Insert({ name: 'John', invalidColumn: 'value' });
+            }).toThrow('Query references unknown field "@invalidColumn".');
+        });
+    });
+
+    describe('Records Error Cases', () => {
+        it('should return empty array for invalid where clause', () => {
+            const table = db.Table('users');
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            
+            const records = table.Records({ where: { name: 'NonExistent' } });
+            expect(records).toHaveLength(0);
+        });
+
+        it('should throw error for invalid column in where clause', () => {
+            const table = db.Table('users');
+            expect(() => {
+                table.Records({ where: { invalidColumn: 'value' } });
+            }).toThrow('Query references unknown field "@invalidColumn".');
+        });
+    });
 });

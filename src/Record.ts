@@ -1,5 +1,7 @@
 import { Database as SqliteDatabaseType } from "better-sqlite3";
 import { inspect } from "util";
+import Table from "./Table";
+import Query from "./Query";
 
 /**
  * Record class represents a single database row with methods for updates and deletion
@@ -25,7 +27,7 @@ import { inspect } from "util";
 export default class Record<ColumnValuesType extends { id: number | string }> {
     private _db: SqliteDatabaseType;
     private _values: ColumnValuesType = {} as ColumnValuesType;
-    private readonly _tableName: string = "";
+    private readonly _table: Table;
 
     /**
      * Creates a Record instance (typically called internally by Table methods)
@@ -34,10 +36,10 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: ColumnValuesType, db: SqliteDatabaseType, tableName: string) {
+    constructor(values: ColumnValuesType, db: SqliteDatabaseType, table: Table) {
         this._values = values;
         this._db = db;
-        this._tableName = tableName;
+        this._table = table;
     }
 
     /**
@@ -75,10 +77,10 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
             .map(key => `${key} = @${key}`)
             .join(", ");
 
-        const query = `UPDATE ${this._tableName} SET ${setClauses} WHERE id = @id;`;
-
-        const stmt = this._db.prepare(query);
-        stmt.run({ ...newValues, id: (this._values as ColumnValuesType).id });
+        const query = `UPDATE ${this._table.Name} SET ${setClauses} WHERE id = @id;`;
+        const _query = new Query(this._table, query, this._db);
+        _query.Parameters = { ...newValues, id: (this._values as ColumnValuesType).id };
+        _query.Run();
 
         this._values = { ...this._values, ...newValues };
     }
@@ -98,9 +100,9 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      */
     // TODO Where clause with primary key other than 'id'
     public Delete(): void {
-        const query = `DELETE FROM ${this._tableName} WHERE id = @id;`;
-        const stmt = this._db.prepare(query);
-        stmt.run({ id: (this._values as ColumnValuesType).id });
+        const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE id = @id;`, this._db);
+        _query.Parameters = { id: (this._values as ColumnValuesType).id };
+        _query.Run();
     }
 
     /**

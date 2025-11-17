@@ -83,7 +83,7 @@ export default class Query {
     this.Validate();
     const stmt = this.db.prepare(this.query);
     const results = stmt.all(this.Parameters) as Type[];
-    return results.map(res => new Record<Type>(res, this.db, this.Table.Name));
+    return results.map(res => new Record<Type>(res, this.db, this.Table));
   }
 
   /**
@@ -103,7 +103,7 @@ export default class Query {
     this.Validate();
     const stmt = this.db.prepare(this.query);
     const results = stmt.get(this.Parameters) as Type | undefined;
-    return results ? new Record<Type>(results, this.db, this.Table.Name) : undefined;
+    return results ? new Record<Type>(results, this.db, this.Table) : undefined;
   }
 
   /**
@@ -151,6 +151,6 @@ export default class Query {
    */
   public Validate() {
     Validator.ValidateQuery(this.query, this.Table.TableColumnInformation);
-    Validator.ValidateQueryParameters(this.Parameters, this.Table.TableColumnInformation);
+    Validator.ValidateQueryParameters(this.query, this.Parameters, this.Table.TableColumnInformation);
   }
 }
