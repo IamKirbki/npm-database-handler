@@ -70,7 +70,7 @@ export default class Record {
      * // Database is updated and user.values reflects the changes
      * ```
      */
-    public Update<TEntity extends {id: number | string}>(newValues: object): void {
+    public Update<Type extends {id: number | string}>(newValues: object): void {
         const setClauses = Object.keys(newValues)
             .map(key => `${key} = @${key}`)
             .join(", ");
@@ -78,7 +78,7 @@ export default class Record {
         const query = `UPDATE ${this._tableName} SET ${setClauses} WHERE id = @id;`;
 
         const stmt = this._db.prepare(query);
-        stmt.run({ ...newValues, id: (this._values as TEntity).id });
+        stmt.run({ ...newValues, id: (this._values as Type).id });
         
         this._values = { ...this._values, ...newValues };
     }
