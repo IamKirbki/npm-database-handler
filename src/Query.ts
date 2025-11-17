@@ -231,7 +231,7 @@ export default class Query {
     const lowerType = columnType.toLowerCase();
 
     // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
-    if (lowerType.includes('text') || lowerType.includes('varchar') || lowerType.includes('char')) {
+    if (lowerType.includes('text') ||  lowerType.includes('char')) {
       return parameterType === 'string';
     }
 
