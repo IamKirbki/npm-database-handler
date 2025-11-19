@@ -1,11 +1,15 @@
 import { Database as SqliteDatabaseType } from "better-sqlite3";
 import {
+    DefaultQueryOptions,
+    QueryOptions,
     QueryParameters,
     ReadableTableColumnInfo,
+    Join,
     TableColumnInfo,
 } from "../types/index";
 import Query from "./Query";
 import Record from "./Record";
+import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
 
 /**
  * Table class for interacting with a specific database table
@@ -121,39 +125,18 @@ export default class Table {
      * });
      */
     public Records<Type extends { id: number | string }>(
-        options?: {
-            select?: string;
-            where?: QueryParameters;
-            orderBy?: string;
-            limit?: number;
-            offset?: number;
-        }
+        options?: DefaultQueryOptions & QueryOptions
     ): Record<Type>[] {
-        const select = options?.select || "*";
-        const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
-
-        // Build WHERE clause with column names and ? placeholders
-        if (options?.where && Object.keys(options.where).length > 0) {
-            const whereConditions = Object.keys(options.where).map(key => `${key} = @${key}`);
-            queryParts.push(`WHERE ${whereConditions.join(" AND ")}`);
-        }
-
-        if (options?.orderBy) {
-            queryParts.push(`ORDER BY ${options.orderBy}`);
-        }
-
-        if (options?.limit !== undefined) {
-            queryParts.push(`LIMIT ${options.limit}`);
-        }
-
-        if (options?.offset !== undefined) {
-            queryParts.push(`OFFSET ${options.offset}`);
-        }
-
-        const queryStr = queryParts.join(" ");
+        const queryStr = QueryStatementBuilder.BuildSelect(this, {
+            select: options?.select,
+            where: options?.where,
+            orderBy: options?.orderBy,
+            limit: options?.limit,
+            offset: options?.offset,
+        });
 
         const query = new Query(this, queryStr, this.db);
-        
+
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
@@ -185,11 +168,7 @@ export default class Table {
      * ```
      */
     public Record<Type extends { id: number | string }>(
-        options?: {
-            select?: string;
-            where?: QueryParameters;
-            orderBy?: string;
-        }
+        options?: DefaultQueryOptions & QueryOptions
     ): Record<Type> | undefined {
         const results = this.Records({
             select: options?.select,
@@ -256,16 +235,9 @@ export default class Table {
             throw new Error("Cannot insert record with no columns");
         }
 
-        // Build INSERT query with @ placeholders
-        const queryParts: string[] = [`INSERT INTO ${this.name}`];
-        queryParts.push(`(${columns.join(", ")})`);
-        queryParts.push("VALUES");
-        queryParts.push(`(${columns.map(col => `@${col}`).join(", ")})`);
-
-        const queryStr = queryParts.join(" ");
-
+        const queryStr = QueryStatementBuilder.BuildInsert(this, records[0]);
         const query = new Query(this, queryStr, this.db);
-        
+
         // Use transaction for multiple records, direct run for single
         if (isMultiple && records.length > 1) {
             query.Transaction(records);
@@ -274,5 +246,71 @@ export default class Table {
             query.Parameters = records[0];
             query.Run();
         }
+    }
+
+    /**
+     * Perform an INNER JOIN operation between this table and one or more other tables
+     * 
+     * Executes a SELECT query with INNER JOIN clause(s) to retrieve records from multiple tables.
+     * Supports single joins, multiple joins, and nested joins for complex relational queries.
+     * 
+     * @template Type - Expected return type (must include id: number | string)
+     * @param Joins - Single Join object or array of Join objects defining the join operations
+     * @param options - Query options including select columns, orderBy, limit, offset
+     * @returns Array of Record objects containing joined data
+     * 
+     * @example
+     * ```typescript
+     * // Simple INNER JOIN between users and orders
+     * const usersTable = db.Table('users');
+     * const ordersTable = db.Table('orders');
+     * 
+     * const results = usersTable.InnerJoin(
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   { select: 'users.name, orders.total' }
+     * );
+     * 
+     * // Multiple INNER JOINs
+     * const addressesTable = db.Table('addresses');
+     * const results = usersTable.InnerJoin([
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   { fromTable: addressesTable, on: { address_id: 'id' } }
+     * ]);
+     * 
+     * // Nested INNER JOIN (users -> orders -> products)
+     * const productsTable = db.Table('products');
+     * const results = usersTable.InnerJoin({
+     *   fromTable: ordersTable,
+     *   on: { user_id: 'id' },
+     *   join: {
+     *     fromTable: productsTable,
+     *     on: { product_id: 'id' }
+     *   }
+     * });
+     * 
+     * // With query options
+     * const results = usersTable.InnerJoin(
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   {
+     *     select: 'users.*, COUNT(orders.id) as order_count',
+     *     orderBy: 'users.created_at DESC',
+     *     limit: 10
+     *   }
+     * );
+     * ```
+     */
+    public InnerJoin<Type extends { id: number | string }>(
+        Joins: Join | Join[],
+        options?: DefaultQueryOptions & QueryOptions,
+    ): Record<Type>[] {
+        const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
+        const query = new Query(this, queryString, this.db);
+        
+        // Set parameters if WHERE clause is present
+        if (options?.where) {
+            query.Parameters = options.where;
+        }
+
+        return query.All();
     }
 }
