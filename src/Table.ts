@@ -1,5 +1,7 @@
 import { Database as SqliteDatabaseType } from "better-sqlite3";
 import {
+    DefaultQueryOptions,
+    QueryOptions,
     QueryParameters,
     ReadableTableColumnInfo,
     SingleJoin,
@@ -123,13 +125,7 @@ export default class Table {
      * });
      */
     public Records<Type extends { id: number | string }>(
-        options?: {
-            select?: string;
-            where?: QueryParameters;
-            orderBy?: string;
-            limit?: number;
-            offset?: number;
-        }
+        options?: DefaultQueryOptions & QueryOptions
     ): Record<Type>[] {
         const queryStr = QueryStatementBuilder.BuildSelect(this, {
             select: options?.select,
@@ -172,11 +168,7 @@ export default class Table {
      * ```
      */
     public Record<Type extends { id: number | string }>(
-        options?: {
-            select?: string;
-            where?: QueryParameters;
-            orderBy?: string;
-        }
+        options?: DefaultQueryOptions & QueryOptions
     ): Record<Type> | undefined {
         const results = this.Records({
             select: options?.select,
