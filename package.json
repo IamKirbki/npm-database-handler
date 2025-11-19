@@ -4,7 +4,7 @@
   "author": "iamkirbki",
   "description": "My handler for better-sqlite3",
   "license": "ISC",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "dist/index.esm.js",
   "module": "dist/index.esm.js",
