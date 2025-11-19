@@ -212,7 +212,7 @@ describe('Table', () => {
         it('should return empty array for invalid where clause', () => {
             const table = db.Table('users');
             table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
-            
+
             const records = table.Records({ where: { name: 'NonExistent' } });
             expect(records).toHaveLength(0);
         });
@@ -224,4 +224,12 @@ describe('Table', () => {
             }).toThrow('Query references unknown field "@invalidColumn".');
         });
     });
+
+    describe('Table selection', () => {
+        it('should throw error for non-existent table', () => {
+            expect(() => {
+                db.Table('non_existent_table');
+            }).toThrow('Table "non_existent_table" does not exist in the database.');
+        });
+    })
 });
