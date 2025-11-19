@@ -89,7 +89,7 @@ export default class Validator {
      * ```
      */
     static ValidateTableName(name: string): void {
-        this.ValidateName(name, "table");
+        this.ValidateName(name, "Table");
     }
 
     /**
@@ -113,7 +113,7 @@ export default class Validator {
      * ```
      */
     static ValidateColumnName(name: string): void {
-        this.ValidateName(name, "column");
+        this.ValidateName(name, "Column");
     }
 
     /**
@@ -128,7 +128,7 @@ export default class Validator {
      * @param type - The type, either table or column
      * @throws Error if the name is invalid
     */
-    private static ValidateName(name: string, type: "table" | "column"): void {
+    private static ValidateName(name: string, type: "Table" | "Column"): void {
         if (!name || typeof name !== "string") {
             throw new Error(`${type} name must be a non-empty string.`);
         }
