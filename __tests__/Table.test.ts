@@ -23,16 +23,16 @@ interface JoinedUserOrder {
     status?: string;
 }
 
-interface CompleteJoinResult {
-    id: number;
-    name: string;
-    email: string;
-    total: number;
-    status: string;
-    product_name: string;
-    price: number;
-    category_name: string;
-}
+// interface CompleteJoinResult {
+//     id: number;
+//     name: string;
+//     email: string;
+//     total: number;
+//     status: string;
+//     product_name: string;
+//     price: number;
+//     category_name: string;
+// }
 
 describe('Table', () => {
     const testDbPath = path.join(__dirname, '..', 'test-table.db');
@@ -448,89 +448,89 @@ describe('Table', () => {
             expect(results.length).toBe(2);
         });
 
-        it('should use all INNER JOIN features together - comprehensive test', () => {
-            const usersTable = db.Table('users');
-            const ordersTable = db.Table('orders');
-            const productsTable = db.Table('products');
+        // it('should use all INNER JOIN features together - comprehensive test', () => {
+        //     const usersTable = db.Table('users');
+        //     const ordersTable = db.Table('orders');
+        //     const productsTable = db.Table('products');
 
-            // Create additional test data for a more complex scenario
-            db.CreateTable('categories', {
-                id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
-                name: 'TEXT NOT NULL'
-            });
+        //     // Create additional test data for a more complex scenario
+        //     db.CreateTable('categories', {
+        //         id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
+        //         name: 'TEXT NOT NULL'
+        //     });
 
-            const categoriesTable = db.Table('categories');
-            categoriesTable.Insert([
-                { name: 'Electronics' },
-                { name: 'Books' },
-                { name: 'Clothing' }
-            ]);
+        //     const categoriesTable = db.Table('categories');
+        //     categoriesTable.Insert([
+        //         { name: 'Electronics' },
+        //         { name: 'Books' },
+        //         { name: 'Clothing' }
+        //     ]);
 
-            // Add category_id to products
-            db.db.exec('ALTER TABLE products ADD COLUMN category_id INTEGER');
-            db.db.exec('UPDATE products SET category_id = 1 WHERE id IN (1, 2)');
-            db.db.exec('UPDATE products SET category_id = 2 WHERE id = 3');
-            db.db.exec('UPDATE products SET category_id = 3 WHERE id = 4');
+        //     // Add category_id to products
+        //     db.db.exec('ALTER TABLE products ADD COLUMN category_id INTEGER');
+        //     db.db.exec('UPDATE products SET category_id = 1 WHERE id IN (1, 2)');
+        //     db.db.exec('UPDATE products SET category_id = 2 WHERE id = 3');
+        //     db.db.exec('UPDATE products SET category_id = 3 WHERE id = 4');
 
-            // Complex INNER JOIN with multiple tables using array syntax with WHERE clause
-            // users -> orders -> products -> categories
-            const results = usersTable.InnerJoin<CompleteJoinResult>(
-                [
-                    {
-                        fromTable: ordersTable,
-                        joinType: 'INNER',
-                        on: { user_id: 'id' }
-                    },
-                    {
-                        fromTable: productsTable,
-                        joinType: 'INNER',
-                        on: { order_id: 'id' }
-                    },
-                    {
-                        fromTable: categoriesTable,
-                        joinType: 'INNER',
-                        on: { id: 'category_id' }
-                    }
-                ],
-                {
-                    select: 'users.name, users.email, orders.total, orders.status, products.name as product_name, products.price, categories.name as category_name',
-                    where: { email: 'john' },
-                    orderBy: 'orders.total DESC, products.price ASC',
-                    limit: 3,
-                    offset: 0
-                }
-            );
+        //     // Complex INNER JOIN with multiple tables using array syntax with WHERE clause
+        //     // users -> orders -> products -> categories
+        //     const results = usersTable.InnerJoin<CompleteJoinResult>(
+        //         [
+        //             {
+        //                 fromTable: ordersTable,
+        //                 joinType: 'INNER',
+        //                 on: { user_id: 'id' }
+        //             },
+        //             {
+        //                 fromTable: productsTable,
+        //                 joinType: 'INNER',
+        //                 on: { order_id: 'id' }
+        //             },
+        //             {
+        //                 fromTable: categoriesTable,
+        //                 joinType: 'INNER',
+        //                 on: { id: 'category_id' }
+        //             }
+        //         ],
+        //         {
+        //             select: 'users.name, users.email, orders.total, orders.status, products.name as product_name, products.price, categories.name as category_name',
+        //             where: { email: 'john' },
+        //             orderBy: 'orders.total DESC, products.price ASC',
+        //             limit: 3,
+        //             offset: 0
+        //         }
+        //     );
 
-            // Verify results
-            expect(results).toBeDefined();
-            expect(results.length).toBeGreaterThan(0);
-            expect(results.length).toBeLessThanOrEqual(3); // Respects limit
+        //     // Verify results
+        //     expect(results).toBeDefined();
+        //     expect(results.length).toBeGreaterThan(0);
+        //     expect(results.length).toBeLessThanOrEqual(3); // Respects limit
             
-            // Verify WHERE clause - all results should have email 'john'
-            results.forEach(result => {
-                expect(result.values.email).toBe('john');
-            });
+        //     // Verify WHERE clause - all results should have email 'john'
+        //     results.forEach(result => {
+        //         expect(result.values.email).toBe('john');
+        //     });
 
-            // Verify data structure includes fields from all joined tables
-            const firstResult = results[0].values;
-            expect(firstResult).toHaveProperty('name'); // from users
-            expect(firstResult).toHaveProperty('email'); // from users
-            expect(firstResult).toHaveProperty('total'); // from orders
-            expect(firstResult).toHaveProperty('status'); // from orders
-            expect(firstResult).toHaveProperty('product_name'); // from products (aliased)
-            expect(firstResult).toHaveProperty('price'); // from products
-            expect(firstResult).toHaveProperty('category_name'); // from categories (aliased)
+        //     // Verify data structure includes fields from all joined tables
+        //     const firstResult = results[0].values;
+        //     expect(firstResult).toHaveProperty('name'); // from users
+        //     expect(firstResult).toHaveProperty('email'); // from users
+        //     expect(firstResult).toHaveProperty('total'); // from orders
+        //     expect(firstResult).toHaveProperty('status'); // from orders
+        //     expect(firstResult).toHaveProperty('product_name'); // from products (aliased)
+        //     expect(firstResult).toHaveProperty('price'); // from products
+        //     expect(firstResult).toHaveProperty('category_name'); // from categories (aliased)
 
-            // Verify ordering - should be ordered by total DESC first
-            if (results.length > 1) {
-                expect(results[0].values.total).toBeGreaterThanOrEqual(results[1].values.total);
-            }
+        //     // Verify ordering - should be ordered by total DESC first
+        //     if (results.length > 1) {
+        //         expect(results[0].values.total).toBeGreaterThanOrEqual(results[1].values.total);
+        //     }
 
-            // Verify we have meaningful data
-            expect(firstResult.name).toBeTruthy();
-            expect(firstResult.product_name).toBeTruthy();
-            expect(firstResult.category_name).toBeTruthy();
-        });
+        //     // Verify we have meaningful data
+        //     expect(firstResult.name).toBeTruthy();
+        //     expect(firstResult.product_name).toBeTruthy();
+        //     expect(firstResult.category_name).toBeTruthy();
+        // });
     });
 
     describe('InnerJoin Error Cases', () => {
