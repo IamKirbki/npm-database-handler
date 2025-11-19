@@ -89,15 +89,7 @@ export default class Validator {
      * ```
      */
     static ValidateTableName(name: string): void {
-        if (!name || typeof name !== "string") {
-            throw new Error("Table name must be a non-empty string.");
-        }
-        if (name.includes(",")) {
-            throw new Error("Table name cannot contain commas.");
-        }
-        if (/[^a-zA-Z0-9_]/.test(name)) {
-            throw new Error("Table name must only contain letters, numbers, and underscores.");
-        }
+        this.ValidateName(name, "table");
     }
 
     /**
@@ -121,14 +113,30 @@ export default class Validator {
      * ```
      */
     static ValidateColumnName(name: string): void {
+        this.ValidateName(name, "column");
+    }
+
+    /**
+     * Generic name validation for tables and columns
+     * 
+     * Rules:
+     * - Must be a non-empty string
+     * - Cannot contain commas
+     * - Must only contain letters, numbers, and underscores
+     * 
+     * @param name - The table/column name to validate
+     * @param type - The type, either table or column
+     * @throws Error if the name is invalid
+    */
+    private static ValidateName(name: string, type: "table" | "column"): void {
         if (!name || typeof name !== "string") {
-            throw new Error("Column name must be a non-empty string.");
+            throw new Error(`${type} name must be a non-empty string.`);
         }
         if (name.includes(",")) {
-            throw new Error("Column name cannot contain commas.");
+            throw new Error(`${type} name cannot contain commas.`);
         }
         if (/[^a-zA-Z0-9_]/.test(name)) {
-            throw new Error("Column name must only contain letters, numbers, and underscores.");
+            throw new Error(`${type} name must only contain letters, numbers, and underscores.`);
         }
     }
 
