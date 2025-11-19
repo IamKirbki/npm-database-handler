@@ -290,6 +290,7 @@ export default class QueryStatementBuilder {
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
         queryParts.push(`FROM ${fromTable.Name}`);
         queryParts.push(this.BuildJoinPart(fromTable, joins));
+        queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
 
         return queryParts.join(" ");
@@ -341,10 +342,13 @@ export default class QueryStatementBuilder {
         const queryParts: string[] = [];
         const joinsArray = Array.isArray(joins) ? joins : [joins];
 
+        let currentTable = fromTable;
         for (const join of joinsArray) {
             queryParts.push(`${join.joinType} JOIN ${join.fromTable.Name}`);
-            queryParts.push(this.BuildJoinOnPart(fromTable, join.fromTable, join.on));
+            queryParts.push(this.BuildJoinOnPart(currentTable, join.fromTable, join.on));
+            currentTable = join.fromTable;
         }
+
 
         return queryParts.join(" ");
     }

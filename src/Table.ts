@@ -305,6 +305,11 @@ export default class Table {
     ): Record<Type>[] {
         const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
         const query = new Query(this, queryString, this.db);
+        
+        // Set parameters if WHERE clause is present
+        if (options?.where) {
+            query.Parameters = options.where;
+        }
 
         return query.All();
     }
