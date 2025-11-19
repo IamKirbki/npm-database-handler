@@ -186,11 +186,13 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record<Type extends { id: number | string }>(options?: {
-        select?: string;
-        where?: QueryParameters;
-        orderBy?: string;
-    }): Record<Type> | undefined {
+    public Record<Type extends { id: number | string }>(
+        options?: {
+            select?: string;
+            where?: QueryParameters;
+            orderBy?: string;
+        }
+    ): Record<Type> | undefined {
         const results = this.Records({
             select: options?.select,
             where: options?.where,
