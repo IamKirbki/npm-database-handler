@@ -244,7 +244,7 @@ export default class Table {
      * ```
      */
     public Insert(values: QueryParameters | QueryParameters[]): void {
-        const isMultiple = Array.isArray(values);
+        const isMultiple = Array.isArray(values) && values.length > 1;
         const records: QueryParameters[] = isMultiple ? values : [values];
 
         if (records.length === 0) {
