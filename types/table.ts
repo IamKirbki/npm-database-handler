@@ -21,7 +21,6 @@ export type ReadableTableColumnInfo = {
 export type Join = {
     fromTable: Table;
     joinType: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
-    join?: Join;
     on: QueryParameters | QueryParameters[];
 }
 

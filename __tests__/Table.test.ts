@@ -343,16 +343,20 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
             const productsTable = db.Table('products');
 
-            const results = usersTable.InnerJoin({
-                fromTable: ordersTable,
-                joinType: 'INNER',
-                on: { user_id: 'id' },
-                join: {
-                    fromTable: productsTable,
-                    joinType: 'INNER',
-                    on: { order_id: 'id' }
-                }
-            });
+            const results = usersTable.InnerJoin(
+                [
+                    {
+                        fromTable: ordersTable,
+                        joinType: 'INNER',
+                        on: { user_id: 'id' },
+                    },
+                    {
+                        fromTable: productsTable,
+                        joinType: 'INNER',
+                        on: { order_id: 'id' }
+                    }
+                ]
+            );
 
             expect(results).toBeDefined();
             expect(results.length).toBeGreaterThan(0);

@@ -344,9 +344,6 @@ export default class QueryStatementBuilder {
         for (const join of joinsArray) {
             queryParts.push(`${join.joinType} JOIN ${join.fromTable.Name}`);
             queryParts.push(this.BuildJoinOnPart(fromTable, join.fromTable, join.on));
-
-            if (join.join)
-                queryParts.push(this.BuildJoinPart(join.fromTable, join.join));
         }
 
         return queryParts.join(" ");
