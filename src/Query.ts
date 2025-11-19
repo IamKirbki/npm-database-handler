@@ -1,8 +1,8 @@
 import Table from "./Table";
-import { QueryParameters } from "../types/index";
+import { QueryParameters } from "types/index";
 import { Database as SqliteDatabaseType } from "better-sqlite3";
 import Record from "./Record";
-import Validator from "./Validator";
+import Validator from "./helpers/Validator";
 
 /**
  * Query class for executing custom SQL queries with parameter validation
