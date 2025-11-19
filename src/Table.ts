@@ -4,7 +4,7 @@ import {
     QueryOptions,
     QueryParameters,
     ReadableTableColumnInfo,
-    Join,
+    // Join,
     TableColumnInfo,
 } from "../types/index";
 import Query from "./Query";
@@ -299,18 +299,18 @@ export default class Table {
      * );
      * ```
      */
-    public InnerJoin<Type extends { id: number | string }>(
-        Joins: Join | Join[],
-        options?: DefaultQueryOptions & QueryOptions,
-    ): Record<Type>[] {
-        const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
-        const query = new Query(this, queryString, this.db);
+    // public InnerJoin<Type extends { id: number | string }>(
+    //     Joins: Join | Join[],
+    //     options?: DefaultQueryOptions & QueryOptions,
+    // ): Record<Type>[] {
+    //     const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
+    //     const query = new Query(this, queryString, this.db);
         
-        // Set parameters if WHERE clause is present
-        if (options?.where) {
-            query.Parameters = options.where;
-        }
+    //     // Set parameters if WHERE clause is present
+    //     if (options?.where) {
+    //         query.Parameters = options.where;
+    //     }
 
-        return query.All();
-    }
+    //     return query.All();
+    // }
 }
