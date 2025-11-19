@@ -292,6 +292,7 @@ export default class Validator {
     ): void {
         for (const [key, value] of Object.entries(parameters)) {
             const columnInfo = TableColumnInformation.find(col => col.name === key);
+            
             if (!columnInfo) {
                 throw new Error(`Parameter "${key}" does not match any column in the table.`);
             }
