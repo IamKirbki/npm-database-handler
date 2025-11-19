@@ -25,7 +25,7 @@ import Query from "./Query";
  * ```
  */
 export default class Record<ColumnValuesType extends { id: number | string }> {
-    private _db: SqliteDatabaseType;
+    private readonly _db: SqliteDatabaseType;
     private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _table: Table;
 
