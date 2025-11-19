@@ -7,6 +7,7 @@ import {
 } from "../types/index";
 import Query from "./Query";
 import Record from "./Record";
+import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
 
 /**
  * Table class for interacting with a specific database table
@@ -130,28 +131,13 @@ export default class Table {
             offset?: number;
         }
     ): Record<Type>[] {
-        const select = options?.select || "*";
-        const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
-
-        // Build WHERE clause with column names and ? placeholders
-        if (options?.where && Object.keys(options.where).length > 0) {
-            const whereConditions = Object.keys(options.where).map(key => `${key} = @${key}`);
-            queryParts.push(`WHERE ${whereConditions.join(" AND ")}`);
-        }
-
-        if (options?.orderBy) {
-            queryParts.push(`ORDER BY ${options.orderBy}`);
-        }
-
-        if (options?.limit !== undefined) {
-            queryParts.push(`LIMIT ${options.limit}`);
-        }
-
-        if (options?.offset !== undefined) {
-            queryParts.push(`OFFSET ${options.offset}`);
-        }
-
-        const queryStr = queryParts.join(" ");
+        const queryStr = QueryStatementBuilder.BuildSelect(this, {
+            select: options?.select,
+            where: options?.where,
+            orderBy: options?.orderBy,
+            limit: options?.limit,
+            offset: options?.offset,
+        });
 
         const query = new Query(this, queryStr, this.db);
 
@@ -257,14 +243,7 @@ export default class Table {
             throw new Error("Cannot insert record with no columns");
         }
 
-        // Build INSERT query with @ placeholders
-        const queryParts: string[] = [`INSERT INTO ${this.name}`];
-        queryParts.push(`(${columns.join(", ")})`);
-        queryParts.push("VALUES");
-        queryParts.push(`(${columns.map(col => `@${col}`).join(", ")})`);
-
-        const queryStr = queryParts.join(" ");
-
+        const queryStr = QueryStatementBuilder.BuildInsert(this, records[0]);
         const query = new Query(this, queryStr, this.db);
 
         // Use transaction for multiple records, direct run for single

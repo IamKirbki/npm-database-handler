@@ -1,7 +1,7 @@
 import SqliteDatabase, { Database as SqliteDatabaseType } from "better-sqlite3";
 import Table from "./Table";
 import Query from "./Query";
-import Validator from "./Validator";
+import Validator from "./helpers/Validator";
 
 /**
  * Main Database class for interacting with SQLite databases
