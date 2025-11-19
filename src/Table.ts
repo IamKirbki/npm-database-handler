@@ -258,7 +258,7 @@ export default class Table {
             throw new Error("Cannot insert record with no columns");
         }
 
-        // Build INSERT query with ? placeholders
+        // Build INSERT query with @ placeholders
         const queryParts: string[] = [`INSERT INTO ${this.name}`];
         queryParts.push(`(${columns.join(", ")})`);
         queryParts.push("VALUES");
