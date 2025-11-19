@@ -120,13 +120,15 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type extends { id: number | string }>(options?: {
-        select?: string;
-        where?: QueryParameters;
-        orderBy?: string;
-        limit?: number;
-        offset?: number;
-    }): Record<Type>[] {
+    public Records<Type extends { id: number | string }>(
+        options?: {
+            select?: string;
+            where?: QueryParameters;
+            orderBy?: string;
+            limit?: number;
+            offset?: number;
+        }
+    ): Record<Type>[] {
         const select = options?.select || "*";
         const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
 
