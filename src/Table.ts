@@ -267,7 +267,7 @@ export default class Table {
         const queryStr = queryParts.join(" ");
 
         // Use transaction for multiple records, direct run for single
-        if (isMultiple && records.length > 1) {
+        if (isMultiple) {
             const query = new Query(this, queryStr, this.db);
             query.Transaction(records);
         } else {
