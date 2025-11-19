@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2015",
     "module": "ESNext",
     "strict": true,
     "outDir": "dist",
@@ -17,8 +17,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "preserveConstEnums": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "importHelpers": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  
 }

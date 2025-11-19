@@ -1,0 +1,160 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import Database from '../src/Database.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+interface UserRecord {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+}
+
+describe('Record', () => {
+    const testDbPath = path.join(__dirname, '..', 'test-record.db');
+    let db: Database;
+
+    beforeEach(() => {
+        db = new Database(testDbPath);
+        db.CreateTable('users', {
+            id: "INTEGER PRIMARY KEY AUTOINCREMENT",
+            name: 'TEXT NOT NULL',
+            email: 'TEXT',
+            age: 'INTEGER'
+        });
+
+        const table = db.Table('users');
+        table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+    });
+
+    afterEach(() => {
+        if (fs.existsSync(testDbPath)) {
+            fs.unlinkSync(testDbPath);
+        }
+    });
+
+    describe('Properties', () => {
+        it('should have values property', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            expect(record).toBeDefined();
+            expect(record?.values).toBeDefined();
+            expect(record?.values).toHaveProperty('name');
+            expect(record?.values).toHaveProperty('email');
+        });
+    });
+
+    describe('Update', () => {
+        it('should update record in database', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            record?.Update({ name: 'John Doe', age: 31 });
+
+            const updated = table.Record({ where: { name: 'John Doe' } });
+            expect((updated?.values as UserRecord).name).toBe('John Doe');
+            expect((updated?.values as UserRecord).age).toBe(31);
+        });
+
+        it('should update local values', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            record?.Update({ age: 31 });
+
+            expect((record?.values as UserRecord).age).toBe(31);
+        });
+    });
+
+    describe('Delete', () => {
+        it('should delete record from database', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            record?.Delete();
+
+            const deleted = table.Record({ where: { name: 'John' } });
+            expect(deleted).toBeUndefined();
+        });
+
+        it('should reduce record count', () => {
+            const table = db.Table('users');
+            const initialCount = table.RecordsCount;
+
+            const record = table.Record({ where: { name: 'John' } });
+            record?.Delete();
+
+            expect(table.RecordsCount).toBe(initialCount - 1);
+        });
+    });
+
+    describe('Serialization', () => {
+        it('should serialize to JSON', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            const json = JSON.stringify(record);
+            const parsed = JSON.parse(json);
+
+            expect(parsed).toHaveProperty('name');
+            expect(parsed).toHaveProperty('email');
+            expect(parsed.name).toBe('John');
+        });
+
+        it('should have toString method', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            const str = record?.toString();
+            expect(str).toBeDefined();
+            expect(str).toContain('John');
+        });
+    });
+
+    describe('Update Validation', () => {
+        it('should throw error when updating with invalid column', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            expect(() => {
+                record?.Update({ invalidColumn: 'value' });
+            }).toThrow();
+        });
+
+        it('should throw error when updating with wrong type', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            expect(() => {
+                record?.Update({ age: 'thirty' });
+            }).toThrow('Parameter "age" has type "string" which does not match column type "INTEGER".');
+        });
+
+        it('should throw error when updating required field to null', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            expect(() => {
+                record?.Update({ name: null });
+            }).toThrow('Parameter "name" cannot be null or undefined for a NOT NULL column.');
+        });
+    });
+
+    describe('Delete Error Cases', () => {
+        it('should handle delete on already deleted record', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
+
+            record?.Delete();
+            
+            // Second delete should not throw but affect 0 rows
+            expect(() => {
+                record?.Delete();
+            }).not.toThrow();
+        });
+    });
+});

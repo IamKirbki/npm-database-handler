@@ -6,12 +6,16 @@
   "license": "ISC",
   "private": true,
   "type": "module",
-  "module": "types/index.ts",
-  "types": "types/index.ts",
+  "main": "dist/index.esm.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "prepare": "npm run build",
-    "test": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint . --fix",
     "lint:check": "eslint ."
   },
@@ -20,15 +24,21 @@
     "jiti": "^2.6.1"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
+    "@vitest/ui": "^4.0.9",
+    "better-sqlite3": "^11.10.0",
     "eslint": "^9.39.1",
     "rollup": "^4.53.2",
+    "rollup-plugin-typescript2": "^0.36.0",
     "tslib": "^2.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.9"
   }
 }
