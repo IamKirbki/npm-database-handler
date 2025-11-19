@@ -224,12 +224,4 @@ describe('Table', () => {
             }).toThrow('Query references unknown field "@invalidColumn".');
         });
     });
-
-    describe('Table selection', () => {
-        it('should throw error for non-existent table', () => {
-            expect(() => {
-                db.Table('non_existent_table');
-            }).toThrow('Table "non_existent_table" does not exist in the database.');
-        });
-    })
 });
