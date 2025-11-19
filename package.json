@@ -1,6 +1,6 @@
 {
   "name": "kirbkis-bettersqlite3-handler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "iamkirbki",
   "description": "My handler for better-sqlite3",
   "license": "ISC",
