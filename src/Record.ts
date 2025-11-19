@@ -79,7 +79,7 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
 
         const query = `UPDATE ${this._table.Name} SET ${setClauses} WHERE id = @id;`;
         const _query = new Query(this._table, query, this._db);
-        _query.Parameters = { ...newValues, id: (this._values as ColumnValuesType).id };
+        _query.Parameters = { ...newValues, id: this._values.id };
         _query.Run();
 
         this._values = { ...this._values, ...newValues };
