@@ -248,47 +248,63 @@ export default class Table {
         }
     }
 
-    public InnerJoin<Type extends { id: number | string }>(options: {
-        join: Join;
-        select?: string;
-        where?: QueryParameters;
-        orderBy?: string;
-        limit?: number;
-        offset?: number;
-    }): Record<Type>[] {
-        const select = options.select || "*";
-
-        const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
-
-        const joins = Array.isArray(options.join) ? options.join : [options.join];
-        for (const join of joins) {
-            queryParts.push(`INNER JOIN ${join.table.Name} ON ${this.Name}.${join.on} = ${join.table.Name}.${join.on}`);
-        }
-
-        if (options.where && Object.keys(options.where).length > 0) {
-            const whereConditions = Object.keys(options.where).map(key => `${key} = @${key}`);
-            queryParts.push(`WHERE ${whereConditions.join(" AND ")}`);
-        }
-
-        if (options.orderBy) {
-            queryParts.push(`ORDER BY ${options.orderBy}`);
-        }
-
-        if (options.limit !== undefined) {
-            queryParts.push(`LIMIT ${options.limit}`);
-        }
-
-        if (options.offset !== undefined) {
-            queryParts.push(`OFFSET ${options.offset}`);
-        }
-
-        const queryStr = queryParts.join(" ");
-
-        const query = new Query(this, queryStr, this.db);
-
-        if (options.where && Object.keys(options.where).length > 0) {
-            query.Parameters = options.where;
-        }
+    /**
+     * Perform an INNER JOIN operation between this table and one or more other tables
+     * 
+     * Executes a SELECT query with INNER JOIN clause(s) to retrieve records from multiple tables.
+     * Supports single joins, multiple joins, and nested joins for complex relational queries.
+     * 
+     * @template Type - Expected return type (must include id: number | string)
+     * @param Joins - Single Join object or array of Join objects defining the join operations
+     * @param options - Query options including select columns, orderBy, limit, offset
+     * @returns Array of Record objects containing joined data
+     * 
+     * @example
+     * ```typescript
+     * // Simple INNER JOIN between users and orders
+     * const usersTable = db.Table('users');
+     * const ordersTable = db.Table('orders');
+     * 
+     * const results = usersTable.InnerJoin(
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   { select: 'users.name, orders.total' }
+     * );
+     * 
+     * // Multiple INNER JOINs
+     * const addressesTable = db.Table('addresses');
+     * const results = usersTable.InnerJoin([
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   { fromTable: addressesTable, on: { address_id: 'id' } }
+     * ]);
+     * 
+     * // Nested INNER JOIN (users -> orders -> products)
+     * const productsTable = db.Table('products');
+     * const results = usersTable.InnerJoin({
+     *   fromTable: ordersTable,
+     *   on: { user_id: 'id' },
+     *   join: {
+     *     fromTable: productsTable,
+     *     on: { product_id: 'id' }
+     *   }
+     * });
+     * 
+     * // With query options
+     * const results = usersTable.InnerJoin(
+     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   {
+     *     select: 'users.*, COUNT(orders.id) as order_count',
+     *     orderBy: 'users.created_at DESC',
+     *     limit: 10
+     *   }
+     * );
+     * ```
+     */
+    public InnerJoin<Type extends { id: number | string }>(
+        Joins: Join | Join[],
+        options?: DefaultQueryOptions & QueryOptions,
+    ): Record<Type>[] {
+        const queryString = QueryStatementBuilder.BuildInnerJoin(this, Joins, options);
+        const query = new Query(this, queryString, this.db);
 
         return query.All();
     }
