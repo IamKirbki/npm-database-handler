@@ -152,14 +152,12 @@ export default class Table {
 
         let results: Record<Type>[];
 
-        if (!options?.where || Object.keys(options.where).length === 0) {
-            const query = new Query(this, queryStr, this.db);
-            results = query.All();
-        } else {
-            const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.db);
+        
+        if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
-            results = query.All();
-        }
+
+        results = query.All();
 
         // Wrap each result in a Record object
         return results;
