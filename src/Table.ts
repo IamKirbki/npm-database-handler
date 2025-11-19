@@ -4,7 +4,7 @@ import {
     QueryOptions,
     QueryParameters,
     ReadableTableColumnInfo,
-    SingleJoin,
+    Join,
     TableColumnInfo,
 } from "../types/index";
 import Query from "./Query";
@@ -249,7 +249,7 @@ export default class Table {
     }
 
     public InnerJoin<Type extends { id: number | string }>(options: {
-        join: SingleJoin | SingleJoin[];
+        join: Join;
         select?: string;
         where?: QueryParameters;
         orderBy?: string;

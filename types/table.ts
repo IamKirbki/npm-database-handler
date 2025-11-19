@@ -1,3 +1,4 @@
+import { QueryParameters } from "./index";
 import Table from "../src/Table";
 
 export type TableColumnInfo = {
@@ -17,7 +18,10 @@ export type ReadableTableColumnInfo = {
     isPrimaryKey: boolean;
 };
 
-export type SingleJoin = {
-    table: Table;
-    on: string;
+export type Join = {
+    fromTable: Table;
+    join?: Join;
+    on: QueryParameters | QueryParameters[];
 }
+
+// export type Join = RequireAtLeastOne<SingleJoin, 'table' | 'join'>;
