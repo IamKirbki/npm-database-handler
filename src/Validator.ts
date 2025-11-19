@@ -359,13 +359,8 @@ export default class Validator {
             return parameterType === 'string';
         }
 
-        // SQLite integer types (INTEGER, INT, TINYINT, SMALLINT, etc.)
-        if (lowerType.includes('int')) {
-            return parameterType === 'number';
-        }
-
-        // SQLite real/float types (REAL, FLOAT, DOUBLE, etc.)
-        if (lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
+        // SQLite integer and real/float types (INTEGER, INT, TINYINT, SMALLINT, REAL, FLOAT, DOUBLE etc.)
+        if (lowerType.includes('int') || lowerType.includes('real') || lowerType.includes('float') || lowerType.includes('double')) {
             return parameterType === 'number';
         }
 
