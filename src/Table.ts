@@ -152,14 +152,12 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
-        let results: Record<Type>[];
-
         const query = new Query(this, queryStr, this.db);
         
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
-        results = query.All();
+        const results: Record<Type>[] = query.All();
 
         // Wrap each result in a Record object
         return results;
@@ -244,7 +242,7 @@ export default class Table {
      * ```
      */
     public Insert(values: QueryParameters | QueryParameters[]): void {
-        const isMultiple = Array.isArray(values) && values.length > 1;
+        const isMultiple = Array.isArray(values);
         const records: QueryParameters[] = isMultiple ? values : [values];
 
         if (records.length === 0) {
@@ -266,13 +264,13 @@ export default class Table {
 
         const queryStr = queryParts.join(" ");
 
+        const query = new Query(this, queryStr, this.db);
+        
         // Use transaction for multiple records, direct run for single
-        if (isMultiple) {
-            const query = new Query(this, queryStr, this.db);
+        if (isMultiple && records.length > 1) {
             query.Transaction(records);
         } else {
             // Single insert
-            const query = new Query(this, queryStr, this.db);
             query.Parameters = records[0];
             query.Run();
         }
