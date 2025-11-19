@@ -283,6 +283,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin({
+                joinType: 'INNER',
                 fromTable: ordersTable,
                 on: { user_id: 'id' }
             });
@@ -297,6 +298,7 @@ describe('Table', () => {
 
             const results = usersTable.InnerJoin<JoinedUserOrder>({
                 fromTable: ordersTable,
+                joinType: 'INNER',
                 on: { user_id: 'id' }
             });
 
@@ -328,8 +330,8 @@ describe('Table', () => {
             ]);
 
             const results = usersTable.InnerJoin([
-                { fromTable: ordersTable, on: { user_id: 'id' } },
-                { fromTable: addressesTable, on: { user_id: 'id' } }
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
+                { fromTable: addressesTable, joinType: 'INNER', on: { user_id: 'id' } }
             ]);
 
             expect(results).toBeDefined();
@@ -343,9 +345,11 @@ describe('Table', () => {
 
             const results = usersTable.InnerJoin({
                 fromTable: ordersTable,
+                joinType: 'INNER',
                 on: { user_id: 'id' },
                 join: {
                     fromTable: productsTable,
+                    joinType: 'INNER',
                     on: { order_id: 'id' }
                 }
             });
@@ -359,7 +363,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin<JoinedUserOrder>(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { select: 'users.name, orders.total' }
             );
 
@@ -377,7 +381,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin<JoinedUserOrder>(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { orderBy: 'orders.total DESC' }
             );
 
@@ -393,7 +397,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { limit: 2 }
             );
 
@@ -405,7 +409,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { limit: 2, offset: 2 }
             );
 
@@ -417,7 +421,7 @@ describe('Table', () => {
             const ordersTable = db.Table('orders');
 
             const results = usersTable.InnerJoin(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 {
                     select: 'users.name, orders.total',
                     orderBy: 'orders.total DESC',
@@ -456,6 +460,7 @@ describe('Table', () => {
             // No orders exist, so join should return empty
             const results = usersTable.InnerJoin({
                 fromTable: ordersTable,
+                joinType: 'INNER',
                 on: { user_id: 'id' }
             });
 
@@ -471,6 +476,7 @@ describe('Table', () => {
             expect(() => {
                 usersTable.InnerJoin({
                     fromTable: ordersTable,
+                    joinType: 'INNER',
                     on: {} // Empty on clause
                 });
             }).toThrow();
@@ -484,7 +490,7 @@ describe('Table', () => {
 
             expect(() => {
                 usersTable.InnerJoin(
-                    { fromTable: ordersTable, on: { user_id: 'id' } },
+                    { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                     { select: 'nonexistent.column' }
                 );
             }).toThrow();
@@ -498,7 +504,7 @@ describe('Table', () => {
 
             expect(() => {
                 usersTable.InnerJoin(
-                    { fromTable: ordersTable, on: { user_id: 'id' } },
+                    { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                     { orderBy: 'nonexistent_column' }
                 );
             }).toThrow();
@@ -512,7 +518,7 @@ describe('Table', () => {
 
             // SQLite treats negative limit as no limit
             const results = usersTable.InnerJoin(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { limit: -1 }
             );
 
@@ -527,7 +533,7 @@ describe('Table', () => {
 
             // SQLite treats negative offset as 0
             const results = usersTable.InnerJoin(
-                { fromTable: ordersTable, on: { user_id: 'id' } },
+                { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
                 { offset: -1 }
             );
 
@@ -542,6 +548,7 @@ describe('Table', () => {
             expect(() => {
                 usersTable.InnerJoin({
                     fromTable: usersTable,
+                    joinType: 'INNER',
                     on: { id: 'id' }
                 });
             }).toThrow();

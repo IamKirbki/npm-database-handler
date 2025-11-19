@@ -303,7 +303,7 @@ export default class Table {
         Joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions,
     ): Record<Type>[] {
-        const queryString = QueryStatementBuilder.BuildInnerJoin(this, Joins, options);
+        const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
         const query = new Query(this, queryString, this.db);
 
         return query.All();

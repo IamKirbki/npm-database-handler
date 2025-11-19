@@ -238,38 +238,50 @@ export default class QueryStatementBuilder {
     }
 
     /**
-     * Build a SELECT statement with INNER JOIN operations
+     * Build a SELECT statement with JOIN operations (INNER, LEFT, RIGHT, FULL)
      * 
      * Supports single or multiple joins, including nested joins.
      * Combines the base SELECT with JOIN clauses and query options.
+     * The join type (INNER, LEFT, RIGHT, FULL) is specified in each Join object.
      * 
      * @param fromTable - The primary table to select from
      * @param joins - Single Join object or array of Join objects defining the join operations
      * @param options - Query options including select columns, orderBy, limit, offset
-     * @returns Complete SELECT statement with INNER JOIN clauses
+     * @returns Complete SELECT statement with JOIN clauses
      * 
      * @example
      * ```typescript
-     * // Single join
-     * const query = QueryStatementBuilder.BuildInnerJoin(
+     * // Single INNER JOIN
+     * const query = QueryStatementBuilder.BuildJoin(
      *   usersTable,
-     *   { fromTable: ordersTable, on: { user_id: 'id' } },
+     *   { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
      *   { select: 'users.*, orders.total' }
      * );
-     * // "SELECT users.*, orders.total FROM users INNER JOIN orders ON users.user_id = users.user_id"
+     * // "SELECT users.*, orders.total FROM users INNER JOIN orders ON users.id = orders.user_id"
      * 
-     * // Multiple joins
-     * const query = QueryStatementBuilder.BuildInnerJoin(
+     * // Multiple joins with different types
+     * const query = QueryStatementBuilder.BuildJoin(
      *   usersTable,
      *   [
-     *     { fromTable: ordersTable, on: { user_id: 'id' } },
-     *     { fromTable: addressesTable, on: { address_id: 'id' } }
+     *     { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } },
+     *     { fromTable: addressesTable, joinType: 'LEFT', on: { address_id: 'id' } }
      *   ],
      *   { orderBy: 'users.created_at DESC', limit: 10 }
      * );
+     * 
+     * // Nested JOIN
+     * const query = QueryStatementBuilder.BuildJoin(
+     *   usersTable,
+     *   {
+     *     fromTable: ordersTable,
+     *     joinType: 'INNER',
+     *     on: { user_id: 'id' },
+     *     join: { fromTable: productsTable, joinType: 'INNER', on: { product_id: 'id' } }
+     *   }
+     * );
      * ```
      */
-    public static BuildInnerJoin(
+    public static BuildJoin(
         fromTable: Table,
         joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions
@@ -277,44 +289,52 @@ export default class QueryStatementBuilder {
         const queryParts: string[] = [];
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
         queryParts.push(`FROM ${fromTable.Name}`);
-        queryParts.push(this.BuildInnerJoinPart(fromTable, joins));
+        queryParts.push(this.BuildJoinPart(fromTable, joins));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
 
         return queryParts.join(" ");
     }
 
     /**
-     * Build INNER JOIN clause(s) recursively (helper method)
+     * Build JOIN clause(s) recursively (helper method)
      * 
      * Processes single or multiple join definitions and handles nested joins.
-     * Each join includes the INNER JOIN clause and ON conditions.
+     * Each join includes the JOIN clause (INNER, LEFT, RIGHT, FULL) and ON conditions.
      * 
      * @param fromTable - The table being joined from (for ON clause context)
      * @param joins - Single Join object or array of Join objects
-     * @returns INNER JOIN clause(s) as a string
+     * @returns JOIN clause(s) as a string
      * 
      * @example
      * ```typescript
-     * // Single join
-     * const joinClause = QueryStatementBuilder.BuildInnerJoinPart(
+     * // Single INNER JOIN
+     * const joinClause = QueryStatementBuilder.BuildJoinPart(
      *   usersTable,
-     *   { fromTable: ordersTable, on: { user_id: 'id' } }
+     *   { fromTable: ordersTable, joinType: 'INNER', on: { user_id: 'id' } }
      * );
-     * // "INNER JOIN orders ON users.user_id = users.user_id"
+     * // "INNER JOIN orders ON users.id = orders.user_id"
+     * 
+     * // LEFT JOIN
+     * const joinClause = QueryStatementBuilder.BuildJoinPart(
+     *   usersTable,
+     *   { fromTable: profilesTable, joinType: 'LEFT', on: { profile_id: 'id' } }
+     * );
+     * // "LEFT JOIN profiles ON users.id = profiles.profile_id"
      * 
      * // Nested join
-     * const joinClause = QueryStatementBuilder.BuildInnerJoinPart(
+     * const joinClause = QueryStatementBuilder.BuildJoinPart(
      *   usersTable,
      *   {
      *     fromTable: ordersTable,
+     *     joinType: 'INNER',
      *     on: { user_id: 'id' },
-     *     join: { fromTable: productsTable, on: { product_id: 'id' } }
+     *     join: { fromTable: productsTable, joinType: 'INNER', on: { product_id: 'id' } }
      *   }
      * );
-     * // "INNER JOIN orders INNER JOIN products ON orders.product_id = orders.product_id ON users.user_id = users.user_id"
+     * // "INNER JOIN orders ON users.id = orders.user_id INNER JOIN products ON orders.id = products.product_id"
      * ```
      */
-    public static BuildInnerJoinPart(
+    public static BuildJoinPart(
         fromTable: Table,
         joins: Join | Join[],
     ): string {
@@ -322,11 +342,11 @@ export default class QueryStatementBuilder {
         const joinsArray = Array.isArray(joins) ? joins : [joins];
 
         for (const join of joinsArray) {
-            queryParts.push(`INNER JOIN ${join.fromTable.Name}`);
+            queryParts.push(`${join.joinType} JOIN ${join.fromTable.Name}`);
             queryParts.push(this.BuildJoinOnPart(fromTable, join.fromTable, join.on));
 
             if (join.join)
-                queryParts.push(this.BuildInnerJoinPart(join.fromTable, join.join));
+                queryParts.push(this.BuildJoinPart(join.fromTable, join.join));
         }
 
         return queryParts.join(" ");
@@ -336,27 +356,32 @@ export default class QueryStatementBuilder {
      * Build ON clause for JOIN operations (helper method)
      * 
      * Creates ON conditions for join operations.
+     * Compares the foreign key column in the joined table with the primary key in the source table.
      * Multiple conditions are joined with AND operator.
      * 
-     * @param table - The table to use for field references in the ON clause
-     * @param on - Single QueryParameters object or array defining the ON conditions
+     * @param table - The source table (left side of the join)
+     * @param joinTable - The table being joined (right side of the join)
+     * @param on - QueryParameters object where key is the foreign key in joinTable and value is the primary key in table
      * @returns ON clause string for JOIN operations
      * 
      * @example
      * ```typescript
      * // Single ON condition
+     * // Key: column in joinTable (orders), Value: column in table (users)
      * const onClause = QueryStatementBuilder.BuildJoinOnPart(
      *   usersTable,
+     *   ordersTable,
      *   { user_id: 'id' }
      * );
-     * // "ON users.user_id = users.user_id"
+     * // "ON users.id = orders.user_id"
      * 
      * // Multiple ON conditions
      * const onClause = QueryStatementBuilder.BuildJoinOnPart(
      *   usersTable,
-     *   [{ user_id: 'id' }, { status: 'active' }]
+     *   ordersTable,
+     *   [{ user_id: 'id' }, { company_id: 'company_id' }]
      * );
-     * // "ON users.user_id = users.user_id AND users.status = users.status"
+     * // "ON users.id = orders.user_id AND users.company_id = orders.company_id"
      * ```
      */
     public static BuildJoinOnPart(
