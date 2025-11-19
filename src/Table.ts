@@ -120,13 +120,15 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type extends { id: number | string }>(options?: {
-        select?: string;
-        where?: QueryParameters;
-        orderBy?: string;
-        limit?: number;
-        offset?: number;
-    }): Record<Type>[] {
+    public Records<Type extends { id: number | string }>(
+        options?: {
+            select?: string;
+            where?: QueryParameters;
+            orderBy?: string;
+            limit?: number;
+            offset?: number;
+        }
+    ): Record<Type>[] {
         const select = options?.select || "*";
         const queryParts: string[] = [`SELECT ${select} FROM ${this.name}`];
 
@@ -152,14 +154,12 @@ export default class Table {
 
         let results: Record<Type>[];
 
-        if (!options?.where || Object.keys(options.where).length === 0) {
-            const query = new Query(this, queryStr, this.db);
-            results = query.All();
-        } else {
-            const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.db);
+        
+        if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
-            results = query.All();
-        }
+
+        results = query.All();
 
         // Wrap each result in a Record object
         return results;
@@ -186,11 +186,13 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record<Type extends { id: number | string }>(options?: {
-        select?: string;
-        where?: QueryParameters;
-        orderBy?: string;
-    }): Record<Type> | undefined {
+    public Record<Type extends { id: number | string }>(
+        options?: {
+            select?: string;
+            where?: QueryParameters;
+            orderBy?: string;
+        }
+    ): Record<Type> | undefined {
         const results = this.Records({
             select: options?.select,
             where: options?.where,
@@ -242,7 +244,7 @@ export default class Table {
      * ```
      */
     public Insert(values: QueryParameters | QueryParameters[]): void {
-        const isMultiple = Array.isArray(values);
+        const isMultiple = Array.isArray(values) && values.length > 1;
         const records: QueryParameters[] = isMultiple ? values : [values];
 
         if (records.length === 0) {
@@ -256,7 +258,7 @@ export default class Table {
             throw new Error("Cannot insert record with no columns");
         }
 
-        // Build INSERT query with ? placeholders
+        // Build INSERT query with @ placeholders
         const queryParts: string[] = [`INSERT INTO ${this.name}`];
         queryParts.push(`(${columns.join(", ")})`);
         queryParts.push("VALUES");
@@ -265,7 +267,7 @@ export default class Table {
         const queryStr = queryParts.join(" ");
 
         // Use transaction for multiple records, direct run for single
-        if (isMultiple && records.length > 1) {
+        if (isMultiple) {
             const query = new Query(this, queryStr, this.db);
             query.Transaction(records);
         } else {
