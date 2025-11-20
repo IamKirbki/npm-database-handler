@@ -1,3 +1,123 @@
+/**
+ * SQL Components that can be parsed from a query:
+ * 
+ * BASIC QUERY STRUCTURE:
+ * - SELECT clause (columns, expressions)
+ * - FROM clause (table name)
+ * - WHERE clause (filter conditions)
+ * - JOIN clauses (table joins)
+ * - ON clause (join conditions)
+ * - GROUP BY clause
+ * - HAVING clause
+ * - ORDER BY clause
+ * - LIMIT clause
+ * - OFFSET clause
+ * 
+ * INSERT/UPDATE/DELETE:
+ * - INSERT INTO (table, columns)
+ * - VALUES clause
+ * - SET clause (for UPDATE)
+ * - DELETE FROM
+ * 
+ * ADVANCED FEATURES:
+ * TODO DISTINCT keyword
+ * TODO Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
+ * TODO Subqueries (in SELECT, FROM, WHERE)
+ * TODO UNION/INTERSECT/EXCEPT
+ * TODO Window functions (OVER, PARTITION BY)
+ * TODO Common Table Expressions (WITH/CTE)
+ * 
+ * JOIN TYPES:
+ * - INNER JOIN (currently supported)
+ * TODO LEFT JOIN / LEFT OUTER JOIN
+ * TODO RIGHT JOIN / RIGHT OUTER JOIN
+ * TODO FULL JOIN / FULL OUTER JOIN
+ * TODO CROSS JOIN
+ * TODO NATURAL JOIN
+ * TODO SELF JOIN
+ * TODO Multiple JOINs in same query
+ * 
+ * CONDITIONAL OPERATORS:
+ * - AND (currently supported in WHERE/ON)
+ * TODO OR (in WHERE/ON/HAVING)
+ * TODO NOT
+ * TODO IN / NOT IN
+ * TODO BETWEEN / NOT BETWEEN
+ * TODO LIKE / NOT LIKE
+ * TODO IS NULL / IS NOT NULL
+ * TODO EXISTS / NOT EXISTS
+ * 
+ * FUNCTIONS:
+ * TODO String functions (UPPER, LOWER, LENGTH, SUBSTR, TRIM, etc.)
+ * TODO Date/Time functions (DATE, DATETIME, STRFTIME, NOW, etc.)
+ * TODO Numeric functions (ROUND, ABS, CEIL, FLOOR, etc.)
+ * TODO Conditional functions (CASE WHEN, COALESCE, NULLIF, IFNULL)
+ * TODO Type conversion (CAST, TYPEOF)
+ * 
+ * GROUPING & AGGREGATION:
+ * TODO GROUP BY (single column)
+ * TODO GROUP BY (multiple columns)
+ * TODO HAVING clause
+ * TODO ROLLUP
+ * TODO CUBE
+ * 
+ * SORTING & PAGINATION:
+ * - ORDER BY (single column, currently supported)
+ * TODO ORDER BY (multiple columns)
+ * TODO ORDER BY with ASC/DESC per column
+ * TODO ORDER BY with NULLS FIRST/LAST
+ * - LIMIT (currently supported)
+ * TODO OFFSET
+ * TODO FETCH FIRST/NEXT
+ * 
+ * ALIASES:
+ * - Column aliases with AS (partially supported)
+ * TODO Table aliases (AS / without AS)
+ * TODO Subquery aliases
+ * 
+ * DATA MODIFICATION:
+ * - Single row INSERT (currently supported)
+ * TODO Multiple row INSERT
+ * TODO INSERT with SELECT
+ * TODO INSERT OR REPLACE/IGNORE
+ * TODO ON CONFLICT clause
+ * TODO RETURNING clause
+ * 
+ * TABLE OPERATIONS:
+ * - CREATE TABLE (basic, currently supported)
+ * - DROP TABLE (currently supported)
+ * TODO ALTER TABLE (ADD/DROP/MODIFY COLUMN)
+ * TODO CREATE INDEX
+ * TODO DROP INDEX
+ * TODO CREATE VIEW
+ * TODO DROP VIEW
+ * TODO TRUNCATE TABLE
+ * 
+ * CONSTRAINTS:
+ * TODO PRIMARY KEY
+ * TODO FOREIGN KEY
+ * TODO UNIQUE
+ * TODO CHECK
+ * TODO DEFAULT
+ * TODO NOT NULL
+ * TODO AUTO INCREMENT
+ * 
+ * TRANSACTIONS:
+ * TODO BEGIN/START TRANSACTION
+ * TODO COMMIT
+ * TODO ROLLBACK
+ * TODO SAVEPOINT
+ * 
+ * OTHER:
+ * TODO Comments (-- and /* *\/)
+ * TODO Literal values (strings, numbers, dates)
+ * TODO Expression parsing
+ * TODO Parentheses for grouping conditions
+ * TODO Wildcards in column selection
+ * TODO Table-qualified column names (table.column)
+ * TODO Schema-qualified names (schema.table.column)
+ */
+
 export default class Lexer {
     private queryParts?: {
         selector?: string[];
