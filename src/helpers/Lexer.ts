@@ -90,13 +90,21 @@ export default class Lexer {
     }
 
     private get GetTable(): string | undefined {
-        let fromMatch = this.query.match(/from\s+([^\s;]+)/i);
+        const patterns = [
+            /from\s+([^\s;]+)/i,
+            /update\s+([^\s;]+)/i,
+            /insert\s+into\s+([^\s;]+)/i,
+            /delete\s+from\s+([^\s;]+)/i,
+            /create\s+table\s+([^\s;]+)/i,
+            /drop\s+table\s+if\s+exists\s+([^\s;]+)/i,
+            /drop\s+table\s+([^\s;]+)/i
+        ];
 
-        if (!fromMatch)
-            fromMatch = this.query.match(/update\s+([^\s;]+)/i);
-
-        if (!fromMatch)
-            fromMatch = this.query.match(/insert\s+into\s+([^\s;]+)/i);
+        let fromMatch: RegExpMatchArray | null = null;
+        for (const pattern of patterns) {
+            fromMatch = this.query.match(pattern);
+            if (fromMatch) break;
+        }
 
 
         if (fromMatch)

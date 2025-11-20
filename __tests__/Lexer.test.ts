@@ -363,4 +363,366 @@ describe('Lexer', () => {
             expect(parts.limit).toBe(10);
         });
     });
+
+    describe('Table Creation/Deletion Queries', () => {
+        it('should parse CREATE TABLE statements', () => {
+            const lexer = new Lexer('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+        });
+
+        it('should parse DROP TABLE statements', () => {
+            const lexer = new Lexer('DROP TABLE IF EXISTS users');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+        });
+    });
+
+    describe('OR Conditions', () => {
+        it('should parse WHERE with OR condition', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE status = @status OR role = @role');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toEqual(['status = @status', 'role = @role']);
+        });
+
+        it('should parse WHERE with mixed AND/OR conditions', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE (status = @status OR role = @role) AND active = @active');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse ON with OR condition', () => {
+            const lexer = new Lexer('SELECT * FROM users JOIN orders ON users.id = orders.user_id OR users.email = orders.email');
+            const parts = lexer.QueryParts;
+            expect(parts.on).toEqual(['users.id = orders.user_id', 'users.email = orders.email']);
+        });
+    });
+
+    describe('Multiple JOINs', () => {
+        it('should parse query with multiple JOINs', () => {
+            const lexer = new Lexer('SELECT * FROM users JOIN orders ON users.id = orders.user_id JOIN products ON orders.product_id = products.id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.on).toBeDefined();
+        });
+
+        it('should parse query with three JOINs', () => {
+            const lexer = new Lexer('SELECT * FROM users JOIN orders ON users.id = orders.user_id JOIN products ON orders.product_id = products.id JOIN categories ON products.category_id = categories.id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+        });
+    });
+
+    describe('Different JOIN Types', () => {
+        it('should parse LEFT JOIN', () => {
+            const lexer = new Lexer('SELECT * FROM users LEFT JOIN orders ON users.id = orders.user_id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.on).toEqual(['users.id = orders.user_id']);
+        });
+
+        it('should parse RIGHT JOIN', () => {
+            const lexer = new Lexer('SELECT * FROM users RIGHT JOIN orders ON users.id = orders.user_id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.on).toEqual(['users.id = orders.user_id']);
+        });
+
+        it('should parse FULL OUTER JOIN', () => {
+            const lexer = new Lexer('SELECT * FROM users FULL OUTER JOIN orders ON users.id = orders.user_id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.on).toEqual(['users.id = orders.user_id']);
+        });
+
+        it('should parse CROSS JOIN', () => {
+            const lexer = new Lexer('SELECT * FROM users CROSS JOIN orders');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+        });
+
+        it('should parse LEFT OUTER JOIN', () => {
+            const lexer = new Lexer('SELECT * FROM users LEFT OUTER JOIN orders ON users.id = orders.user_id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.on).toEqual(['users.id = orders.user_id']);
+        });
+    });
+
+    describe('Multiple Columns in ORDER BY', () => {
+        it('should parse ORDER BY with multiple columns', () => {
+            const lexer = new Lexer('SELECT * FROM users ORDER BY created_at DESC, name ASC');
+            const parts = lexer.QueryParts;
+            expect(parts.orderBy).toBeDefined();
+        });
+
+        it('should parse ORDER BY with three columns', () => {
+            const lexer = new Lexer('SELECT * FROM users ORDER BY status, created_at DESC, name');
+            const parts = lexer.QueryParts;
+            expect(parts.orderBy).toBeDefined();
+        });
+    });
+
+    describe('LIMIT with OFFSET', () => {
+        it('should parse LIMIT with OFFSET', () => {
+            const lexer = new Lexer('SELECT * FROM users LIMIT 10 OFFSET 20');
+            const parts = lexer.QueryParts;
+            expect(parts.limit).toBe(10);
+            expect(parts.offset).toBeDefined();
+        });
+
+        it('should parse LIMIT with OFFSET and WHERE', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE active = @active LIMIT 5 OFFSET 10');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toEqual(['active = @active']);
+            expect(parts.limit).toBe(5);
+            expect(parts.offset).toBeDefined();
+        });
+
+        it('should parse LIMIT with OFFSET and ORDER BY', () => {
+            const lexer = new Lexer('SELECT * FROM users ORDER BY created_at LIMIT 20 OFFSET 40');
+            const parts = lexer.QueryParts;
+            expect(parts.orderBy).toBe('created_at');
+            expect(parts.limit).toBe(20);
+            expect(parts.offset).toBeDefined();
+        });
+    });
+
+    describe('Aggregate Functions', () => {
+        it('should parse COUNT function', () => {
+            const lexer = new Lexer('SELECT COUNT(*) FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toEqual(['COUNT(*)']);
+        });
+
+        it('should parse multiple aggregate functions', () => {
+            const lexer = new Lexer('SELECT COUNT(*), MAX(age), MIN(age), AVG(salary) FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toContain('COUNT(*)');
+            expect(parts.selector).toContain('MAX(age)');
+            expect(parts.selector).toContain('MIN(age)');
+            expect(parts.selector).toContain('AVG(salary)');
+        });
+
+        it('should parse aggregate with alias', () => {
+            const lexer = new Lexer('SELECT COUNT(*) as total, AVG(age) as average_age FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toBeDefined();
+        });
+
+        it('should parse SUM function', () => {
+            const lexer = new Lexer('SELECT SUM(amount) FROM orders');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toEqual(['SUM(amount)']);
+        });
+    });
+
+    describe('GROUP BY and HAVING', () => {
+        it('should parse GROUP BY clause', () => {
+            const lexer = new Lexer('SELECT status, COUNT(*) FROM users GROUP BY status');
+            const parts = lexer.QueryParts;
+            expect(parts.groupBy).toBeDefined();
+        });
+
+        it('should parse GROUP BY with multiple columns', () => {
+            const lexer = new Lexer('SELECT status, role, COUNT(*) FROM users GROUP BY status, role');
+            const parts = lexer.QueryParts;
+            expect(parts.groupBy).toBeDefined();
+        });
+
+        it('should parse GROUP BY with HAVING', () => {
+            const lexer = new Lexer('SELECT status, COUNT(*) FROM users GROUP BY status HAVING COUNT(*) > 5');
+            const parts = lexer.QueryParts;
+            expect(parts.groupBy).toBeDefined();
+            expect(parts.having).toBeDefined();
+        });
+
+        it('should parse HAVING with parameter', () => {
+            const lexer = new Lexer('SELECT status, COUNT(*) FROM users GROUP BY status HAVING COUNT(*) > @minCount');
+            const parts = lexer.QueryParts;
+            expect(parts.having).toBeDefined();
+        });
+
+        it('should parse GROUP BY with ORDER BY', () => {
+            const lexer = new Lexer('SELECT status, COUNT(*) FROM users GROUP BY status ORDER BY COUNT(*) DESC');
+            const parts = lexer.QueryParts;
+            expect(parts.groupBy).toBeDefined();
+            expect(parts.orderBy).toBeDefined();
+        });
+    });
+
+    describe('Subqueries', () => {
+        it('should parse subquery in WHERE with IN', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE id IN (SELECT user_id FROM orders)');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse subquery with EXISTS', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE EXISTS (SELECT 1 FROM orders WHERE orders.user_id = users.id)');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse subquery in FROM', () => {
+            const lexer = new Lexer('SELECT * FROM (SELECT id, name FROM users WHERE active = @active) AS active_users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toEqual(['*']);
+        });
+    });
+
+    describe('DISTINCT Keyword', () => {
+        it('should parse DISTINCT with single column', () => {
+            const lexer = new Lexer('SELECT DISTINCT status FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toEqual(['status']);
+            expect(parts.distinct).toBe(true);
+        });
+
+        it('should parse DISTINCT with multiple columns', () => {
+            const lexer = new Lexer('SELECT DISTINCT status, role FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toEqual(['status', 'role']);
+            expect(parts.distinct).toBe(true);
+        });
+
+        it('should parse DISTINCT with WHERE', () => {
+            const lexer = new Lexer('SELECT DISTINCT status FROM users WHERE active = @active');
+            const parts = lexer.QueryParts;
+            expect(parts.distinct).toBe(true);
+            expect(parts.where).toEqual(['active = @active']);
+        });
+    });
+
+    describe('Table Aliases', () => {
+        it('should parse table alias with AS', () => {
+            const lexer = new Lexer('SELECT u.name FROM users AS u');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.tableAlias).toBe('u');
+        });
+
+        it('should parse table alias without AS', () => {
+            const lexer = new Lexer('SELECT u.name FROM users u');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.tableAlias).toBe('u');
+        });
+
+        it('should parse JOIN with table aliases', () => {
+            const lexer = new Lexer('SELECT u.name, o.total FROM users AS u JOIN orders AS o ON u.id = o.user_id');
+            const parts = lexer.QueryParts;
+            expect(parts.table).toBe('users');
+            expect(parts.tableAlias).toBe('u');
+        });
+    });
+
+    describe('Functions in Clauses', () => {
+        it('should parse function in WHERE clause', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE LOWER(name) = @name');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse function in SET clause', () => {
+            const lexer = new Lexer('UPDATE users SET updated_at = datetime(@now) WHERE id = @id');
+            const parts = lexer.QueryParts;
+            expect(parts.set).toBeDefined();
+        });
+
+        it('should parse multiple functions in SELECT', () => {
+            const lexer = new Lexer('SELECT UPPER(name), LOWER(email), LENGTH(description) FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toContain('UPPER(name)');
+            expect(parts.selector).toContain('LOWER(email)');
+            expect(parts.selector).toContain('LENGTH(description)');
+        });
+    });
+
+    describe('Additional Operators', () => {
+        it('should parse BETWEEN operator', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE age BETWEEN @minAge AND @maxAge');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse IN operator with parameters', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE status IN (@status1, @status2, @status3)');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse LIKE operator', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE name LIKE @pattern');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toEqual(['name LIKE @pattern']);
+        });
+
+        it('should parse NOT LIKE operator', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE email NOT LIKE @pattern');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+
+        it('should parse NOT IN operator', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE status NOT IN (@status1, @status2)');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toBeDefined();
+        });
+    });
+
+    describe('NULL Handling', () => {
+        it('should parse IS NULL', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE email IS NULL');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toEqual(['email IS NULL']);
+        });
+
+        it('should parse IS NOT NULL', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE email IS NOT NULL');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toEqual(['email IS NOT NULL']);
+        });
+
+        it('should parse IS NULL with AND', () => {
+            const lexer = new Lexer('SELECT * FROM users WHERE email IS NULL AND status = @status');
+            const parts = lexer.QueryParts;
+            expect(parts.where).toContain('email IS NULL');
+            expect(parts.where).toContain('status = @status');
+        });
+    });
+
+    describe('CASE Statements', () => {
+        it('should parse simple CASE statement', () => {
+            const lexer = new Lexer('SELECT CASE WHEN age > 18 THEN @adult ELSE @minor END FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toBeDefined();
+        });
+
+        it('should parse CASE with alias', () => {
+            const lexer = new Lexer('SELECT name, CASE WHEN age > 18 THEN @adult ELSE @minor END as age_group FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toBeDefined();
+        });
+
+        it('should parse multiple CASE statements', () => {
+            const lexer = new Lexer('SELECT CASE WHEN age > 18 THEN @adult ELSE @minor END, CASE WHEN status = @active THEN @yes ELSE @no END FROM users');
+            const parts = lexer.QueryParts;
+            expect(parts.selector).toBeDefined();
+        });
+    });
+
+    describe('Multiple Row INSERT', () => {
+        it('should parse INSERT with multiple value sets', () => {
+            const lexer = new Lexer('INSERT INTO users (name) VALUES (@name1), (@name2), (@name3)');
+            const parts = lexer.QueryParts;
+            expect(parts.values).toBeDefined();
+        });
+
+        it('should parse INSERT with multiple columns and rows', () => {
+            const lexer = new Lexer('INSERT INTO users (name, email) VALUES (@name1, @email1), (@name2, @email2)');
+            const parts = lexer.QueryParts;
+            expect(parts.values).toBeDefined();
+        });
+    });
 });
