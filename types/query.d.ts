@@ -14,3 +14,5 @@ export type QueryOptions = {
     limit?: number;
     offset?: number;
 };
+
+export type QueryType = 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'CREATE' | 'DROP' | 'ALTER';
