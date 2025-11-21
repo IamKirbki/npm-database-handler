@@ -3,6 +3,4 @@ export type SelectValues = {
     expressions: string[];
 }
 
-export type FromValues = {
-    tables: { tableName: string; alias?: string }[];
-}
+export type FromValues = { tableName: string; alias?: string }[];

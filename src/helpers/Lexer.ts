@@ -22,7 +22,7 @@
  * 
  * BASIC QUERY STRUCTURE:
  * - SELECT clause (columns, expressions)
- * - FROM clause (table name) -> TODO: Move to FromParser.ts
+ * - FROM clause (table name)
  * - WHERE clause (filter conditions) -> TODO: Move to WhereParser.ts
  * - JOIN clauses (table joins) -> TODO: Move to JoinParser.ts
  * - ON clause (join conditions) -> TODO: Move to JoinParser.ts
@@ -137,7 +137,7 @@
  * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
-import { QueryType, SelectValues } from "types/index";
+import { FromValues, QueryType, SelectValues } from "types/index";
 import FromParser from "./parsers/FromParser";
 import SelectParser from "./parsers/SelectParser";
 
@@ -174,6 +174,7 @@ export default class Lexer {
 
     private ParseSelectQuery(): void {
         this._select();
+        this._from();
     }
 
     private _selectValues?: SelectValues;
@@ -186,9 +187,13 @@ export default class Lexer {
         this._selectValues = selectParser.SelectValues;
     }
 
+    private _fromValues?: FromValues;
+    public get FromValues(): FromValues | undefined {
+        return this._fromValues;
+    }
+
     private _from(): void {
         const fromParser = new FromParser(this.query);
-        const tables = fromParser.ParseTables();
-        // Handle tables as needed
+        this._fromValues = fromParser.ParseTables();
     }
 }
