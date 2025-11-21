@@ -3,11 +3,17 @@ import { FromValues } from "types/index";
 export default class FromParser {
     private readonly query: string;
 
-    constructor(query: string) {
-        this.query = query.split('\n').map(line => line.trim()).join(' ');
+    private _fromValues?: FromValues;
+    public get FromValues(): FromValues | undefined {
+        return this._fromValues;
     }
 
-    public ParseTables(): FromValues {
+    constructor(query: string) {
+        this.query = query.split('\n').map(line => line.trim()).join(' ');
+        this._fromValues = this.ParseTables();
+    }
+
+    private ParseTables(): FromValues {
         const fromClause = this.query.match(/from\s+(.*?)(\s+where|\s+group\s+by|\s+order\s+by|\s+left|\s+inner|\s+outer|\s+right|\s+limit|\s+union|\s+join|\s+full|\s+cross|;|$)/i);
         if (!fromClause || fromClause.length < 2) {
             throw new Error("Invalid SQL query: FROM clause not found.");

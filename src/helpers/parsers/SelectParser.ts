@@ -9,12 +9,10 @@ export default class SelectParser {
 
     private readonly query: string;
 
-
+    private _selectValues?: SelectValues;
     public get SelectValues(): SelectValues | undefined {
         return this._selectValues;
     }
-
-    private _selectValues?: SelectValues;
 
     constructor(query: string) {
         this.query = query.split('\n').map(line => line.trim()).join(' ');
