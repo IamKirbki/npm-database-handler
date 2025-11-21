@@ -1,3 +1,5 @@
+import { SelectValues } from "types/index";
+
 export default class SelectParser {
     private readonly AGGREGATE_FUNCTIONS = [
         'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',
@@ -7,8 +9,19 @@ export default class SelectParser {
 
     private readonly query: string;
 
+
+    public get SelectValues(): SelectValues | undefined {
+        return this._selectValues;
+    }
+
+    private _selectValues?: SelectValues;
+
     constructor(query: string) {
         this.query = query.split('\n').map(line => line.trim()).join(' ');
+        this._selectValues = {
+            columns: this.ParseColumns(),
+            expressions: this.ParseExpressions()
+        };
     }
 
     public ParseColumns(): string[] {
