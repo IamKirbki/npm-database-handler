@@ -1,25 +1,44 @@
 /**
  * SQL Components that can be parsed from a query:
  * 
+ * ARCHITECTURE REFACTORING:
+ * TODO: Split this Lexer into multiple parser classes (Option 1 approach):
+ *       - Create src/helpers/parsers/ directory
+ *       - Create SelectParser.ts for SELECT/DISTINCT parsing
+ *       - Create FromParser.ts for FROM clause and table aliases
+ *       - Create WhereParser.ts for WHERE conditions and operators
+ *       - Create JoinParser.ts for all JOIN types and ON conditions
+ *       - Create GroupByParser.ts for GROUP BY and HAVING
+ *       - Create OrderByParser.ts for ORDER BY with ASC/DESC
+ *       - Create LimitParser.ts for LIMIT and OFFSET
+ *       - Create InsertParser.ts for INSERT and VALUES
+ *       - Create UpdateParser.ts for UPDATE and SET
+ *       - Create DeleteParser.ts for DELETE operations
+ *       - Create DdlParser.ts for CREATE/DROP/ALTER operations
+ *       - Create src/helpers/validators/ directory
+ *       - Create ParameterValidator.ts for parameter validation
+ *       - Create QueryValidator.ts for general query validation
+ *       - Update main Lexer.ts to orchestrate these parsers
+ * 
  * BASIC QUERY STRUCTURE:
  * - SELECT clause (columns, expressions)
- * - FROM clause (table name)
- * - WHERE clause (filter conditions)
- * - JOIN clauses (table joins)
- * - ON clause (join conditions)
- * - GROUP BY clause
- * - HAVING clause
- * - ORDER BY clause
- * - LIMIT clause
- * - OFFSET clause
+ * - FROM clause (table name) -> TODO: Move to FromParser.ts
+ * - WHERE clause (filter conditions) -> TODO: Move to WhereParser.ts
+ * - JOIN clauses (table joins) -> TODO: Move to JoinParser.ts
+ * - ON clause (join conditions) -> TODO: Move to JoinParser.ts
+ * - GROUP BY clause -> TODO: Implement in GroupByParser.ts
+ * - HAVING clause -> TODO: Implement in GroupByParser.ts
+ * - ORDER BY clause -> TODO: Move to OrderByParser.ts
+ * - LIMIT clause -> TODO: Move to LimitParser.ts
+ * - OFFSET clause -> TODO: Implement in LimitParser.ts
  * 
  * INSERT/UPDATE/DELETE:
- * - INSERT INTO (table, columns)
- * - VALUES clause
- * - SET clause (for UPDATE)
- * - DELETE FROM
+ * - INSERT INTO (table, columns) -> TODO: Move to InsertParser.ts
+ * - VALUES clause -> TODO: Move to InsertParser.ts
+ * - SET clause (for UPDATE) -> TODO: Move to UpdateParser.ts
+ * - DELETE FROM -> TODO: Move to DeleteParser.ts
  * 
- * ADVANCED FEATURES:
+ * ADVANCED FEATURES (implement in SelectParser.ts):
  * TODO: DISTINCT keyword
  * TODO: Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
  * TODO: Subqueries (in SELECT, FROM, WHERE)
@@ -27,7 +46,7 @@
  * TODO: Window functions (OVER, PARTITION BY)
  * TODO: Common Table Expressions (WITH/CTE)
  * 
- * JOIN TYPES:
+ * JOIN TYPES (implement in JoinParser.ts):
  * - INNER JOIN (currently supported)
  * TODO: LEFT JOIN / LEFT OUTER JOIN
  * TODO: RIGHT JOIN / RIGHT OUTER JOIN
@@ -37,7 +56,7 @@
  * TODO: SELF JOIN
  * TODO: Multiple JOINs in same query
  * 
- * CONDITIONAL OPERATORS:
+ * CONDITIONAL OPERATORS (implement in WhereParser.ts):
  * - AND (currently supported in WHERE/ON)
  * TODO: OR (in WHERE/ON/HAVING)
  * TODO: NOT
@@ -47,35 +66,35 @@
  * TODO: IS NULL / IS NOT NULL
  * TODO: EXISTS / NOT EXISTS
  * 
- * FUNCTIONS:
+ * FUNCTIONS (create FunctionParser.ts or add to relevant parsers):
  * TODO: String functions (UPPER, LOWER, LENGTH, SUBSTR, TRIM, etc.)
  * TODO: Date/Time functions (DATE, DATETIME, STRFTIME, NOW, etc.)
  * TODO: Numeric functions (ROUND, ABS, CEIL, FLOOR, etc.)
  * TODO: Conditional functions (CASE WHEN, COALESCE, NULLIF, IFNULL)
  * TODO: Type conversion (CAST, TYPEOF)
  * 
- * GROUPING & AGGREGATION:
+ * GROUPING & AGGREGATION (implement in GroupByParser.ts):
  * TODO: GROUP BY (single column)
  * TODO: GROUP BY (multiple columns)
  * TODO: HAVING clause
  * TODO: ROLLUP
  * TODO: CUBE
  * 
- * SORTING & PAGINATION:
- * - ORDER BY (single column, currently supported)
+ * SORTING & PAGINATION (implement in OrderByParser.ts and LimitParser.ts):
+ * - ORDER BY (single column, currently supported) -> TODO: Move to OrderByParser.ts
  * TODO: ORDER BY (multiple columns)
  * TODO: ORDER BY with ASC/DESC per column
  * TODO: ORDER BY with NULLS FIRST/LAST
- * - LIMIT (currently supported)
- * TODO: OFFSET
+ * - LIMIT (currently supported) -> TODO: Move to LimitParser.ts
+ * TODO: OFFSET (add to LimitParser.ts)
  * TODO: FETCH FIRST/NEXT
  * 
- * ALIASES:
+ * ALIASES (implement in FromParser.ts and SelectParser.ts):
  * - Column aliases with AS (partially supported)
- * TODO: Table aliases (AS / without AS)
- * TODO: Subquery aliases
+ * TODO: Table aliases (AS / without AS) -> FromParser.ts
+ * TODO: Subquery aliases -> FromParser.ts
  * 
- * DATA MODIFICATION:
+ * DATA MODIFICATION (implement in InsertParser.ts):
  * - Single row INSERT (currently supported)
  * TODO: Multiple row INSERT
  * TODO: INSERT with SELECT
@@ -83,7 +102,7 @@
  * TODO: ON CONFLICT clause
  * TODO: RETURNING clause
  * 
- * TABLE OPERATIONS:
+ * TABLE OPERATIONS (implement in DdlParser.ts):
  * - CREATE TABLE (basic, currently supported)
  * - DROP TABLE (currently supported)
  * TODO: ALTER TABLE (ADD/DROP/MODIFY COLUMN)
@@ -93,7 +112,7 @@
  * TODO: DROP VIEW
  * TODO: TRUNCATE TABLE
  * 
- * CONSTRAINTS:
+ * CONSTRAINTS (implement in DdlParser.ts):
  * TODO: PRIMARY KEY
  * TODO: FOREIGN KEY
  * TODO: UNIQUE
@@ -102,184 +121,43 @@
  * TODO: NOT NULL
  * TODO: AUTO INCREMENT
  * 
- * TRANSACTIONS:
+ * TRANSACTIONS (create TransactionParser.ts):
  * TODO: BEGIN/START TRANSACTION
  * TODO: COMMIT
  * TODO: ROLLBACK
  * TODO: SAVEPOINT
  * 
- * OTHER:
- * TODO: Comments (-- and /* *\/)
- * TODO: Literal values (strings, numbers, dates)
- * TODO: Expression parsing
- * TODO: Parentheses for grouping conditions
- * TODO: Wildcards in column selection
- * TODO: Table-qualified column names (table.column)
- * TODO: Schema-qualified names (schema.table.column)
+ * OTHER (implement in relevant parsers):
+ * TODO: Comments (-- and /* *\/) -> QueryValidator.ts
+ * TODO: Literal values (strings, numbers, dates) -> Create LiteralParser.ts
+ * TODO: Expression parsing -> Create ExpressionParser.ts
+ * TODO: Parentheses for grouping conditions -> WhereParser.ts
+ * TODO: Wildcards in column selection -> SelectParser.ts
+ * TODO: Table-qualified column names (table.column) -> SelectParser.ts
+ * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
+import SelectParser from "./parsers/SelectParser";
+
 export default class Lexer {
-    private queryParts?: {
-        selector?: string[];
-        table?: string;
-        where?: string[];
-        values?: string[];
-        set?: string[];
-        orderBy?: string;
-        limit?: number;
-        on?: string[];
+    private _selectData?: {
+        columns: string[];
+        expressions: string[];
+    }
+
+    public get SelectData() {
+        return this._selectData;
     }
 
     constructor(public query: string) {
-        const parts = query.trim().split(";");
-        if (parts.length > 1 && parts[1].trim() !== "") {
-            throw new Error("Only single statements are allowed. Multiple statements detected.");
-        }
+        this._select(query);
     }
 
-    public get QueryParts() {
-        {
-            this.ValidateParameters([
-                ...(this.GetWhere || []),
-                ...(this.GetSet || [])
-            ]);
-            this.ValidateOnParameters(this.GetOn || []);
-            this.ValidateValueParameters(this.GetValues || []);
-
-            if (!this.queryParts) {
-                this.queryParts = {
-                    selector: this.GetSelector,
-                    table: this.GetTable,
-                    where: this.GetWhere,
-                    values: this.GetValues,
-                    set: this.GetSet,
-                    orderBy: this.GetOrderBy,
-                    limit: this.GetLimit,
-                    on: this.GetOn
-                };
-            }
-
-            return this.queryParts;
-        }
-    }
-
-    private ValidateValueParameters(params: string[]) {
-        params.forEach(param => {
-            const value = param.trim();
-
-            if (!value || !value.startsWith("@")) {
-                throw new Error(`Invalid value format: ${param}. Expected format: @value`);
-            }
-        });
-    }
-
-    private ValidateOnParameters(params: string[]) {
-        params.forEach(param => {
-            const [key, value] = param.split("=").map(s => s.trim());
-
-            if (!key || !value) {
-                throw new Error(`Invalid parameter format: ${param}. Expected format: key = value`);
-            } else if (!value.includes(key.split(".")[1])) {
-                throw new Error(`Parameter value must reference the key: ${param}. Expected format: table.key = table.key`);
-            }
-        });
-    }
-
-    private ValidateParameters(params: string[]) {
-        params.forEach(param => {
-            const [key, value] = param.split("=").map(s => s.trim());
-
-            if (!key || !value || !value.startsWith("@")) {
-                throw new Error(`Invalid parameter format: ${param}. Expected format: key = @value`);
-            } else if (!value.includes(key) && !value.includes(key.split(".")[1])) {
-                throw new Error(`Parameter value must reference the key: ${param}. Expected format: key = @key`);
-            }
-        });
-    }
-
-    private get GetSelector(): string[] | undefined {
-        let selectMatch = this.query.match(/select\s+(.+?)\s+from/i);
-        if (selectMatch)
-            return selectMatch[1].split(",").map(s => s.trim());
-
-        selectMatch = this.query.match(/select\s+(.+?)(\s+where|\s+order\s+by|\s+limit|;|$)/i);
-        if (selectMatch)
-            return selectMatch[1].split(",").map(s => s.trim());
-
-        return undefined;
-    }
-
-    private get GetTable(): string | undefined {
-        const patterns = [
-            /from\s+([^\s;]+)/i,
-            /update\s+([^\s;]+)/i,
-            /insert\s+into\s+([^\s;]+)/i,
-            /delete\s+from\s+([^\s;]+)/i,
-            /create\s+table\s+([^\s;]+)/i,
-            /drop\s+table\s+if\s+exists\s+([^\s;]+)/i,
-            /drop\s+table\s+([^\s;]+)/i
-        ];
-
-        let fromMatch: RegExpMatchArray | null = null;
-        for (const pattern of patterns) {
-            fromMatch = this.query.match(pattern);
-            if (fromMatch) break;
-        }
-
-
-        if (fromMatch)
-            return fromMatch[1].trim();
-        else if (this.GetSelector)
-            throw new Error("FROM clause is required.");
-
-        return undefined;
-    }
-
-    private get GetWhere(): string[] | undefined {
-        const whereMatch = this.query.match(/where\s+(.+?)(\s+order by|\s+limit|;|$)/i);
-        if (whereMatch)
-            return whereMatch[1].split("and").map(s => s.trim());
-
-        return undefined;
-    }
-
-    private get GetValues(): string[] | undefined {
-        const valuesMatch = this.query.match(/values\s*\((.+?)\)/i);
-        if (valuesMatch)
-            return valuesMatch[1].split(",").map(s => s.trim());
-
-        return undefined;
-    }
-
-    private get GetSet(): string[] | undefined {
-        const setMatch = this.query.match(/set\s+(.+?)(\s+where|;|$)/i);
-        if (setMatch)
-            return setMatch[1].split(",").map(s => s.trim());
-
-        return undefined;
-    }
-
-    private get GetOrderBy(): string | undefined {
-        const orderByMatch = this.query.match(/order by\s+([^\s;]+)/i);
-        if (orderByMatch)
-            return orderByMatch[1].trim();
-
-        return undefined;
-    }
-
-    private get GetLimit(): number | undefined {
-        const limitMatch = this.query.match(/limit\s+(\d+)/i);
-        if (limitMatch)
-            return parseInt(limitMatch[1], 10);
-
-        return undefined;
-    }
-
-    private get GetOn(): string[] | undefined {
-        const onMatch = this.query.match(/on\s+(.+?)(\s+where|;|$)/i);
-        if (onMatch)
-            return onMatch[1].split("and").map(s => s.trim());
-
-        return undefined;
+    private _select(query: string): void {
+        const selectParser = new SelectParser(query);
+        this._selectData = {
+            columns: selectParser.ParseColumns(),
+            expressions: selectParser.ParseExpressions()
+        };
     }
 }
