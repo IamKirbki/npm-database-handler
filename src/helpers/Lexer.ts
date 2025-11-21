@@ -39,8 +39,8 @@
  * - DELETE FROM -> TODO: Move to DeleteParser.ts
  * 
  * ADVANCED FEATURES (implement in SelectParser.ts):
- * TODO: DISTINCT keyword
- * TODO: Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
+ * DISTINCT keyword
+ * Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
  * TODO: Subqueries (in SELECT, FROM, WHERE)
  * TODO: UNION/INTERSECT/EXCEPT
  * TODO: Window functions (OVER, PARTITION BY)
@@ -137,27 +137,58 @@
  * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
+import { QueryType, SelectValues } from "types/index";
+import FromParser from "./parsers/FromParser";
 import SelectParser from "./parsers/SelectParser";
 
 export default class Lexer {
-    private _selectData?: {
-        columns: string[];
-        expressions: string[];
+    private _detectedQueryType?: QueryType;
+    public get DetectedQueryType() {
+        return this._detectedQueryType;
     }
 
-    public get SelectData() {
-        return this._selectData;
+    private readonly _queryTypes: Record<QueryType, () => void> = {
+        'SELECT': this.ParseSelectQuery.bind(this),
+        'INSERT': this.ParseSelectQuery.bind(this), 
+        'UPDATE': this.ParseSelectQuery.bind(this),
+        'DELETE': this.ParseSelectQuery.bind(this),
+        'CREATE': this.ParseSelectQuery.bind(this),
+        'DROP': this.ParseSelectQuery.bind(this),
+        'ALTER': this.ParseSelectQuery.bind(this)
+    };
+
+    public readonly query: string;
+
+    constructor(query: string) {
+        this.query = query;
+
+        this._detectedQueryType = Object.keys(this._queryTypes).find(type => {
+            const regex = new RegExp(`^\\s*${type}\\b`, 'i');
+            return regex.test(this.query);
+        }) as QueryType | undefined;
+
+        if (this._detectedQueryType) {
+            this._queryTypes[this._detectedQueryType]();
+        }
     }
 
-    constructor(public query: string) {
-        this._select(query);
+    private ParseSelectQuery(): void {
+        this._select();
     }
 
-    private _select(query: string): void {
-        const selectParser = new SelectParser(query);
-        this._selectData = {
-            columns: selectParser.ParseColumns(),
-            expressions: selectParser.ParseExpressions()
-        };
+    private _selectValues?: SelectValues;
+    public get SelectValues(): SelectValues | undefined {
+        return this._selectValues;
+    }
+
+    private _select(): void {
+        const selectParser = new SelectParser(this.query);
+        this._selectValues = selectParser.SelectValues;
+    }
+
+    private _from(): void {
+        const fromParser = new FromParser(this.query);
+        const tables = fromParser.ParseTables();
+        // Handle tables as needed
     }
 }
