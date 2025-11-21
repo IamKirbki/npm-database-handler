@@ -176,6 +176,7 @@ export default class Lexer {
     private ParseSelectQuery(): void {
         this._select();
         this._from();
+        this._where();
     }
 
     private _selectValues?: SelectValues;
