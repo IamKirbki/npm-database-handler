@@ -1,6 +1,5 @@
-import { DefaultQueryOptions, QueryOptions, QueryParameters } from "types/query";
+import { DefaultQueryOptions, QueryOptions, QueryParameters, Join } from "types/index";
 import Table from "Table";
-import { Join } from "../../types/table";
 
 /**
  * QueryStatementBuilder - Utility class for building SQL query strings
