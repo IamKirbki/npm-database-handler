@@ -22,7 +22,7 @@ export default class SelectParser {
         };
     }
 
-    public ParseColumns(): string[] {
+    private ParseColumns(): string[] {
         const selectClause = this.query.match(/select\s+(.*?)\s+from/i);
         if (!selectClause || selectClause.length < 2) {
             throw new Error("Invalid SQL query: SELECT clause not found.");
@@ -65,7 +65,7 @@ export default class SelectParser {
         }).flat();
     }
 
-    public ParseExpressions(): string[] {
+    private ParseExpressions(): string[] {
         const selectClause = this.query.match(/select\s+(.*?)\s+from/i);
         if (!selectClause || selectClause.length < 2) {
             throw new Error("Invalid SQL query: SELECT clause not found.");

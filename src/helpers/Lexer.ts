@@ -205,7 +205,7 @@ export default class Lexer {
 
     private _where(): void {
         const whereParser = new WhereParser(this.query);
-        this._whereValues = whereParser.ParseConditions();
+        this._whereValues = whereParser.WhereValues;
     }
 
 }

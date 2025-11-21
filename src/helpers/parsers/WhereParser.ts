@@ -10,9 +10,10 @@ export default class WhereParser {
 
     constructor(query: string) {
         this.query = query.split('\n').map(line => line.trim()).join(' ');
+        this._whereValues = this.ParseConditions();
     }
 
-    public ParseConditions(): WhereValues {
+    private ParseConditions(): WhereValues {
         const whereClause = this.query.match(/where\s+(.*?)(\s+group\s+by|\s+order\s+by|\s+limit|;|$)/i);
         if (!whereClause || whereClause.length < 2) {
             throw new Error("Invalid SQL query: WHERE clause not found.");
