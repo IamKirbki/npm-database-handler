@@ -23,9 +23,9 @@
  * BASIC QUERY STRUCTURE:
  * - SELECT clause (columns, expressions)
  * - FROM clause (table name)
- * - WHERE clause (filter conditions) -> TODO: Move to WhereParser.ts
- * - JOIN clauses (table joins) -> TODO: Move to JoinParser.ts
- * - ON clause (join conditions) -> TODO: Move to JoinParser.ts
+ * - WHERE clause (filter conditions)
+ * - JOIN clauses (table joins)
+ * - ON clause (join conditions)
  * - GROUP BY clause -> TODO: Implement in GroupByParser.ts
  * - HAVING clause -> TODO: Implement in GroupByParser.ts
  * - ORDER BY clause -> TODO: Move to OrderByParser.ts
