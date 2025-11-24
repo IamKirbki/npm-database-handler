@@ -631,7 +631,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id   =   orders.user_id'
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });

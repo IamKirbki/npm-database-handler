@@ -9,17 +9,28 @@ export default class JoinParser {
     }
 
     constructor(query: string) {
-        this.query = query;
+        this.query = query.replace(/\s+/g, " ").trim();
         this._joinValues = this.ParseJoins();
     }
 
     private ParseJoins(): JoinValues[] {
-        const joinRegex = /\b(SELF\s+JOIN|NATURAL\s+JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|LEFT\s+OUTER\s+JOIN|RIGHT\s+OUTER\s+JOIN|FULL\s+OUTER\s+JOIN|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\s+(?:AS\s+)?([a-zA-Z_][a-zA-Z0-9_]*))?\s+ON\s+(.+?)(?=SELF\s+JOIN|NATURAL\s+JOIN|INNER\s+JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|FULL\s+JOIN|CROSS\s+JOIN|LEFT\s+OUTER\s+JOIN|RIGHT\s+OUTER\s+JOIN|FULL\s+OUTER\s+JOIN|JOIN|$)/gi;
+        const joinTypes =
+            "SELF JOIN|NATURAL JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|LEFT OUTER JOIN|RIGHT OUTER JOIN|FULL OUTER JOIN|JOIN";
+        const joinTypePattern = `\\b(${joinTypes})`;
+        const tableNamePattern = `\\s+([a-zA-Z_][a-zA-Z0-9_]*)`;
+        const aliasPattern = `(?:\\s+(?:AS\\s+)?([a-zA-Z_][a-zA-Z0-9_]*))?`;
+        const onConditionPattern = `\\s+ON\\s+(.+?)`;
+        const lookaheadPattern = `(?=${joinTypes}|$)`;
+
+        const joinRegex = new RegExp(
+            `${joinTypePattern}${tableNamePattern}${aliasPattern}${onConditionPattern}${lookaheadPattern}`,
+            "gi"
+        );
         const joins: JoinValues[] = [];
         let match: RegExpExecArray | null;
 
         while ((match = joinRegex.exec(this.query)) !== null) {
-            const joinType = match[1].replace(/\s+/g, " ").trim().toUpperCase() as JoinTypes;
+            const joinType = match[1].toUpperCase() as JoinTypes;
             const tableName = match[2];
             const alias = match[3];
             const onCondition = match[4].trim();
