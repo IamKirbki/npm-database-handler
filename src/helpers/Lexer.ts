@@ -48,13 +48,13 @@
  * 
  * JOIN TYPES (implement in JoinParser.ts):
  * - INNER JOIN (currently supported)
- * TODO: LEFT JOIN / LEFT OUTER JOIN
- * TODO: RIGHT JOIN / RIGHT OUTER JOIN
- * TODO: FULL JOIN / FULL OUTER JOIN
- * TODO: CROSS JOIN
- * TODO: NATURAL JOIN
- * TODO: SELF JOIN
- * TODO: Multiple JOINs in same query
+ * LEFT JOIN / LEFT OUTER JOIN
+ * RIGHT JOIN / RIGHT OUTER JOIN
+ * FULL JOIN / FULL OUTER JOIN
+ * CROSS JOIN
+ * NATURAL JOIN
+ * SELF JOIN
+ * Multiple JOINs in same query
  * 
  * CONDITIONAL OPERATORS (implement in WhereParser.ts):
  * - AND (currently supported in WHERE/ON)
