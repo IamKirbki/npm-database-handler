@@ -100,6 +100,12 @@ export default class Table {
         }));
     }
 
+    public Drop(): void {
+        const queryStr = `DROP TABLE IF EXISTS ${this.name};`;
+        const query = new Query(this, queryStr, this.db);
+        query.Run();
+    }
+
     /**
      * Fetch records from the table with optional filtering, ordering, and pagination
      * @param options Query options for selecting records
@@ -305,7 +311,7 @@ export default class Table {
     // ): Record<Type>[] {
     //     const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
     //     const query = new Query(this, queryString, this.db);
-        
+
     //     // Set parameters if WHERE clause is present
     //     if (options?.where) {
     //         query.Parameters = options.where;

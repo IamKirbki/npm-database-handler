@@ -80,6 +80,24 @@ describe('Table', () => {
         });
     });
 
+    describe('Drop', () => {
+        it('should drop the table', () => {
+            const table = db.Table('users');
+
+            const columnsBeforeDrop = table.TableColumnInformation;
+            expect(columnsBeforeDrop.length).toBeGreaterThan(0);
+
+            table.Drop();
+            
+            const columnsAfterDrop = table.TableColumnInformation;
+            expect(columnsAfterDrop.length).toBe(0);
+
+            expect(() => {
+                db.Table('users');
+            }).toThrow('Table "users" does not exist in the database.');
+        });
+    });
+
     describe('Insert', () => {
         it('should insert a single record', () => {
             const table = db.Table('users');
