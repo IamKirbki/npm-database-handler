@@ -1,4 +1,4 @@
-import { SelectValue } from "types/index";
+import { SelectValues } from "types/index";
 
 export default class SelectParser {
     private readonly AGGREGATE_FUNCTIONS = [
@@ -9,8 +9,8 @@ export default class SelectParser {
 
     private readonly query: string;
 
-    private _selectValues?: SelectValue[];
-    public get SelectValues(): SelectValue[] | undefined {
+    private _selectValues?: SelectValues[];
+    public get SelectValues(): SelectValues[] | undefined {
         return this._selectValues;
     }
 

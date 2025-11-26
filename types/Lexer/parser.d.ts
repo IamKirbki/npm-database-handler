@@ -1,4 +1,4 @@
-export type SelectValue = {
+export type SelectValues = {
     columns: string;
     expressions: string;
 };
@@ -6,13 +6,13 @@ export type SelectValue = {
 export type FromValues = {
     tableName: string;
     alias?: string
-}[];
+};
 
 export type WhereValues = {
     value: string;
     condition: OperatorTypes;
     searchValue: string;
-}[];
+};
 
 export type OperatorTypes =
     '=' |

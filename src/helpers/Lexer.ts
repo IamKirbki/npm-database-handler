@@ -137,7 +137,7 @@
  * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
-import { FromValues, JoinValues, QueryType, SelectValue, WhereValues } from "types/index";
+import { FromValues, JoinValues, QueryType, SelectValues, WhereValues } from "types/index";
 import FromParser from "./parsers/FromParser";
 import SelectParser from "./parsers/SelectParser";
 import WhereParser from "./parsers/WhereParser";
@@ -181,8 +181,8 @@ export default class Lexer {
         this._join();
     }
 
-    private _selectValues?: SelectValue[];
-    public get SelectValues(): SelectValue[] | undefined {
+    private _selectValues?: SelectValues[];
+    public get SelectValues(): SelectValues[] | undefined {
         return this._selectValues;
     }
 
@@ -191,8 +191,8 @@ export default class Lexer {
         this._selectValues = selectParser.SelectValues;
     }
 
-    private _fromValues?: FromValues;
-    public get FromValues(): FromValues | undefined {
+    private _fromValues?: FromValues[];
+    public get FromValues(): FromValues[] | undefined {
         return this._fromValues;
     }
 
@@ -201,8 +201,8 @@ export default class Lexer {
         this._fromValues = fromParser.FromValues;
     }
 
-    private _whereValues?: WhereValues;
-    public get WhereValues(): WhereValues | undefined {
+    private _whereValues?: WhereValues[];
+    public get WhereValues(): WhereValues[] | undefined {
         return this._whereValues;
     }
 

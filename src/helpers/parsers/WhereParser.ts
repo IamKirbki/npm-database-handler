@@ -3,8 +3,8 @@ import { OperatorTypes, WhereValues } from "types/index";
 export default class WhereParser {
     private readonly query: string;
 
-    private _whereValues?: WhereValues;
-    public get WhereValues(): WhereValues | undefined {
+    private _whereValues?: WhereValues[];
+    public get WhereValues(): WhereValues[] | undefined {
         return this._whereValues;
     }
 
@@ -13,7 +13,7 @@ export default class WhereParser {
         this._whereValues = this.ParseConditions();
     }
 
-    private ParseConditions(): WhereValues {
+    private ParseConditions(): WhereValues[] {
         const whereClause = this.query.match(/where\s+(.*?)(\s+group\s+by|\s+order\s+by|\s+limit|;|$)/i);
         if (!whereClause || whereClause.length < 2) {
             throw new Error("Invalid SQL query: WHERE clause not found.");
