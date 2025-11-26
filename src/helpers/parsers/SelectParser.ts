@@ -1,4 +1,4 @@
-import { SelectValues } from "types/index";
+import { SelectValue } from "types/index";
 
 export default class SelectParser {
     private readonly AGGREGATE_FUNCTIONS = [
@@ -9,17 +9,19 @@ export default class SelectParser {
 
     private readonly query: string;
 
-    private _selectValues?: SelectValues;
-    public get SelectValues(): SelectValues | undefined {
+    private _selectValues?: SelectValue[];
+    public get SelectValues(): SelectValue[] | undefined {
         return this._selectValues;
     }
 
     constructor(query: string) {
         this.query = query.split('\n').map(line => line.trim()).join(' ');
-        this._selectValues = {
-            columns: this.ParseColumns(),
-            expressions: this.ParseExpressions()
-        };
+        const columns = this.ParseColumns();
+        const expressions = this.ParseExpressions();
+
+        columns.forEach((col, index) => {
+            this._selectValues?.push({ columns: col, expressions: expressions[index] || '' });
+        });
     }
 
     private ParseColumns(): string[] {

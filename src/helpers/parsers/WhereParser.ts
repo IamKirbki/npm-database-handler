@@ -1,4 +1,4 @@
-import { WhereValues } from "../../../types/index";
+import { OperatorTypes, WhereValues } from "types/index";
 
 export default class WhereParser {
     private readonly query: string;
@@ -26,7 +26,7 @@ export default class WhereParser {
             if (match) {
                 return {
                     value: match[1].trim(),
-                    condition: match[2].trim(),
+                    condition: match[2].trim().toUpperCase() as OperatorTypes,
                     searchValue: match[3].trim()
                 };
             } else {

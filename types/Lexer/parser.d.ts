@@ -1,6 +1,6 @@
-export type SelectValues = {
-    columns: string[];
-    expressions: string[];
+export type SelectValue = {
+    columns: string;
+    expressions: string;
 };
 
 export type FromValues = {
@@ -10,9 +10,22 @@ export type FromValues = {
 
 export type WhereValues = {
     value: string;
-    condition: string;
+    condition: OperatorTypes;
     searchValue: string;
 }[];
+
+export type OperatorTypes =
+    '=' |
+    '!=' |
+    '<>' |
+    '<' |
+    '<=' |
+    '>' |
+    '>=' |
+    'LIKE' |
+    'IN' |
+    'IS NULL' |
+    'IS NOT NULL';
 
 export type JoinTypes =
     'INNER JOIN' |
@@ -30,4 +43,9 @@ export type JoinValues = {
     tableName: string;
     alias?: string;
     onCondition: string;
+}
+
+export type GroupByValues = {
+    columns: string[];
+    havingConditions?: WhereValues;
 }

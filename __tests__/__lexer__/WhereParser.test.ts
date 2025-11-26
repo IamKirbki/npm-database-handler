@@ -87,7 +87,7 @@ describe('WhereParser', () => {
         it('should parse case-insensitive LIKE', () => {
             const parser = new WhereParser('SELECT * FROM users WHERE name like @pattern');
             expect(parser.WhereValues).toEqual([
-                { value: 'name', condition: 'like', searchValue: '@pattern' }
+                { value: 'name', condition: 'LIKE', searchValue: '@pattern' }
             ]);
         });
     });
@@ -117,7 +117,7 @@ describe('WhereParser', () => {
         it('should parse case-insensitive IN', () => {
             const parser = new WhereParser('SELECT * FROM users WHERE role in (@role1, @role2)');
             expect(parser.WhereValues).toEqual([
-                { value: 'role', condition: 'in', searchValue: '(@role1, @role2)' }
+                { value: 'role', condition: 'IN', searchValue: '(@role1, @role2)' }
             ]);
         });
     });
@@ -140,14 +140,14 @@ describe('WhereParser', () => {
         it('should parse case-insensitive IS NULL', () => {
             const parser = new WhereParser('SELECT * FROM users WHERE deleted_at is null');
             expect(parser.WhereValues).toEqual([
-                { value: 'deleted_at', condition: 'is null', searchValue: '' }
+                { value: 'deleted_at', condition: 'IS NULL', searchValue: '' }
             ]);
         });
 
         it('should parse case-insensitive IS NOT NULL', () => {
             const parser = new WhereParser('SELECT * FROM users WHERE deleted_at is not null');
             expect(parser.WhereValues).toEqual([
-                { value: 'deleted_at', condition: 'is not null', searchValue: '' }
+                { value: 'deleted_at', condition: 'IS NOT NULL', searchValue: '' }
             ]);
         });
     });
