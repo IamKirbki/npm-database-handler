@@ -1,27 +1,24 @@
 import { OperatorTypes, WhereValues } from "types/index";
+import { BaseParser } from "./BaseParser";
+import { SqlUtils } from "./SqlUtils";
 
-export default class WhereParser {
-    private readonly query: string;
-
-    private _whereValues?: WhereValues[];
+export default class WhereParser extends BaseParser<WhereValues[]> {
     public get WhereValues(): WhereValues[] | undefined {
-        return this._whereValues;
+        return this.Values;
     }
 
-    constructor(query: string) {
-        this.query = query.split('\n').map(line => line.trim()).join(' ');
-        this._whereValues = this.ParseConditions();
-    }
+    protected parse(): WhereValues[] {
+        const clause = this.extractClause(
+            new RegExp(`where\\s+(.*?)${SqlUtils.createTerminatorPattern()}`, 'i'),
+            "Invalid SQL query: WHERE clause not found."
+        );
+        
+        if (!clause) return [];
 
-    private ParseConditions(): WhereValues[] {
-        const whereClause = this.query.match(/where\s+(.*?)(\s+group\s+by|\s+order\s+by|\s+limit|;|$)/i);
-        if (!whereClause || whereClause.length < 2) {
-            throw new Error("Invalid SQL query: WHERE clause not found.");
-        }
-
-        const whereContent = whereClause[1].trim();
-        const conditions = whereContent.split(/(\s+and\s+|\s+or\s+)/i).filter(cond => !/^\s*(and|or)\s*$/i.test(cond)).map(cond => {
-            const match = cond.match(/(.*?)\s*(!=|<>|<=|>=|=|<|>| like | in | is\s+null| is\s+not\s+null)\s*(.*)/i);
+        return SqlUtils.splitByLogicalOperators(clause.content).map(condition => {
+            const match = condition.match(new RegExp(
+                `(.*?)\\s*(${SqlUtils.createOperatorPattern()})\\s*(.*)`, 'i'
+            ));
 
             if (match) {
                 return {
@@ -30,10 +27,8 @@ export default class WhereParser {
                     searchValue: match[3].trim()
                 };
             } else {
-                throw new Error(`Invalid condition in WHERE clause: ${cond}`);
+                throw new Error(`Invalid condition in WHERE clause: ${condition}`);
             }
         });
-
-        return conditions;
     }
 }
