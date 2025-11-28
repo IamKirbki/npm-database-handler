@@ -332,7 +332,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id = orders.user_id WHERE users.status = \'active\''
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });
@@ -350,7 +350,7 @@ describe('JoinParser', () => {
                     joinType: 'LEFT JOIN',
                     tableName: 'products',
                     alias: undefined,
-                    onCondition: 'orders.product_id = products.id WHERE users.active = true'
+                    onCondition: 'orders.product_id = products.id'
                 }
             ]);
         });
@@ -364,7 +364,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id = orders.user_id GROUP BY users.name'
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });
@@ -376,7 +376,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id = orders.user_id ORDER BY orders.created_at DESC'
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });
@@ -388,7 +388,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id = orders.user_id LIMIT 10'
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });
@@ -400,7 +400,7 @@ describe('JoinParser', () => {
                     joinType: 'INNER JOIN',
                     tableName: 'orders',
                     alias: undefined,
-                    onCondition: 'users.id = orders.user_id WHERE users.status = \'active\' GROUP BY users.id HAVING COUNT(*) > 5 ORDER BY users.created_at LIMIT 20'
+                    onCondition: 'users.id = orders.user_id'
                 }
             ]);
         });
@@ -570,7 +570,7 @@ describe('JoinParser', () => {
                     joinType: 'LEFT JOIN',
                     tableName: 'event_data',
                     alias: 'ed',
-                    onCondition: 'e.id = ed.event_id WHERE u.active = true'
+                    onCondition: 'e.id = ed.event_id'
                 }
             ]);
         });
