@@ -14,12 +14,30 @@ import { SqlUtils } from "./SqlUtils";
  * ✅ Parentheses for grouping conditions
  * 
  * TODO FEATURES:
+ * 
  * - NOT operator
+ *   Example: "SELECT * FROM users WHERE NOT (age < 18 OR status = 'inactive')"
+ *   Explanation: Parse NOT operator for negating conditions and expressions
+ * 
  * - BETWEEN/NOT BETWEEN range conditions
+ *   Example: "SELECT * FROM products WHERE price BETWEEN 10.00 AND 50.00"
+ *   Explanation: Parse range conditions for numeric, date, and string values
+ * 
  * - EXISTS/NOT EXISTS subquery conditions
+ *   Example: "SELECT * FROM users WHERE EXISTS (SELECT 1 FROM orders WHERE user_id = users.id)"
+ *   Explanation: Parse subquery existence checks for correlated queries
+ * 
  * - Complex expression parsing
+ *   Example: "SELECT * FROM products WHERE (price * 0.9) > 25 AND category IN ('electronics', 'books')"
+ *   Explanation: Parse mathematical expressions and function calls within conditions
+ * 
  * - Regular expressions (REGEXP)
+ *   Example: "SELECT * FROM users WHERE email REGEXP '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'"
+ *   Explanation: Parse regular expression pattern matching conditions
+ * 
  * - GLOB pattern matching
+ *   Example: "SELECT * FROM files WHERE filename GLOB '*.txt'"
+ *   Explanation: Parse Unix-style glob pattern matching (SQLite specific)
  */
 
 export default class WhereParser extends BaseParser<WhereValues[]> {

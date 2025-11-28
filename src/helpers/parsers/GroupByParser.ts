@@ -12,11 +12,26 @@ import { SqlUtils } from "./SqlUtils";
  * ✅ Complex HAVING expressions
  * 
  * TODO FEATURES:
+ * 
  * - ROLLUP grouping
+ *   Example: "SELECT region, country, SUM(sales) FROM data GROUP BY ROLLUP(region, country)"
+ *   Explanation: Parse ROLLUP for hierarchical grouping with subtotals at each level
+ * 
  * - CUBE grouping
+ *   Example: "SELECT region, product, SUM(sales) FROM data GROUP BY CUBE(region, product)"
+ *   Explanation: Parse CUBE for all possible combinations of grouping columns
+ * 
  * - GROUPING SETS
+ *   Example: "SELECT region, product, SUM(sales) FROM data GROUP BY GROUPING SETS ((region), (product), ())"
+ *   Explanation: Parse explicit specification of grouping combinations
+ * 
  * - Window functions with PARTITION BY
+ *   Example: "SELECT name, salary, AVG(salary) OVER (PARTITION BY department) as dept_avg FROM employees"
+ *   Explanation: Parse window functions that partition data for analytical calculations
+ * 
  * - FILTER clause for aggregates
+ *   Example: "SELECT COUNT(*) FILTER (WHERE age > 18) as adults, COUNT(*) as total FROM users GROUP BY city"
+ *   Explanation: Parse conditional aggregation using FILTER clause
  */
 
 export default class GroupByParser extends BaseParser<GroupByValues[]> {

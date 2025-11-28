@@ -10,15 +10,42 @@ import { SelectValues } from "types/index";
  * ✅ Column aliases with AS
  * 
  * TODO FEATURES:
+ * 
  * - Subqueries (in SELECT, FROM, WHERE)
+ *   Example: "SELECT name, (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count FROM users"
+ *   Explanation: Parse nested SELECT statements within main query clauses
+ * 
  * - UNION/INTERSECT/EXCEPT
+ *   Example: "SELECT name FROM customers UNION SELECT name FROM suppliers"
+ *   Explanation: Combine results from multiple SELECT statements with set operations
+ * 
  * - Window functions (OVER, PARTITION BY)
+ *   Example: "SELECT name, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) FROM employees"
+ *   Explanation: Parse analytical functions that operate over a window of rows
+ * 
  * - Common Table Expressions (WITH/CTE)
+ *   Example: "WITH sales_summary AS (SELECT region, SUM(amount) FROM sales GROUP BY region) SELECT * FROM sales_summary"
+ *   Explanation: Parse WITH clauses that define temporary named result sets
+ * 
  * - Wildcards in column selection (*)
+ *   Example: "SELECT users.*, orders.total FROM users JOIN orders ON users.id = orders.user_id"
+ *   Explanation: Handle asterisk wildcards, especially with table prefixes
+ * 
  * - Table-qualified column names (table.column)
+ *   Example: "SELECT users.name, orders.total FROM users JOIN orders ON users.id = orders.user_id"
+ *   Explanation: Parse columns with table prefixes for disambiguation
+ * 
  * - Schema-qualified names (schema.table.column)
+ *   Example: "SELECT public.users.name, sales.orders.total FROM public.users"
+ *   Explanation: Parse fully qualified column names including schema
+ * 
  * - Expression parsing (mathematical, string concatenation)
+ *   Example: "SELECT name, (price * quantity) as total, CONCAT(first_name, ' ', last_name) as full_name FROM products"
+ *   Explanation: Parse complex expressions involving operators and functions
+ * 
  * - CASE WHEN statements
+ *   Example: "SELECT name, CASE WHEN age < 18 THEN 'Minor' WHEN age < 65 THEN 'Adult' ELSE 'Senior' END as category FROM users"
+ *   Explanation: Parse conditional logic expressions in SELECT clauses
  */
 
 export default class SelectParser {
