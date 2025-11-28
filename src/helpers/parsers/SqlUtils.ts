@@ -78,6 +78,46 @@ export class SqlUtils {
     ];
 
     /**
+     * SQL control flow and conditional keywords.
+     * 
+     * Contains keywords used in CASE statements and other conditional constructs
+     * that should be excluded from column name parsing.
+     * 
+     * @readonly
+     * @static
+     * @example
+     * ```typescript
+     * // Check if a keyword is a control flow keyword
+     * const isKeyword = SqlUtils.SQL_KEYWORDS.includes('CASE');
+     * ```
+     */
+    static readonly SQL_KEYWORDS = [
+        'CASE', 'WHEN', 'THEN', 'ELSE', 'END'
+    ];
+
+    /**
+     * Checks if a token should be excluded from column parsing.
+     * 
+     * Determines whether a token is an aggregate function or SQL keyword
+     * that should not be treated as a column name during parsing.
+     * 
+     * @param token - The token to check
+     * @returns True if the token should be excluded from column parsing
+     * 
+     * @example
+     * ```typescript
+     * const shouldExclude1 = SqlUtils.shouldExcludeFromColumns('COUNT');  // true
+     * const shouldExclude2 = SqlUtils.shouldExcludeFromColumns('CASE');   // true
+     * const shouldExclude3 = SqlUtils.shouldExcludeFromColumns('name');   // false
+     * ```
+     */
+    static shouldExcludeFromColumns(token: string): boolean {
+        const upperToken = token.toUpperCase();
+        return this.AGGREGATE_FUNCTIONS.includes(upperToken) || 
+               this.SQL_KEYWORDS.includes(upperToken);
+    }
+
+    /**
      * Creates a regex pattern that matches SQL clause terminators.
      * 
      * Generates a regex pattern string that can be used to identify where
