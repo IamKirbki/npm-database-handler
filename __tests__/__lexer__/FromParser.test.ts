@@ -294,7 +294,7 @@ describe('FromParser', () => {
         it('should throw error when FROM clause is missing', () => {
             expect(() => {
                 const parser = new FromParser('SELECT name, email');
-                parser.FromValues;
+                return parser.FromValues;
             }).toThrow('Invalid SQL query: FROM clause not found.');
         });
     });

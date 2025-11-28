@@ -492,14 +492,14 @@ describe('WhereParser', () => {
         it('should throw error when WHERE clause is missing', () => {
             expect(() => {
                 const parser = new WhereParser('SELECT * FROM users');
-                parser.WhereValues;
+                return parser.WhereValues;
             }).toThrow('Invalid SQL query: WHERE clause not found.');
         });
 
         it('should throw error when WHERE clause is empty', () => {
             expect(() => {
                 const parser = new WhereParser('SELECT * FROM users WHERE');
-                parser.WhereValues;
+                return parser.WhereValues;
             }).toThrow();
         });
     });

@@ -5,20 +5,23 @@ import tsparser from '@typescript-eslint/parser';
 export default [
   eslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
+        project: './tsconfig.eslint.json',
       },
     },
     plugins: {
       '@typescript-eslint': tseslint,
     },
     rules: {
-      // TypeScript specific rules
+      // TypeScript recommended rules
+      ...tseslint.configs.recommended.rules,
+      
+      // Custom overrides
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -39,33 +42,6 @@ export default [
     },
   },
   {
-    files: ['**/*.ts'],
-    ignores: ['src/**/*.ts'],
-    languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-      'no-console': 'off',
-      'prefer-const': 'error',
-      'no-var': 'error',
-    },
-  },
-  {
     files: ['**/*.js', '**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -73,7 +49,12 @@ export default [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '*.config.js',
+      'src/helpers/parsers/ExampleParser.ts',
+    ],
   },
 ];
 
