@@ -1,4 +1,6 @@
 import { SelectValues } from "types/index";
+import { BaseParser } from "./BaseParser";
+import { SqlUtils } from "./SqlUtils";
 
 /**
  * Parser for SQL SELECT clause components.
@@ -48,48 +50,41 @@ import { SelectValues } from "types/index";
  *   Explanation: Parse conditional logic expressions in SELECT clauses
  */
 
-export default class SelectParser {
-    private readonly AGGREGATE_FUNCTIONS = [
-        'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',
-        'UPPER', 'LOWER', 'LENGTH', 'SUBSTR', 'TRIM',
-        'ROUND', 'ABS', 'DISTINCT', "CASE", "WHEN", "THEN", "ELSE", "END"
-    ];
-
-    private readonly query: string;
-
-    private _selectValues?: SelectValues[];
+export default class SelectParser extends BaseParser<SelectValues[]> {
     public get SelectValues(): SelectValues[] | undefined {
-        return this._selectValues;
+        return this._values;
     }
 
-    constructor(query: string) {
-        this.query = query.split('\n').map(line => line.trim()).join(' ');
+    protected parse(): SelectValues[] {
         const columns = this.ParseColumns();
         const expressions = this.ParseExpressions();
+        const selectValues: SelectValues[] = [];
 
         columns.forEach((col, index) => {
-            this._selectValues?.push({ columns: col, expressions: expressions[index] || '' });
+            selectValues.push({ columns: col, expressions: expressions[index] || '' });
         });
+        
+        return selectValues;
     }
 
     private ParseColumns(): string[] {
-        const selectClause = this.query.match(/select\s+(.*?)\s+from/i);
-        if (!selectClause || selectClause.length < 2) {
+        const selectClause = this.extractClause(/select\s+(.*?)\s+from/i);
+        if (!selectClause) {
             throw new Error("Invalid SQL query: SELECT clause not found.");
         }
 
-        let selectContent = selectClause[1].trim();
+        let selectContent = selectClause.content.trim();
         
         selectContent = selectContent.replace(/^distinct\s+/i, '');
         
-        const columns = selectContent.split(',').map(col => col.replace(/\s+as\s+\w+/i, '').trim());
+        const columns = selectContent.split(',').map((col: string) => col.replace(/\s+as\s+\w+/i, '').trim());
         const regex = /[+\-*/()]/;
 
-        return columns.map(col => {
+        return columns.map((col: string) => {
             if (/\bcase\b/i.test(col)) {
                 const whenMatches = col.match(/when\s+(\w+(?:\.\w+)?)\s*[><=!]/gi);
                 if (whenMatches) {
-                    return whenMatches.map(when => {
+                    return whenMatches.map((when: string) => {
                         const match = when.match(/when\s+(\w+(?:\.\w+)?)/i);
                         return match ? match[1] : '';
                     }).filter(Boolean);
@@ -103,11 +98,11 @@ export default class SelectParser {
 
                 return columnNames
                     .split(columnNames.includes("(*)") ? /[+\-/()]/ : /[+\-*/()]/)
-                    .map(part => part.trim())
-                    .filter(part =>
+                    .map((part: string) => part.trim())
+                    .filter((part: string) =>
                         part &&
                         !/^\d+(\.\d+)?$/.test(part) &&
-                        !this.AGGREGATE_FUNCTIONS.includes(part.toUpperCase())
+                        !SqlUtils.shouldExcludeFromColumns(part)
                     );
             }
 
@@ -116,19 +111,19 @@ export default class SelectParser {
     }
 
     private ParseExpressions(): string[] {
-        const selectClause = this.query.match(/select\s+(.*?)\s+from/i);
-        if (!selectClause || selectClause.length < 2) {
+        const selectClause = this.extractClause(/select\s+(.*?)\s+from/i);
+        if (!selectClause) {
             throw new Error("Invalid SQL query: SELECT clause not found.");
         }
 
-        let selectContent = selectClause[1].trim();
+        let selectContent = selectClause.content.trim();
         
         selectContent = selectContent.replace(/^distinct\s+/i, '');
 
-        const columns = selectContent.split(',').map(col => col.trim());
+        const columns = selectContent.split(',').map((col: string) => col.trim());
         const regex = /[+\-*/()]/;
         
-        return columns.filter(col => {
+        return columns.filter((col: string) => {
             if (/\bcase\b/i.test(col)) {
                 return true;
             }
