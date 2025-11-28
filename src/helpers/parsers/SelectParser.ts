@@ -1,5 +1,26 @@
 import { SelectValues } from "types/index";
 
+/**
+ * Parser for SQL SELECT clause components.
+ * 
+ * CURRENT FEATURES:
+ * ✅ Basic column selection
+ * ✅ DISTINCT keyword
+ * ✅ Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
+ * ✅ Column aliases with AS
+ * 
+ * TODO FEATURES:
+ * - Subqueries (in SELECT, FROM, WHERE)
+ * - UNION/INTERSECT/EXCEPT
+ * - Window functions (OVER, PARTITION BY)
+ * - Common Table Expressions (WITH/CTE)
+ * - Wildcards in column selection (*)
+ * - Table-qualified column names (table.column)
+ * - Schema-qualified names (schema.table.column)
+ * - Expression parsing (mathematical, string concatenation)
+ * - CASE WHEN statements
+ */
+
 export default class SelectParser {
     private readonly AGGREGATE_FUNCTIONS = [
         'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',

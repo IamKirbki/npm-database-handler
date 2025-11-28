@@ -2,6 +2,23 @@ import { FromValues } from "types/index";
 import { BaseParser } from "./BaseParser";
 import { SqlUtils } from "./SqlUtils";
 
+/**
+ * Parser for SQL FROM clause components.
+ * 
+ * CURRENT FEATURES:
+ * ✅ Basic table references
+ * ✅ Table aliases (with and without AS keyword)
+ * ✅ Schema-qualified table names
+ * 
+ * TODO FEATURES:
+ * - Subquery aliases
+ * - Table-valued functions
+ * - Common Table Expressions (CTE)
+ * - LATERAL subqueries
+ * - VALUES clause as table source
+ * - Temporary table references
+ */
+
 export default class FromParser extends BaseParser<FromValues[]> {
     public get FromValues(): FromValues[] | undefined {
         return this.Values;

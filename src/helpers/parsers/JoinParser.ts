@@ -2,6 +2,26 @@ import { JoinTypes, JoinValues } from "types/index";
 import { BaseParser } from "./BaseParser";
 import { SqlUtils } from "./SqlUtils";
 
+/**
+ * Parser for SQL JOIN clause components.
+ * 
+ * CURRENT FEATURES:
+ * ✅ INNER JOIN
+ * ✅ LEFT JOIN/LEFT OUTER JOIN
+ * ✅ RIGHT JOIN/RIGHT OUTER JOIN
+ * ✅ FULL JOIN/FULL OUTER JOIN
+ * ✅ CROSS JOIN
+ * ✅ Multiple JOINs in same query
+ * ✅ ON conditions with complex expressions
+ * 
+ * TODO FEATURES:
+ * - NATURAL JOIN
+ * - SELF JOIN detection and optimization
+ * - JOIN hints and optimization suggestions
+ * - USING clause (alternative to ON)
+ * - Lateral joins
+ */
+
 export default class JoinParser extends BaseParser<JoinValues[]> {
     public get JoinValues(): JoinValues[] | undefined {
         return this.Values;

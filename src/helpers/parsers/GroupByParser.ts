@@ -2,6 +2,23 @@ import { GroupByValues, OperatorTypes } from "types/index";
 import { BaseParser } from "./BaseParser";
 import { SqlUtils } from "./SqlUtils";
 
+/**
+ * Parser for SQL GROUP BY and HAVING clause components.
+ * 
+ * CURRENT FEATURES:
+ * ✅ GROUP BY (single and multiple columns)
+ * ✅ HAVING clause with conditions
+ * ✅ Aggregate functions in HAVING
+ * ✅ Complex HAVING expressions
+ * 
+ * TODO FEATURES:
+ * - ROLLUP grouping
+ * - CUBE grouping
+ * - GROUPING SETS
+ * - Window functions with PARTITION BY
+ * - FILTER clause for aggregates
+ */
+
 export default class GroupByParser extends BaseParser<GroupByValues[]> {
     private _groupByValues?: GroupByValues[];
     

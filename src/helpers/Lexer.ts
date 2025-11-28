@@ -2,35 +2,37 @@
  * SQL Components that can be parsed from a query:
  * 
  * ARCHITECTURE REFACTORING:
- * TODO: Split this Lexer into multiple parser classes (Option 1 approach):
- *       - Create src/helpers/parsers/ directory
- *       - Create SelectParser.ts for SELECT/DISTINCT parsing
- *       - Create FromParser.ts for FROM clause and table aliases
- *       - Create WhereParser.ts for WHERE conditions and operators
- *       - Create JoinParser.ts for all JOIN types and ON conditions
- *       - Create GroupByParser.ts for GROUP BY and HAVING
- *       - Create OrderByParser.ts for ORDER BY with ASC/DESC
- *       - Create LimitParser.ts for LIMIT and OFFSET
- *       - Create InsertParser.ts for INSERT and VALUES
- *       - Create UpdateParser.ts for UPDATE and SET
- *       - Create DeleteParser.ts for DELETE operations
- *       - Create DdlParser.ts for CREATE/DROP/ALTER operations
- *       - Create src/helpers/validators/ directory
- *       - Create ParameterValidator.ts for parameter validation
- *       - Create QueryValidator.ts for general query validation
- *       - Update main Lexer.ts to orchestrate these parsers
+ * ✅ COMPLETED: Split this Lexer into multiple parser classes:
+ *       ✅ Created src/helpers/parsers/ directory
+ *       ✅ Created BaseParser.ts for common parser functionality
+ *       ✅ Created SqlUtils.ts for shared SQL parsing utilities
+ *       ✅ Created SelectParser.ts for SELECT/DISTINCT parsing
+ *       ✅ Created FromParser.ts for FROM clause and table aliases
+ *       ✅ Created WhereParser.ts for WHERE conditions and operators
+ *       ✅ Created JoinParser.ts for all JOIN types and ON conditions
+ *       ✅ Created GroupByParser.ts for GROUP BY and HAVING
+ *       TODO: Create OrderByParser.ts for ORDER BY with ASC/DESC
+ *       TODO: Create LimitParser.ts for LIMIT and OFFSET
+ *       TODO: Create InsertParser.ts for INSERT and VALUES
+ *       TODO: Create UpdateParser.ts for UPDATE and SET
+ *       TODO: Create DeleteParser.ts for DELETE operations
+ *       TODO: Create DdlParser.ts for CREATE/DROP/ALTER operations
+ *       TODO: Create src/helpers/validators/ directory
+ *       TODO: Create ParameterValidator.ts for parameter validation
+ *       TODO: Create QueryValidator.ts for general query validation
+ *       ✅ Updated main Lexer.ts to orchestrate these parsers
  * 
  * BASIC QUERY STRUCTURE:
- * - SELECT clause (columns, expressions)
- * - FROM clause (table name)
- * - WHERE clause (filter conditions)
- * - JOIN clauses (table joins)
- * - ON clause (join conditions)
- * - GROUP BY clause -> TODO: Implement in GroupByParser.ts
- * - HAVING clause -> TODO: Implement in GroupByParser.ts
- * - ORDER BY clause -> TODO: Move to OrderByParser.ts
- * - LIMIT clause -> TODO: Move to LimitParser.ts
- * - OFFSET clause -> TODO: Implement in LimitParser.ts
+ * ✅ SELECT clause (columns, expressions) - Implemented in SelectParser.ts
+ * ✅ FROM clause (table name) - Implemented in FromParser.ts
+ * ✅ WHERE clause (filter conditions) - Implemented in WhereParser.ts
+ * ✅ JOIN clauses (table joins) - Implemented in JoinParser.ts
+ * ✅ ON clause (join conditions) - Implemented in JoinParser.ts
+ * ✅ GROUP BY clause - Implemented in GroupByParser.ts
+ * ✅ HAVING clause - Implemented in GroupByParser.ts
+ * TODO: ORDER BY clause -> TODO: Move to OrderByParser.ts
+ * TODO: LIMIT clause -> TODO: Move to LimitParser.ts
+ * TODO: OFFSET clause -> TODO: Implement in LimitParser.ts
  * 
  * INSERT/UPDATE/DELETE:
  * - INSERT INTO (table, columns) -> TODO: Move to InsertParser.ts
@@ -46,24 +48,25 @@
  * TODO: Window functions (OVER, PARTITION BY)
  * TODO: Common Table Expressions (WITH/CTE)
  * 
- * JOIN TYPES (implement in JoinParser.ts):
- * - INNER JOIN (currently supported)
- * LEFT JOIN / LEFT OUTER JOIN
- * RIGHT JOIN / RIGHT OUTER JOIN
- * FULL JOIN / FULL OUTER JOIN
- * CROSS JOIN
- * NATURAL JOIN
- * SELF JOIN
- * Multiple JOINs in same query
+ * JOIN TYPES (✅ implemented in JoinParser.ts):
+ * ✅ INNER JOIN
+ * ✅ LEFT JOIN / LEFT OUTER JOIN
+ * ✅ RIGHT JOIN / RIGHT OUTER JOIN
+ * ✅ FULL JOIN / FULL OUTER JOIN
+ * ✅ CROSS JOIN
+ * ✅ Multiple JOINs in same query
+ * TODO: NATURAL JOIN
+ * TODO: SELF JOIN
  * 
- * CONDITIONAL OPERATORS (implement in WhereParser.ts):
- * - AND (currently supported in WHERE/ON)
- * TODO: OR (in WHERE/ON/HAVING)
+ * CONDITIONAL OPERATORS (✅ implemented in WhereParser.ts):
+ * ✅ AND (in WHERE/ON/HAVING)
+ * ✅ OR (in WHERE/ON/HAVING)
+ * ✅ Comparison operators (=, !=, <>, <, <=, >, >=)
+ * ✅ LIKE / NOT LIKE
+ * ✅ IN / NOT IN
+ * ✅ IS NULL / IS NOT NULL
  * TODO: NOT
- * TODO: IN / NOT IN
  * TODO: BETWEEN / NOT BETWEEN
- * TODO: LIKE / NOT LIKE
- * TODO: IS NULL / IS NOT NULL
  * TODO: EXISTS / NOT EXISTS
  * 
  * FUNCTIONS (create FunctionParser.ts or add to relevant parsers):
@@ -73,10 +76,10 @@
  * TODO: Conditional functions (CASE WHEN, COALESCE, NULLIF, IFNULL)
  * TODO: Type conversion (CAST, TYPEOF)
  * 
- * GROUPING & AGGREGATION (implement in GroupByParser.ts):
- * TODO: GROUP BY (single column)
- * TODO: GROUP BY (multiple columns)
- * TODO: HAVING clause
+ * GROUPING & AGGREGATION (✅ implemented in GroupByParser.ts):
+ * ✅ GROUP BY (single column)
+ * ✅ GROUP BY (multiple columns)
+ * ✅ HAVING clause
  * TODO: ROLLUP
  * TODO: CUBE
  * 
@@ -137,11 +140,8 @@
  * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
-import { FromValues, JoinValues, QueryType, SelectValues, WhereValues } from "types/index";
-import FromParser from "./parsers/FromParser";
+import { QueryType, SelectValues } from "types/index";
 import SelectParser from "./parsers/SelectParser";
-import WhereParser from "./parsers/WhereParser";
-import JoinParser from "./parsers/JoinParser";
 
 export default class Lexer {
     private _detectedQueryType?: QueryType;
@@ -176,9 +176,6 @@ export default class Lexer {
 
     private ParseSelectQuery(): void {
         this._select();
-        this._from();
-        this._where();
-        this._join();
     }
 
     private _selectValues?: SelectValues[];
@@ -189,35 +186,5 @@ export default class Lexer {
     private _select(): void {
         const selectParser = new SelectParser(this.query);
         this._selectValues = selectParser.SelectValues;
-    }
-
-    private _fromValues?: FromValues[];
-    public get FromValues(): FromValues[] | undefined {
-        return this._fromValues;
-    }
-
-    private _from(): void {
-        const fromParser = new FromParser(this.query);
-        this._fromValues = fromParser.FromValues;
-    }
-
-    private _whereValues?: WhereValues[];
-    public get WhereValues(): WhereValues[] | undefined {
-        return this._whereValues;
-    }
-
-    private _where(): void {
-        const whereParser = new WhereParser(this.query);
-        this._whereValues = whereParser.WhereValues;
-    }
-
-    private _joinValues?: JoinValues[];
-    public get JoinValues(): JoinValues[] | undefined {
-        return this._joinValues;
-    }
-
-    private _join(): void {
-        const joinParser = new JoinParser(this.query);
-        this._joinValues = joinParser.JoinValues;
     }
 }
