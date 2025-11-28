@@ -33,7 +33,4 @@ export abstract class BaseParser<T> {
             fullMatch: match[0]
         };
     }
-
-    protected static readonly SQL_TERMINATORS = 
-        '\\s+(?:where|group\\s+by|order\\s+by|limit|having|union|join|inner\\s+join|left\\s+join|right\\s+join|full\\s+join|cross\\s+join|;|$)';
 }
