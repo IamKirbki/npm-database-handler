@@ -140,51 +140,38 @@
  * TODO: Schema-qualified names (schema.table.column) -> FromParser.ts
  */
 
-import { QueryType, SelectValues } from "types/index";
+import { SelectValues, SubQueryValues } from "types/index";
 import SelectParser from "./parsers/SelectParser";
+import SubQueryParser from "./parsers/SubQueryParser";
 
 export default class Parser {
-    private _detectedQueryType?: QueryType;
-    public get DetectedQueryType() {
-        return this._detectedQueryType;
+    private readonly query: string;
+    private subQueryValues?: SubQueryValues;
+
+    constructor(sqlQuery: string) {
+        this.query = sqlQuery.split('\n').map(line => line.trim()).join(' ').replace(/\s+/g, ' ').trim();
+        const subQueryParser = new SubQueryParser(this.query);
+        this.subQueryValues = subQueryParser.SubQueries;
     }
 
-    private readonly _queryTypes: Record<QueryType, () => void> = {
-        'SELECT': this.ParseSelectQuery.bind(this),
-        'INSERT': this.ParseSelectQuery.bind(this), 
-        'UPDATE': this.ParseSelectQuery.bind(this),
-        'DELETE': this.ParseSelectQuery.bind(this),
-        'CREATE': this.ParseSelectQuery.bind(this),
-        'DROP': this.ParseSelectQuery.bind(this),
-        'ALTER': this.ParseSelectQuery.bind(this)
-    };
-
-    public readonly query: string;
-
-    constructor(query: string) {
-        this.query = query;
-
-        this._detectedQueryType = Object.keys(this._queryTypes).find(type => {
-            const regex = new RegExp(`^\\s*${type}\\b`, 'i');
-            return regex.test(this.query);
-        }) as QueryType | undefined;
-
-        if (this._detectedQueryType) {
-            this._queryTypes[this._detectedQueryType]();
+    public get SelectValues(): SelectValues[] | SelectValues[][] {
+        if (this.query.trim().toLowerCase().startsWith('with')) {
+            const selectParser = new SelectParser(this.query);
+            return selectParser.SelectValues || [];
         }
-    }
-
-    private ParseSelectQuery(): void {
-        this._select();
-    }
-
-    private _selectValues?: SelectValues[];
-    public get SelectValues(): SelectValues[] | undefined {
-        return this._selectValues;
-    }
-
-    private _select(): void {
+        
+        if(this.subQueryValues && this.subQueryValues.queries.length > 0) {
+            const allSelectValues: SelectValues[][] = [];
+            for(const subQuery of this.subQueryValues.queries) {
+                const selectParser = new SelectParser(subQuery);
+                if(selectParser.SelectValues) {
+                    allSelectValues.push(selectParser.SelectValues);
+                }
+            }
+            return allSelectValues;
+        }
+        
         const selectParser = new SelectParser(this.query);
-        this._selectValues = selectParser.SelectValues;
+        return selectParser.SelectValues || [];
     }
 }

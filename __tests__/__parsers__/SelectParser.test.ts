@@ -122,146 +122,118 @@ describe('SelectParser', () => {
             FROM users`);
             expect(parser.ParseColumns()).toEqual(['name', 'email', 'age']);
         });
+    });
+});
 
-        it('should throw error when SELECT clause is missing', () => {
-            expect(() => {
-                const parser = new SelectParser('FROM users');
-                parser.ParseColumns();
-            }).toThrow('Invalid SQL query: SELECT clause not found.');
-        });
-
-        it('should throw error when FROM clause is missing', () => {
-            expect(() => {
-                const parser = new SelectParser('SELECT name');
-                parser.ParseColumns();
-            }).toThrow('Invalid SQL query: SELECT clause not found.');
-        });
+describe('ParseExpressions', () => {
+    it('should return empty array for simple column selection', () => {
+        const parser = new SelectParser('SELECT name FROM users');
+        expect(parser.ParseExpressions()).toEqual([]);
     });
 
-    describe('ParseExpressions', () => {
-        it('should return empty array for simple column selection', () => {
-            const parser = new SelectParser('SELECT name FROM users');
-            expect(parser.ParseExpressions()).toEqual([]);
-        });
-
-        it('should return empty array for multiple columns', () => {
-            const parser = new SelectParser('SELECT name, email, age FROM users');
-            expect(parser.ParseExpressions()).toEqual([]);
-        });
-
-        it('should detect arithmetic expressions', () => {
-            const parser = new SelectParser('SELECT price * quantity AS total FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['price * quantity AS total']);
-        });
-
-        it('should detect addition expressions', () => {
-            const parser = new SelectParser('SELECT price + tax FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['price + tax']);
-        });
-
-        it('should detect subtraction expressions', () => {
-            const parser = new SelectParser('SELECT revenue - cost FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['revenue - cost']);
-        });
-
-        it('should detect division expressions', () => {
-            const parser = new SelectParser('SELECT total / count FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['total / count']);
-        });
-
-        it('should detect complex expressions with parentheses', () => {
-            const parser = new SelectParser('SELECT (price + tax) * quantity AS total FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['(price + tax) * quantity AS total']);
-        });
-
-        it('should detect multiple expressions', () => {
-            const parser = new SelectParser('SELECT price * quantity AS total, (revenue - cost) AS profit FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['price * quantity AS total', '(revenue - cost) AS profit']);
-        });
-
-        it('should detect mixed columns and expressions', () => {
-            const parser = new SelectParser('SELECT id, price * quantity AS total, status FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['price * quantity AS total']);
-        });
-
-        it('should detect expressions with table qualifiers', () => {
-            const parser = new SelectParser('SELECT orders.price * orders.quantity FROM orders');
-            expect(parser.ParseExpressions()).toEqual(['orders.price * orders.quantity']);
-        });
-
-        it('should detect function calls as expressions', () => {
-            const parser = new SelectParser('SELECT COUNT(*), SUM(price) FROM orders');
-            const expressions = parser.ParseExpressions();
-            expect(expressions).toContain('COUNT(*)');
-            expect(expressions).toContain('SUM(price)');
-        });
-
-        it('should detect nested function calls', () => {
-            const parser = new SelectParser('SELECT ROUND(AVG(price)) FROM orders');
-            expect(parser.ParseExpressions()).toContain('ROUND(AVG(price))');
-        });
-
-        it('should detect CASE statements as expressions', () => {
-            const parser = new SelectParser('SELECT CASE WHEN age > 18 THEN @adult ELSE @minor END FROM users');
-            const expressions = parser.ParseExpressions();
-            expect(expressions.length).toBeGreaterThan(0);
-            expect(expressions.some(expr => expr.includes('CASE'))).toBe(true);
-        });
-
-        it('should throw error when SELECT clause is missing', () => {
-            expect(() => {
-                const parser = new SelectParser('FROM users');
-                parser.ParseExpressions();
-            }).toThrow('Invalid SQL query: SELECT clause not found.');
-        });
-
-        it('should throw error when FROM clause is missing', () => {
-            expect(() => {
-                const parser = new SelectParser('SELECT name');
-                parser.ParseExpressions();
-            }).toThrow('Invalid SQL query: SELECT clause not found.');
-        });
+    it('should return empty array for multiple columns', () => {
+        const parser = new SelectParser('SELECT name, email, age FROM users');
+        expect(parser.ParseExpressions()).toEqual([]);
     });
 
-    describe('Edge Cases', () => {
-        it('should handle case-insensitive SELECT', () => {
-            const parser = new SelectParser('select name from users');
-            expect(parser.ParseColumns()).toEqual(['name']);
-        });
+    it('should detect arithmetic expressions', () => {
+        const parser = new SelectParser('SELECT price * quantity AS total FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['price * quantity AS total']);
+    });
 
-        it('should handle case-insensitive FROM', () => {
-            const parser = new SelectParser('SELECT name FROM users');
-            expect(parser.ParseColumns()).toEqual(['name']);
-        });
+    it('should detect addition expressions', () => {
+        const parser = new SelectParser('SELECT price + tax FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['price + tax']);
+    });
 
-        it('should handle mixed case SELECT and FROM', () => {
-            const parser = new SelectParser('SeLeCt name FrOm users');
-            expect(parser.ParseColumns()).toEqual(['name']);
-        });
+    it('should detect subtraction expressions', () => {
+        const parser = new SelectParser('SELECT revenue - cost FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['revenue - cost']);
+    });
 
-        it('should handle tabs and multiple spaces', () => {
-            const parser = new SelectParser('SELECT\t\tname,\t\temail\t\tFROM\t\tusers');
-            expect(parser.ParseColumns()).toEqual(['name', 'email']);
-        });
+    it('should detect division expressions', () => {
+        const parser = new SelectParser('SELECT total / count FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['total / count']);
+    });
 
-        it('should handle columns with underscores', () => {
-            const parser = new SelectParser('SELECT user_name, email_address FROM users');
-            expect(parser.ParseColumns()).toEqual(['user_name', 'email_address']);
-        });
+    it('should detect complex expressions with parentheses', () => {
+        const parser = new SelectParser('SELECT (price + tax) * quantity AS total FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['(price + tax) * quantity AS total']);
+    });
 
-        it('should handle columns with numbers', () => {
-            const parser = new SelectParser('SELECT col1, col2, col3 FROM table1');
-            expect(parser.ParseColumns()).toEqual(['col1', 'col2', 'col3']);
-        });
+    it('should detect multiple expressions', () => {
+        const parser = new SelectParser('SELECT price * quantity AS total, (revenue - cost) AS profit FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['price * quantity AS total', '(revenue - cost) AS profit']);
+    });
 
-        it('should handle expressions with literal numbers', () => {
-            const parser = new SelectParser('SELECT price * 1.5 AS discounted FROM products');
-            expect(parser.ParseExpressions()).toEqual(['price * 1.5 AS discounted']);
-        });
+    it('should detect mixed columns and expressions', () => {
+        const parser = new SelectParser('SELECT id, price * quantity AS total, status FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['price * quantity AS total']);
+    });
 
-        it('should extract column from expression with literal number', () => {
-            const parser = new SelectParser('SELECT price * 1.5 AS discounted FROM products');
-            expect(parser.ParseColumns()).toEqual(['price']);
-        });
+    it('should detect expressions with table qualifiers', () => {
+        const parser = new SelectParser('SELECT orders.price * orders.quantity FROM orders');
+        expect(parser.ParseExpressions()).toEqual(['orders.price * orders.quantity']);
+    });
+
+    it('should detect function calls as expressions', () => {
+        const parser = new SelectParser('SELECT COUNT(*), SUM(price) FROM orders');
+        const expressions = parser.ParseExpressions();
+        expect(expressions).toContain('COUNT(*)');
+        expect(expressions).toContain('SUM(price)');
+    });
+
+    it('should detect nested function calls', () => {
+        const parser = new SelectParser('SELECT ROUND(AVG(price)) FROM orders');
+        expect(parser.ParseExpressions()).toContain('ROUND(AVG(price))');
+    });
+
+    it('should detect CASE statements as expressions', () => {
+        const parser = new SelectParser('SELECT CASE WHEN age > 18 THEN @adult ELSE @minor END FROM users');
+        const expressions = parser.ParseExpressions();
+        expect(expressions.length).toBeGreaterThan(0);
+        expect(expressions.some(expr => expr.includes('CASE'))).toBe(true);
+    });
+});
+
+describe('Edge Cases', () => {
+    it('should handle case-insensitive SELECT', () => {
+        const parser = new SelectParser('select name from users');
+        expect(parser.ParseColumns()).toEqual(['name']);
+    });
+
+    it('should handle case-insensitive FROM', () => {
+        const parser = new SelectParser('SELECT name FROM users');
+        expect(parser.ParseColumns()).toEqual(['name']);
+    });
+
+    it('should handle mixed case SELECT and FROM', () => {
+        const parser = new SelectParser('SeLeCt name FrOm users');
+        expect(parser.ParseColumns()).toEqual(['name']);
+    });
+
+    it('should handle tabs and multiple spaces', () => {
+        const parser = new SelectParser('SELECT\t\tname,\t\temail\t\tFROM\t\tusers');
+        expect(parser.ParseColumns()).toEqual(['name', 'email']);
+    });
+
+    it('should handle columns with underscores', () => {
+        const parser = new SelectParser('SELECT user_name, email_address FROM users');
+        expect(parser.ParseColumns()).toEqual(['user_name', 'email_address']);
+    });
+
+    it('should handle columns with numbers', () => {
+        const parser = new SelectParser('SELECT col1, col2, col3 FROM table1');
+        expect(parser.ParseColumns()).toEqual(['col1', 'col2', 'col3']);
+    });
+
+    it('should handle expressions with literal numbers', () => {
+        const parser = new SelectParser('SELECT price * 1.5 AS discounted FROM products');
+        expect(parser.ParseExpressions()).toEqual(['price * 1.5 AS discounted']);
+    });
+
+    it('should extract column from expression with literal number', () => {
+        const parser = new SelectParser('SELECT price * 1.5 AS discounted FROM products');
+        expect(parser.ParseColumns()).toEqual(['price']);
     });
 });

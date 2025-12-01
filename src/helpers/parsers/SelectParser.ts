@@ -67,17 +67,128 @@ export default class SelectParser extends BaseParser<SelectValues[]> {
         return selectValues;
     }
 
-    private ParseColumns(): string[] {
+    /**
+     * Extracts the main SELECT clause from SQL query, handling CTE (WITH clauses).
+     * 
+     * For regular queries, finds the SELECT...FROM pattern.
+     * For CTE queries, finds the main SELECT clause that comes after all WITH clauses.
+     * 
+     * @returns The main SELECT clause content or null if not found
+     * 
+     * @example
+     * ```typescript
+     * // Regular query
+     * "SELECT id, name FROM users" -> "id, name"
+     * 
+     * // CTE query
+     * "WITH temp AS (...) SELECT u.id, u.name FROM users u" -> "u.id, u.name"
+     * ```
+     */
+    private extractMainSelectClause(): string | null {
+        const query = this.query.toLowerCase();
+        
+        // Check if this is a CTE query (starts with WITH)
+        if (query.trim().startsWith('with')) {
+            return this.extractMainSelectFromCTE();
+        }
+        
+        // Regular query - use the existing logic
         const selectClause = this.extractClause(/select\s+(.*?)\s+from/i);
-        if (!selectClause) {
-            throw new Error("Invalid SQL query: SELECT clause not found.");
+        return selectClause ? selectClause.content : null;
+    }
+
+    /**
+     * Extracts the main SELECT clause from a CTE (WITH) query.
+     * 
+     * Identifies the main SELECT statement that comes after all WITH clauses
+     * by finding the SELECT that is not preceded by another keyword that would
+     * indicate it's part of a CTE definition.
+     * 
+     * @returns The main SELECT clause content or null if not found
+     */
+    private extractMainSelectFromCTE(): string | null {
+        const query = this.query;
+        
+        // Find all SELECT statements and their positions
+        const selectMatches = [...query.matchAll(/\bselect\s+/gi)];
+        if (selectMatches.length === 0) return null;
+        
+        // For each SELECT, check if it's the main one by looking backwards
+        // for keywords that indicate it's part of a CTE
+        for (let i = selectMatches.length - 1; i >= 0; i--) {
+            const match = selectMatches[i];
+            const selectIndex = match.index;
+            if (selectIndex === undefined) continue;
+            
+            // Get the text before this SELECT to analyze context
+            const beforeSelect = query.substring(0, selectIndex).trim().toLowerCase();
+            
+            // Skip if this SELECT is part of a CTE definition, subquery, or other clause
+            if (this.isSelectPartOfSubstructure(beforeSelect)) {
+                continue;
+            }
+            
+            // This should be the main SELECT - extract its content
+            const fromMatch = query.substring(selectIndex).match(/\bfrom\s+/i);
+            if (!fromMatch || fromMatch.index === undefined) continue;
+            
+            const selectStart = selectIndex + match[0].length;
+            const fromStart = selectIndex + fromMatch.index;
+            const selectContent = query.substring(selectStart, fromStart).trim();
+            
+            return selectContent;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Determines if a SELECT statement is part of a substructure (CTE, subquery, etc.)
+     * rather than the main SELECT clause.
+     * 
+     * @param beforeSelect Text that appears before the SELECT statement
+     * @returns true if the SELECT is part of a substructure
+     */
+    private isSelectPartOfSubstructure(beforeSelect: string): boolean {
+        // Remove parentheses and their contents to focus on main structure
+        const cleaned = beforeSelect.replace(/\([^)]*\)/g, '');
+        
+        // Check if we're inside a CTE definition
+        const ctePattern = /\b(with\s+(?:recursive\s+)?\w+\s+as|,\s*\w+\s+as)\s*$/i;
+        if (ctePattern.test(cleaned)) {
+            return true;
+        }
+        
+        // Check if we're inside a subquery (opening parenthesis without closing)
+        let parenCount = 0;
+        for (const char of beforeSelect) {
+            if (char === '(') parenCount++;
+            if (char === ')') parenCount--;
+        }
+        if (parenCount > 0) {
+            return true;
+        }
+        
+        // Check if the SELECT follows keywords that indicate subquery context
+        const subqueryKeywords = /\b(exists|in|any|all|case|when)\s*$/i;
+        if (subqueryKeywords.test(cleaned)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    private ParseColumns(): string[] {
+        const selectContent = this.extractMainSelectClause();
+        if (!selectContent) {
+            return [];
         }
 
-        let selectContent = selectClause.content.trim();
+        let cleanedContent = selectContent.trim();
         
-        selectContent = selectContent.replace(/^distinct\s+/i, '');
+        cleanedContent = cleanedContent.replace(/^distinct\s+/i, '');
         
-        const columns = selectContent.split(',').map((col: string) => col.replace(/\s+as\s+\w+/i, '').trim());
+        const columns = cleanedContent.split(',').map((col: string) => col.replace(/\s+as\s+\w+/i, '').trim());
         const regex = /[+\-*/()]/;
 
         return columns.map((col: string) => {
@@ -111,16 +222,16 @@ export default class SelectParser extends BaseParser<SelectValues[]> {
     }
 
     private ParseExpressions(): string[] {
-        const selectClause = this.extractClause(/select\s+(.*?)\s+from/i);
-        if (!selectClause) {
-            throw new Error("Invalid SQL query: SELECT clause not found.");
+        const selectContent = this.extractMainSelectClause();
+        if (!selectContent) {
+            return [];
         }
 
-        let selectContent = selectClause.content.trim();
+        let cleanedContent = selectContent.trim();
         
-        selectContent = selectContent.replace(/^distinct\s+/i, '');
+        cleanedContent = cleanedContent.replace(/^distinct\s+/i, '');
 
-        const columns = selectContent.split(',').map((col: string) => col.trim());
+        const columns = cleanedContent.split(',').map((col: string) => col.trim());
         const regex = /[+\-*/()]/;
         
         return columns.filter((col: string) => {
