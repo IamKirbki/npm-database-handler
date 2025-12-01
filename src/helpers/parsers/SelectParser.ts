@@ -7,47 +7,57 @@ import { SqlUtils } from "./SqlUtils";
  * 
  * CURRENT FEATURES:
  * ✅ Basic column selection
- * ✅ DISTINCT keyword
+ * ✅ DISTINCT keyword  
  * ✅ Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
  * ✅ Column aliases with AS
+ * ✅ Common Table Expressions (WITH/CTE) - Main SELECT extraction
+ * ✅ Table-qualified column names (table.column) - Basic support
+ * ✅ CASE WHEN statements - Basic column extraction from WHEN clauses
+ * ✅ Mathematical expressions - Basic arithmetic operator parsing
+ * ✅ Parentheses handling in expressions
+ * ✅ String literal safety in parsing
+ * 
+ * INTEGRATION NOTES:
+ * - Called by Parser.ts for main SELECT clause extraction from complex queries
+ * - Handles CTE queries by identifying main SELECT vs subquery SELECT statements
+ * - Returns SelectValues[] with {columns, expressions} structure for Parser consumption
  * 
  * TODO FEATURES:
  * 
- * - Subqueries (in SELECT, FROM, WHERE)
+ * - Enhanced Subquery Support
  *   Example: "SELECT name, (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count FROM users"
- *   Explanation: Parse nested SELECT statements within main query clauses
+ *   Current: Basic parsing, needs better nested subquery column extraction
+ *   Explanation: Improve extraction of columns from deeply nested SELECT subqueries
  * 
- * - UNION/INTERSECT/EXCEPT
+ * - UNION/INTERSECT/EXCEPT Operations
  *   Example: "SELECT name FROM customers UNION SELECT name FROM suppliers"
- *   Explanation: Combine results from multiple SELECT statements with set operations
+ *   Status: Not implemented - needs Parser.ts coordination
+ *   Explanation: Handle set operations that combine multiple SELECT statements
  * 
- * - Window functions (OVER, PARTITION BY)
- *   Example: "SELECT name, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) FROM employees"
- *   Explanation: Parse analytical functions that operate over a window of rows
+ * - Advanced Window Functions
+ *   Example: "SELECT name, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) FROM employees"  
+ *   Current: Basic recognition, needs OVER clause parsing
+ *   Explanation: Extract PARTITION BY and ORDER BY clauses from window functions
  * 
- * - Common Table Expressions (WITH/CTE)
- *   Example: "WITH sales_summary AS (SELECT region, SUM(amount) FROM sales GROUP BY region) SELECT * FROM sales_summary"
- *   Explanation: Parse WITH clauses that define temporary named result sets
- * 
- * - Wildcards in column selection (*)
+ * - Enhanced Wildcard Support
  *   Example: "SELECT users.*, orders.total FROM users JOIN orders ON users.id = orders.user_id"
- *   Explanation: Handle asterisk wildcards, especially with table prefixes
+ *   Current: Basic * handling, needs table-prefixed wildcards
+ *   Explanation: Properly expand table-qualified wildcards (table.*)
  * 
- * - Table-qualified column names (table.column)
- *   Example: "SELECT users.name, orders.total FROM users JOIN orders ON users.id = orders.user_id"
- *   Explanation: Parse columns with table prefixes for disambiguation
- * 
- * - Schema-qualified names (schema.table.column)
+ * - Schema-qualified Names
  *   Example: "SELECT public.users.name, sales.orders.total FROM public.users"
- *   Explanation: Parse fully qualified column names including schema
+ *   Status: Not implemented
+ *   Explanation: Parse three-part column names (schema.table.column)
  * 
- * - Expression parsing (mathematical, string concatenation)
- *   Example: "SELECT name, (price * quantity) as total, CONCAT(first_name, ' ', last_name) as full_name FROM products"
- *   Explanation: Parse complex expressions involving operators and functions
+ * - Advanced Expression Parsing
+ *   Example: "SELECT CONCAT(first_name, ' ', last_name) as full_name, COALESCE(email, 'no-email') FROM users"
+ *   Current: Basic math operators, needs function call parsing
+ *   Explanation: Better function call recognition and nested expression handling
  * 
- * - CASE WHEN statements
- *   Example: "SELECT name, CASE WHEN age < 18 THEN 'Minor' WHEN age < 65 THEN 'Adult' ELSE 'Senior' END as category FROM users"
- *   Explanation: Parse conditional logic expressions in SELECT clauses
+ * - Complex CASE Statement Support  
+ *   Example: "SELECT CASE WHEN age < 18 THEN 'Minor' WHEN age BETWEEN 18 AND 65 THEN 'Adult' ELSE 'Senior' END FROM users"
+ *   Current: Basic WHEN column extraction, needs full CASE parsing
+ *   Explanation: Parse complete CASE expressions including THEN/ELSE values and nested conditions
  */
 
 export default class SelectParser extends BaseParser<SelectValues[]> {
@@ -66,7 +76,7 @@ export default class SelectParser extends BaseParser<SelectValues[]> {
         
         return selectValues;
     }
-
+    
     /**
      * Extracts the main SELECT clause from SQL query, handling CTE (WITH clauses).
      * 

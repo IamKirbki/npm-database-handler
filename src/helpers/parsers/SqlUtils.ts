@@ -236,6 +236,10 @@ export class SqlUtils {
         'union', 'intersect', 'except', 'all', 'any', 'some', 'with'
     ];
 
+    static readonly SQL_SELECT_EXPRESSIONS_KEYWORDS = [
+        "concat", "coalesce", "nullif", "ifnull", "cast", "typeof", "distinct"
+    ];
+
     /**
      * Checks if a token should be excluded from column parsing.
      * 
