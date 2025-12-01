@@ -49,3 +49,8 @@ export type GroupByValues = {
     columns: string[];
     havingConditions?: WhereValues;
 }
+
+export type SubQueryValues = {
+    queries: string[];
+    tablesUsed: FromValues[];
+}
