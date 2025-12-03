@@ -1,6 +1,6 @@
 import Table from "./Table";
 import { QueryParameters } from "types/index";
-import { Database as SqliteDatabaseType } from "better-sqlite3";
+import { Database as DatabaseType } from "better-sqlite3";
 import Record from "./Record";
 import Validator from "./helpers/Validator";
 
@@ -37,7 +37,7 @@ import Validator from "./helpers/Validator";
  */
 export default class Query {
   public readonly Table: Table;
-  private readonly db: SqliteDatabaseType;
+  private readonly db: DatabaseType;
   private query: string = "";
   public Parameters: QueryParameters = {};
 
@@ -63,7 +63,7 @@ export default class Query {
    * query.Parameters = { id: 1 };
    * ```
    */
-  constructor(Table: Table, Query: string, DB: SqliteDatabaseType) {
+  constructor(Table: Table, Query: string, DB: DatabaseType) {
     this.Table = Table;
     this.query = Query;
     this.db = DB;

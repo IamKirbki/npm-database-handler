@@ -1,4 +1,4 @@
-import { Database as SqliteDatabaseType } from "better-sqlite3";
+import { Database as DatabaseType } from "better-sqlite3";
 import { inspect } from "util";
 import Table from "./Table";
 import Query from "./Query";
@@ -25,7 +25,7 @@ import Query from "./Query";
  * ```
  */
 export default class Record<ColumnValuesType extends { id: number | string }> {
-    private readonly _db: SqliteDatabaseType;
+    private readonly _db: DatabaseType;
     private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _table: Table;
 
@@ -36,7 +36,7 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: ColumnValuesType, db: SqliteDatabaseType, table: Table) {
+    constructor(values: ColumnValuesType, db: DatabaseType, table: Table) {
         this._values = values;
         this._db = db;
         this._table = table;
