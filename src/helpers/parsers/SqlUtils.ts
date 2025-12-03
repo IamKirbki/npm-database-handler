@@ -1,3 +1,5 @@
+import { SelectExpressionsRule } from "types/index";
+
 /**
  * **SqlUtils** - Advanced SQL parsing utility class providing comprehensive parsing operations.
  * 
@@ -115,6 +117,186 @@ export class SqlUtils {
         'UNION', 'JOIN', 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN',
         'FULL JOIN', 'CROSS JOIN', 'LEFT OUTER JOIN', 'RIGHT OUTER JOIN',
         'FULL OUTER JOIN'
+    ];
+
+
+    static readonly expressionRules: SelectExpressionsRule[] = [
+        {
+            name: 'COUNT',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'SUM',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'AVG',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'MIN',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'MAX',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'GROUP_CONCAT',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'TOTAL',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'ABS',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'ROUND',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'CEIL',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'FLOOR',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'POWER',
+            parameterRange: [2, 2]
+        },
+        {
+            name: 'SQRT',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'UPPER',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'LOWER',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'LENGTH',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'SUBSTR',
+            parameterRange: [2, 3]
+        },
+        {
+            name: 'TRIM',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'LTRIM',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'RTRIM',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'REPLACE',
+            parameterRange: [3, 3]
+        },
+        {
+            name: 'CONCAT',
+            parameterRange: [1, 255]
+        },
+        {
+            name: 'INSTR',
+            parameterRange: [2, 2]
+        },
+        {
+            name: 'DATE',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'TIME',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'DATETIME',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'STRFTIME',
+            parameterRange: [2, 3]
+        },
+        {
+            name: 'JULIANDAY',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'COALESCE',
+            parameterRange: [2, 255]
+        },
+        {
+            name: 'NULLIF',
+            parameterRange: [2, 2]
+        },
+        {
+            name: 'IFNULL',
+            parameterRange: [2, 2]
+        },
+        {
+            name: 'IIF',
+            parameterRange: [3, 3]
+        },
+        {
+            name: 'CAST',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'TYPEOF',
+            parameterRange: [1, 1]
+        },
+        {
+            name: 'ROW_NUMBER',
+            parameterRange: [0, 0]
+        },
+        {
+            name: 'RANK',
+            parameterRange: [0, 0]
+        },
+        {
+            name: 'DENSE_RANK',
+            parameterRange: [0, 0]
+        },
+        {
+            name: 'LAG',
+            parameterRange: [1, 3]
+        },
+        {
+            name: 'LEAD',
+            parameterRange: [1, 3]
+        },
+        {
+            name: 'JSON_EXTRACT',
+            parameterRange: [2, 2]
+        },
+        {
+            name: 'JSON_ARRAY',
+            parameterRange: [0, 255]
+        },
+        {
+            name: 'JSON_OBJECT',
+            parameterRange: [0, 255]
+        },
+        {
+            name: 'JSON_ARRAY_LENGTH',
+            parameterRange: [1, 2]
+        },
+        {
+            name: 'JSON_VALID',
+            parameterRange: [1, 1]
+        }
     ];
 
     /**
@@ -373,5 +555,84 @@ export class SqlUtils {
             .split(/(\s+and\s+|\s+or\s+)/i)
             .filter(part => !/^\s*(and|or)\s*$/i.test(part))
             .map(part => part.trim());
+    }
+
+    static splitByComma(content: string | undefined): string[] {
+        if (!content) return [];
+        const parts: string[] = [];
+
+        while (content.trim().length > 0) {
+            const functionMatch = content.match(/^(\w+)\s*\(/);
+
+            if (functionMatch) {
+                let openParens = 0;
+                let endIndex = 0;
+
+                for (; endIndex < content.length; endIndex++) {
+                    if (content[endIndex] === '(') openParens++;
+                    else if (content[endIndex] === ')') openParens--;
+                    if (openParens === 0 && endIndex > functionMatch[0].length - 1) break;
+                }
+
+                let fullExpression = content.slice(0, endIndex + 1);
+                let remainingContent = content.slice(endIndex + 1).trim();
+                
+                const aliasMatch = remainingContent.match(/^(as\s+\w+|\w+)(\s*,.*)?$/i);
+                if (aliasMatch) {
+                    const aliasLength = aliasMatch[1].length;
+                    fullExpression += ' ' + remainingContent.slice(0, aliasLength);
+                    remainingContent = remainingContent.slice(aliasLength).trim();
+                }
+                
+                parts.push(fullExpression.trim());
+                content = remainingContent;
+
+                if (content.startsWith(',')) {
+                    content = content.slice(1).trim();
+                }
+            } else if (content.startsWith('"') || content.startsWith("'") || content.startsWith('`')) {
+                const quoteChar = content[0];
+                let endIndex = 1;
+                
+                while (endIndex < content.length) {
+                    if (content[endIndex] === quoteChar && content[endIndex - 1] !== '\\') {
+                        break;
+                    }
+                
+                    endIndex++;
+                }
+                
+                parts.push(content.slice(0, endIndex + 1).trim());
+                content = content.slice(endIndex + 1).trim();
+                
+                if (content.startsWith(',')) {
+                    content = content.slice(1).trim();
+                }
+            } else {
+                let parenDepth = 0;
+                let actualCommaIndex = -1;
+                
+                for (let i = 0; i < content.length; i++) {
+                    if (content[i] === '(') {
+                        parenDepth++;
+                    } else if (content[i] === ')') {
+                        parenDepth--;
+                    } else if (content[i] === ',' && parenDepth === 0) {
+                        actualCommaIndex = i;
+                        break;
+                    }
+                }
+                
+                if (actualCommaIndex === -1) {
+                    parts.push(content.trim());
+                    break;
+                } else {
+                    parts.push(content.slice(0, actualCommaIndex).trim());
+                    content = content.slice(actualCommaIndex + 1).trim();
+                }
+            }
+        }
+
+        return parts;
     }
 }

@@ -1,7 +1,29 @@
 export type SelectValues = {
-    columns: string;
-    expressions: string;
+    column: string[] | string;
+    expression?: SelectExpression;
+    alias?: string;
 };
+
+export type SelectExpression = {
+    name: string,
+    columns: string[]
+    alias?: string
+};
+
+export type CaseExpression = {
+    columns: string[];
+    operator?: string;
+    alias?: string;
+}
+
+export type ShouldBeTypes = "NUMBER" | "STRING" | "DATE" | SqlBoolean;
+
+export type SqlBoolean = 0 | 1;
+
+export type SelectExpressionsRule = {
+    name: string,
+    parameterRange: [number, number]
+}
 
 export type FromValues = {
     tableName: string;

@@ -1,63 +1,111 @@
-import { SelectValues } from "types/index";
+import { SelectExpression, SelectValues } from "types/index";
 import { BaseParser } from "./BaseParser";
 import { SqlUtils } from "./SqlUtils";
 
 /**
- * Parser for SQL SELECT clause components.
+ * SELECT [SOMETHING] FROM ...
  * 
- * CURRENT FEATURES:
- * ✅ Basic column selection
- * ✅ DISTINCT keyword  
- * ✅ Aggregate functions (COUNT, SUM, AVG, MIN, MAX)
- * ✅ Column aliases with AS
- * ✅ Common Table Expressions (WITH/CTE) - Main SELECT extraction
- * ✅ Table-qualified column names (table.column) - Basic support
- * ✅ CASE WHEN statements - Basic column extraction from WHEN clauses
- * ✅ Mathematical expressions - Basic arithmetic operator parsing
- * ✅ Parentheses handling in expressions
- * ✅ String literal safety in parsing
+ * Column: * | column_name | table_name.column_name | expression
  * 
- * INTEGRATION NOTES:
- * - Called by Parser.ts for main SELECT clause extraction from complex queries
- * - Handles CTE queries by identifying main SELECT vs subquery SELECT statements
- * - Returns SelectValues[] with {columns, expressions} structure for Parser consumption
+ * * works
+ * column_name works
+ * table_name.column_name should still be dragged apart into {table: table_name, column: column_name}
  * 
- * TODO FEATURES:
+ * === SELECT CLAUSE EXPRESSIONS ===
  * 
- * - Enhanced Subquery Support
- *   Example: "SELECT name, (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count FROM users"
- *   Current: Basic parsing, needs better nested subquery column extraction
- *   Explanation: Improve extraction of columns from deeply nested SELECT subqueries
+ * Basic Columns:
+ * column_name
+ * table_name.column_name
+ * schema.table.column_name
+ * *
+ * table_name.*
  * 
- * - UNION/INTERSECT/EXCEPT Operations
- *   Example: "SELECT name FROM customers UNION SELECT name FROM suppliers"
- *   Status: Not implemented - needs Parser.ts coordination
- *   Explanation: Handle set operations that combine multiple SELECT statements
+ * Aggregate Functions:
+ * COUNT(*)
+ * COUNT(column_name)
+ * COUNT(DISTINCT column_name)
+ * SUM(column_name)
+ * AVG(column_name)
+ * MIN(column_name)
+ * MAX(column_name)
+ * GROUP_CONCAT(column_name)
+ * TOTAL(column_name)
  * 
- * - Advanced Window Functions
- *   Example: "SELECT name, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) FROM employees"  
- *   Current: Basic recognition, needs OVER clause parsing
- *   Explanation: Extract PARTITION BY and ORDER BY clauses from window functions
+ * Mathematical Expressions:
+ * column_name + column_name
+ * column_name - column_name
+ * column_name * column_name
+ * column_name / column_name
+ * column_name % column_name
+ * (column_name + column_name) * 2
+ * ABS(column_name)
+ * ROUND(column_name, 2)
+ * CEIL(column_name)
+ * FLOOR(column_name)
+ * POWER(column_name, 2)
+ * SQRT(column_name)
  * 
- * - Enhanced Wildcard Support
- *   Example: "SELECT users.*, orders.total FROM users JOIN orders ON users.id = orders.user_id"
- *   Current: Basic * handling, needs table-prefixed wildcards
- *   Explanation: Properly expand table-qualified wildcards (table.*)
+ * String Functions:
+ * UPPER(column_name)
+ * LOWER(column_name)
+ * LENGTH(column_name)
+ * SUBSTR(column_name, 1, 10)
+ * TRIM(column_name)
+ * LTRIM(column_name)
+ * RTRIM(column_name)
+ * REPLACE(column_name, 'old', 'new')
+ * CONCAT(first_name, ' ', last_name)
+ * first_name || ' ' || last_name
+ * INSTR(column_name, 'search')
  * 
- * - Schema-qualified Names
- *   Example: "SELECT public.users.name, sales.orders.total FROM public.users"
- *   Status: Not implemented
- *   Explanation: Parse three-part column names (schema.table.column)
+ * Date/Time Functions:
+ * DATE(column_name)
+ * TIME(column_name)
+ * DATETIME(column_name)
+ * STRFTIME('%Y-%m-%d', column_name)
+ * JULIANDAY(column_name)
+ * DATE('now')
+ * DATETIME('now', 'localtime')
+ * DATE(column_name, '+1 day')
  * 
- * - Advanced Expression Parsing
- *   Example: "SELECT CONCAT(first_name, ' ', last_name) as full_name, COALESCE(email, 'no-email') FROM users"
- *   Current: Basic math operators, needs function call parsing
- *   Explanation: Better function call recognition and nested expression handling
+ * Conditional Expressions:
+ * CASE WHEN age > 18 THEN 'Adult' ELSE 'Minor' END
+ * CASE status WHEN 1 THEN 'Active' WHEN 0 THEN 'Inactive' ELSE 'Unknown' END
+ * IIF(score > 80, 'Pass', 'Fail')
+ * COALESCE(nickname, first_name, 'Unknown')
+ * NULLIF(column_name, 0)
+ * IFNULL(column_name, 'N/A')
  * 
- * - Complex CASE Statement Support  
- *   Example: "SELECT CASE WHEN age < 18 THEN 'Minor' WHEN age BETWEEN 18 AND 65 THEN 'Adult' ELSE 'Senior' END FROM users"
- *   Current: Basic WHEN column extraction, needs full CASE parsing
- *   Explanation: Parse complete CASE expressions including THEN/ELSE values and nested conditions
+ * Type Conversion:
+ * CAST(column_name AS INTEGER)
+ * CAST(column_name AS REAL)
+ * CAST(column_name AS TEXT)
+ * TYPEOF(column_name)
+ * 
+ * Subqueries (Scalar):
+ * (SELECT COUNT(*) FROM orders WHERE user_id = users.id)
+ * (SELECT MAX(created_at) FROM orders WHERE user_id = users.id)
+ * 
+ * Window Functions:
+ * ROW_NUMBER() OVER (ORDER BY created_at)
+ * RANK() OVER (PARTITION BY department ORDER BY salary DESC)
+ * DENSE_RANK() OVER (ORDER BY score)
+ * LAG(salary, 1) OVER (ORDER BY hire_date)
+ * LEAD(salary, 1) OVER (ORDER BY hire_date)
+ * SUM(amount) OVER (PARTITION BY user_id ORDER BY date)
+ * AVG(score) OVER (ORDER BY date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)
+ * 
+ * JSON Functions (SQLite 3.38+):
+ * JSON_EXTRACT(json_column, '$.key')
+ * JSON_ARRAY(val1, val2, val3)
+ * JSON_OBJECT('name', name, 'age', age)
+ * JSON_ARRAY_LENGTH(json_column)
+ * JSON_VALID(json_column)
+ * 
+ * Column Aliases:
+ * column_name AS alias_name
+ * expression AS alias_name
+ * column_name alias_name (without AS)
  */
 
 export default class SelectParser extends BaseParser<SelectValues[]> {
@@ -66,189 +114,103 @@ export default class SelectParser extends BaseParser<SelectValues[]> {
     }
 
     protected parse(): SelectValues[] {
-        const columns = this.ParseColumns();
-        const expressions = this.ParseExpressions();
-        const selectValues: SelectValues[] = [];
+        const selectContent = this.extractClause(
+            /select\s+([\s\S]*?)\s+from/i,
+            "Couldn't find select match!"
+        )?.content.trim();
 
-        columns.forEach((col, index) => {
-            selectValues.push({ columns: col, expressions: expressions[index] || '' });
-        });
+        const columnStrings = SqlUtils.splitByComma(selectContent);
         
-        return selectValues;
-    }
-    
-    /**
-     * Extracts the main SELECT clause from SQL query, handling CTE (WITH clauses).
-     * 
-     * For regular queries, finds the SELECT...FROM pattern.
-     * For CTE queries, finds the main SELECT clause that comes after all WITH clauses.
-     * 
-     * @returns The main SELECT clause content or null if not found
-     * 
-     * @example
-     * ```typescript
-     * // Regular query
-     * "SELECT id, name FROM users" -> "id, name"
-     * 
-     * // CTE query
-     * "WITH temp AS (...) SELECT u.id, u.name FROM users u" -> "u.id, u.name"
-     * ```
-     */
-    private extractMainSelectClause(): string | null {
-        const query = this.query.toLowerCase();
-        
-        // Check if this is a CTE query (starts with WITH)
-        if (query.trim().startsWith('with')) {
-            return this.extractMainSelectFromCTE();
-        }
-        
-        // Regular query - use the existing logic
-        const selectClause = this.extractClause(/select\s+(.*?)\s+from/i);
-        return selectClause ? selectClause.content : null;
+        return columnStrings.map(columnStr => 
+            this.parseColumn(columnStr.trim())
+        );
     }
 
-    /**
-     * Extracts the main SELECT clause from a CTE (WITH) query.
-     * 
-     * Identifies the main SELECT statement that comes after all WITH clauses
-     * by finding the SELECT that is not preceded by another keyword that would
-     * indicate it's part of a CTE definition.
-     * 
-     * @returns The main SELECT clause content or null if not found
-     */
-    private extractMainSelectFromCTE(): string | null {
-        const query = this.query;
+    private parseColumn(columnStr: string): SelectValues {
+        const caseMatch = columnStr.match(/case([\s\S]*?)end/i);
+        // if(caseMatch?[0]) {
+            
+        // }
+
+        const aliasMatch = columnStr.match(/\s+(?:as\s+)?(\w+)$/i);
+        const alias = aliasMatch?.[1];
         
-        // Find all SELECT statements and their positions
-        const selectMatches = [...query.matchAll(/\bselect\s+/gi)];
-        if (selectMatches.length === 0) return null;
-        
-        // For each SELECT, check if it's the main one by looking backwards
-        // for keywords that indicate it's part of a CTE
-        for (let i = selectMatches.length - 1; i >= 0; i--) {
-            const match = selectMatches[i];
-            const selectIndex = match.index;
-            if (selectIndex === undefined) continue;
-            
-            // Get the text before this SELECT to analyze context
-            const beforeSelect = query.substring(0, selectIndex).trim().toLowerCase();
-            
-            // Skip if this SELECT is part of a CTE definition, subquery, or other clause
-            if (this.isSelectPartOfSubstructure(beforeSelect)) {
-                continue;
-            }
-            
-            // This should be the main SELECT - extract its content
-            const fromMatch = query.substring(selectIndex).match(/\bfrom\s+/i);
-            if (!fromMatch || fromMatch.index === undefined) continue;
-            
-            const selectStart = selectIndex + match[0].length;
-            const fromStart = selectIndex + fromMatch.index;
-            const selectContent = query.substring(selectStart, fromStart).trim();
-            
-            return selectContent;
+        if (aliasMatch) {
+            columnStr = columnStr.slice(0, aliasMatch.index).trim();
         }
+
+        const functionMatch = columnStr.match(/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)/);
         
-        return null;
+        const mathMatch = !functionMatch ? 
+            columnStr.match(/(.+?)([+\-*/%])(.+)/) : null;
+
+        let expression: SelectExpression | undefined;
+
+        if (functionMatch) {
+            expression = this.parseExpression(functionMatch[1], functionMatch[2]);
+        } else if (mathMatch) {
+            const operator = mathMatch[2];
+            const operands = `${mathMatch[1].trim()},${mathMatch[3].trim()}`;
+            expression = this.parseExpression(operator, operands);
+        }
+
+        const column = expression 
+            ? this.extractColumnNames(expression.columns)
+            : columnStr.trim();
+
+        return { column, expression, alias };
     }
 
-    /**
-     * Determines if a SELECT statement is part of a substructure (CTE, subquery, etc.)
-     * rather than the main SELECT clause.
-     * 
-     * @param beforeSelect Text that appears before the SELECT statement
-     * @returns true if the SELECT is part of a substructure
-     */
-    private isSelectPartOfSubstructure(beforeSelect: string): boolean {
-        // Remove parentheses and their contents to focus on main structure
-        const cleaned = beforeSelect.replace(/\([^)]*\)/g, '');
-        
-        // Check if we're inside a CTE definition
-        const ctePattern = /\b(with\s+(?:recursive\s+)?\w+\s+as|,\s*\w+\s+as)\s*$/i;
-        if (ctePattern.test(cleaned)) {
-            return true;
+    private parseExpression(expression: string, parameters: string): SelectExpression {
+        const rule = SqlUtils.expressionRules.find(
+            r => r.name.toUpperCase() === expression.toUpperCase()
+        );
+        const params = SqlUtils.splitByComma(parameters).map(param => param.trim());
+
+        if (rule) {
+            this.validateParameterCount(expression, params.length, rule.parameterRange);
         }
-        
-        // Check if we're inside a subquery (opening parenthesis without closing)
-        let parenCount = 0;
-        for (const char of beforeSelect) {
-            if (char === '(') parenCount++;
-            if (char === ')') parenCount--;
-        }
-        if (parenCount > 0) {
-            return true;
-        }
-        
-        // Check if the SELECT follows keywords that indicate subquery context
-        const subqueryKeywords = /\b(exists|in|any|all|case|when)\s*$/i;
-        if (subqueryKeywords.test(cleaned)) {
-            return true;
-        }
-        
-        return false;
+
+        return {
+            name: expression,
+            columns: params.filter(this.isValidParameter)
+        };
     }
 
-    private ParseColumns(): string[] {
-        const selectContent = this.extractMainSelectClause();
-        if (!selectContent) {
-            return [];
-        }
+    // private parseCaseExpression(caseContent: string): SelectExpression {
 
-        let cleanedContent = selectContent.trim();
-        
-        cleanedContent = cleanedContent.replace(/^distinct\s+/i, '');
-        
-        const columns = cleanedContent.split(',').map((col: string) => col.replace(/\s+as\s+\w+/i, '').trim());
-        const regex = /[+\-*/()]/;
+    // }
 
-        return columns.map((col: string) => {
-            if (/\bcase\b/i.test(col)) {
-                const whenMatches = col.match(/when\s+(\w+(?:\.\w+)?)\s*[><=!]/gi);
-                if (whenMatches) {
-                    return whenMatches.map((when: string) => {
-                        const match = when.match(/when\s+(\w+(?:\.\w+)?)/i);
-                        return match ? match[1] : '';
-                    }).filter(Boolean);
-                }
-                return [];
-            }
-            
-            if (regex.test(col) && col.trim() !== "*") {
-                const columnNames = col
-                    .replace(/\s+as\s+\w+/i, '');
-
-                return columnNames
-                    .split(columnNames.includes("(*)") ? /[+\-/()]/ : /[+\-*/()]/)
-                    .map((part: string) => part.trim())
-                    .filter((part: string) =>
-                        part &&
-                        !/^\d+(\.\d+)?$/.test(part) &&
-                        !SqlUtils.shouldExcludeFromColumns(part)
-                    );
-            }
-
-            return [col];
-        }).flat();
+    private extractColumnNames(columns: string[]): string[] {
+        return columns.filter(col => 
+            !this.isLiteral(col) && !this.isNumeric(col)
+        );
     }
 
-    private ParseExpressions(): string[] {
-        const selectContent = this.extractMainSelectClause();
-        if (!selectContent) {
-            return [];
+    private validateParameterCount(expression: string, count: number, range: [number, number]): void {
+        if (count < range[0] || count > range[1]) {
+            throw new Error(
+                `Invalid number of parameters for expression ${expression}. ` +
+                `Expected between ${range[0]} and ${range[1]}, got ${count}.`
+            );
         }
+    }
 
-        let cleanedContent = selectContent.trim();
-        
-        cleanedContent = cleanedContent.replace(/^distinct\s+/i, '');
+    private isValidParameter(param: string): boolean {
+        return (
+            /^\w+$/.test(param) ||              // Column name
+            /^\d+(\.\d+)?$/.test(param) ||      // Number
+            /^(['"]).*\1$/.test(param) ||       // String literal
+            /^null$/i.test(param) ||            // NULL
+            /^(true|false)$/i.test(param)       // Boolean
+        );
+    }
 
-        const columns = cleanedContent.split(',').map((col: string) => col.trim());
-        const regex = /[+\-*/()]/;
-        
-        return columns.filter((col: string) => {
-            if (/\bcase\b/i.test(col)) {
-                return true;
-            }
-            return regex.test(col);
-        });
+    private isLiteral(value: string): boolean {
+        return /^(['"]).*\1$/.test(value);
+    }
+
+    private isNumeric(value: string): boolean {
+        return /^\d+(\.\d+)?$/.test(value);
     }
 }
