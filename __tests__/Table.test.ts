@@ -110,10 +110,9 @@ describe('Table', () => {
 
         it('should insert multiple records', () => {
             const table = db.Table('users');
-            table.Insert([
-                { name: 'John', email: 'john@example.com', age: 30 },
-                { name: 'Jane', email: 'jane@example.com', age: 25 },
-            ]);
+
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            table.Insert({ name: 'Jane', email: 'jane@example.com', age: 25 });
 
             const records = table.Records();
             expect(records.length).toBe(2);
@@ -122,19 +121,29 @@ describe('Table', () => {
         it('should throw error for empty array', () => {
             const table = db.Table('users');
             expect(() => {
-                table.Insert([]);
-            }).toThrow('Cannot insert empty array');
+                table.Insert({});
+            }).toThrow('Cannot insert record with no columns');
         });
     });
 
     describe('Records', () => {
         beforeEach(() => {
             const table = db.Table('users');
-            table.Insert([
-                { name: 'John', email: 'john@example.com', age: 30 },
-                { name: 'Jane', email: 'jane@example.com', age: 25 },
-                { name: 'Bob', email: 'bob@example.com', age: 35 },
-            ]);
+            table.Insert({
+                name: 'John',
+                email: 'john@example.com',
+                age: 30
+            });
+            table.Insert({
+                name: 'Jane',
+                email: 'jane@example.com',
+                age: 25
+            });
+            table.Insert({
+                name: 'Bob',
+                email: 'bob@example.com',
+                age: 35
+            });
         });
 
         it('should return all records', () => {
@@ -203,10 +212,16 @@ describe('Table', () => {
     describe('RecordsCount', () => {
         it('should return count of records', () => {
             const table = db.Table('users');
-            table.Insert([
-                { name: 'John', email: 'john@example.com', age: 30 },
-                { name: 'Jane', email: 'jane@example.com', age: 25 },
-            ]);
+            table.Insert({
+                name: 'John',
+                email: 'john@example.com',
+                age: 30
+            });
+            table.Insert({
+                name: 'Jane',
+                email: 'jane@example.com',
+                age: 25
+            });
 
             expect(table.RecordsCount).toBe(2);
         });

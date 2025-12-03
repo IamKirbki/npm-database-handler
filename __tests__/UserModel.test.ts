@@ -9,23 +9,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("User Model CRUD Tests", () => {
     let user: User;
-    const testDbPath = path.join(__dirname, '..', 'test.db');
-
-    afterEach(() => {
-        // Clean up test database
-        if (fs.existsSync(testDbPath)) {
-            fs.unlinkSync(testDbPath);
-        }
-    });
+    let db: Database;
+    let testDbPath: string;
 
     beforeEach(() => {
-        // Create fresh in-memory database for each test
-        const db = new Database(testDbPath);
+        // Create unique test database for each test
+        testDbPath = path.join(__dirname, '..', `test-${Date.now()}-${Math.random()}.db`);
+        db = new Database(testDbPath);
         db.CreateTable("User", {
             id: "TEXT PRIMARY KEY",
             name: "TEXT"
         });
         user = new User(db.db);
+    });
+
+    afterEach(() => {
+        // Close database connection before cleanup
+        db.db.close();
+        
+        // Clean up test database
+        if (fs.existsSync(testDbPath)) {
+            fs.unlinkSync(testDbPath);
+        }
     });
 
     describe("CREATE Operations", () => {
