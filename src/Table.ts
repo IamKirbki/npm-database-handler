@@ -1,4 +1,4 @@
-import { Database as SqliteDatabaseType } from "better-sqlite3";
+import { Database as DatabaseType, RunResult } from "better-sqlite3";
 import {
     DefaultQueryOptions,
     QueryOptions,
@@ -33,7 +33,7 @@ import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
  */
 export default class Table {
     private readonly name: string;
-    private readonly db: SqliteDatabaseType;
+    private readonly db: DatabaseType;
 
     /**
      * Creates a Table instance
@@ -42,7 +42,7 @@ export default class Table {
      * @param db - Database connection instance
      * @throws Error if the table does not exist in the database
      */
-    constructor(name: string, db: SqliteDatabaseType) {
+    constructor(name: string, db: DatabaseType) {
         this.name = name;
         this.db = db;
 
@@ -147,7 +147,7 @@ export default class Table {
             query.Parameters = options.where;
 
         const results: Record<Type>[] = query.All();
-
+        
         // Wrap each result in a Record object
         return results;
     }
@@ -226,32 +226,21 @@ export default class Table {
      * ]);
      * ```
      */
-    public Insert(values: QueryParameters | QueryParameters[]): void {
-        const isMultiple = Array.isArray(values);
-        const records: QueryParameters[] = isMultiple ? values : [values];
-
-        if (records.length === 0) {
-            throw new Error("Cannot insert empty array");
-        }
-
-        // Get columns from first record
-        const columns = Object.keys(records[0]);
+    public Insert<Type extends { id: number | string }>(values: QueryParameters): Record<Type> | undefined{
+        const columns = Object.keys(values);
 
         if (columns.length === 0) {
             throw new Error("Cannot insert record with no columns");
         }
 
-        const queryStr = QueryStatementBuilder.BuildInsert(this, records[0]);
+        const queryStr = QueryStatementBuilder.BuildInsert(this, values);
         const query = new Query(this, queryStr, this.db);
-
-        // Use transaction for multiple records, direct run for single
-        if (isMultiple && records.length > 1) {
-            query.Transaction(records);
-        } else {
-            // Single insert
-            query.Parameters = records[0];
-            query.Run();
-        }
+        query.Parameters = values;
+        
+        const result = query.Run<RunResult>();
+        return this.Record({
+            where: { id: result.lastInsertRowid }
+        });
     }
 
     /**

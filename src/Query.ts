@@ -1,6 +1,6 @@
 import Table from "./Table";
 import { QueryParameters } from "types/index";
-import { Database as SqliteDatabaseType } from "better-sqlite3";
+import { Database as DatabaseType } from "better-sqlite3";
 import Record from "./Record";
 import Validator from "./helpers/Validator";
 
@@ -37,7 +37,7 @@ import Validator from "./helpers/Validator";
  */
 export default class Query {
   public readonly Table: Table;
-  private readonly db: SqliteDatabaseType;
+  private readonly db: DatabaseType;
   private query: string = "";
   public Parameters: QueryParameters = {};
 
@@ -63,7 +63,7 @@ export default class Query {
    * query.Parameters = { id: 1 };
    * ```
    */
-  constructor(Table: Table, Query: string, DB: SqliteDatabaseType) {
+  constructor(Table: Table, Query: string, DB: DatabaseType) {
     this.Table = Table;
     this.query = Query;
     this.db = DB;
@@ -131,7 +131,14 @@ export default class Query {
   public All<Type extends { id: number | string }>(): Record<Type>[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    const results = stmt.all(this.Parameters) as Type[];
+    let results = stmt.all(this.Parameters) as Type[];
+
+    // This is a fix for a bug where id's passed as numbers don't match string ids in the db
+    if (results.length === 0 && this.Parameters.id) {
+      this.Parameters.id = this.Parameters.id.toString();
+      results = stmt.all(this.Parameters) as Type[];
+    }
+
     return results.map(res => new Record<Type>(res, this.db, this.Table));
   }
 

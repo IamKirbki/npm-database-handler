@@ -2,7 +2,7 @@ export type QueryParameters = {
     [key: string]: QueryValues;
 };
 
-export type QueryValues = string | number | boolean | null
+export type QueryValues = string | number | boolean | null | bigint
 
 export type DefaultQueryOptions = {
     select?: string;

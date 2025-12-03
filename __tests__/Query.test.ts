@@ -29,10 +29,12 @@ describe('Query', () => {
     describe('All', () => {
         beforeEach(() => {
             const table = db.Table('users');
-            table.Insert([
-                { name: 'John', email: 'john@example.com', age: 30 },
-                { name: 'Jane', email: 'jane@example.com', age: 25 },
-            ]);
+            table.Insert(
+                { name: 'John', email: 'john@example.com', age: 30 }
+            );
+            table.Insert(
+                { name: 'Jane', email: 'jane@example.com', age: 25 }
+            );
         });
 
         it('should return all rows', () => {
