@@ -357,7 +357,7 @@ export default class Validator {
 
         // SQLite text types (TEXT, VARCHAR, CHAR, etc.)
         if (lowerType.includes('text') || lowerType.includes('char')) {
-            return parameterType === 'string';
+            return parameterType === 'string' || parameterType === 'number';
         }
 
         // SQLite integer and real/float types (INTEGER, INT, TINYINT, SMALLINT, REAL, FLOAT, DOUBLE etc.)
