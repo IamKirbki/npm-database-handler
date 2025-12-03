@@ -46,5 +46,6 @@
  */
 
 import Database from "./Database";
+import Model from "./abstract/Model";
 
-export { Database };
+export { Database, Model };
