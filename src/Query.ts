@@ -131,7 +131,14 @@ export default class Query {
   public All<Type extends { id: number | string }>(): Record<Type>[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
-    const results = stmt.all(this.Parameters) as Type[];
+    let results = stmt.all(this.Parameters) as Type[];
+
+    // This is a fix for a bug where id's passed as numbers don't match string ids in the db
+    if (results.length === 0 && this.Parameters.id) {
+      this.Parameters.id = this.Parameters.id.toString();
+      results = stmt.all(this.Parameters) as Type[];
+    }
+
     return results.map(res => new Record<Type>(res, this.db, this.Table));
   }
 
