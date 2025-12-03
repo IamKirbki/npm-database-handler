@@ -147,7 +147,7 @@ export default class Table {
             query.Parameters = options.where;
 
         const results: Record<Type>[] = query.All();
-
+        
         // Wrap each result in a Record object
         return results;
     }
