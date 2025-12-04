@@ -87,9 +87,9 @@ export default class Query {
    * console.log(`Updated ${updateResult.changes} rows`);
    * ```
    */
-  public Run<Type>(): Type {
-    const stmt = this.adapter.prepare(this.query);
-    return stmt.run(this.Parameters) as Type;
+  public async Run<Type>(): Promise<Type> {
+    const stmt = await this.adapter.prepare(this.query);
+    return await stmt.run(this.Parameters) as Type;
   }
 
   /**
@@ -118,14 +118,14 @@ export default class Query {
    * });
    * ```
    */
-  public All<Type>(): Record<Type>[] {
-    const stmt = this.adapter.prepare(this.query);
-    let results = stmt.all(this.Parameters) as Type[];
+  public async All<Type>(): Promise<Record<Type>[]> {
+    const stmt = await this.adapter.prepare(this.query);
+    let results = await stmt.all(this.Parameters) as Type[];
 
     // This is a fix for a bug where id's passed as numbers don't match string ids in the db
     if (results.length === 0 && this.Parameters.id) {
       this.Parameters.id = this.Parameters.id.toString();
-      results = stmt.all(this.Parameters) as Type[];
+      results = await stmt.all(this.Parameters) as Type[];
     }
 
     return results.map(res => new Record<Type>(res, this.adapter, this.Table));
@@ -156,20 +156,27 @@ export default class Query {
    * }
    * ```
    */
-  public Get<Type>(): Record<Type> | undefined {
-    const stmt = this.adapter.prepare(this.query);
-    const results = stmt.get(this.Parameters) as Type | undefined;
+  public async Get<Type>(): Promise<Record<Type> | undefined> {
+    const stmt = await this.adapter.prepare(this.query);
+    const results = await stmt.get(this.Parameters) as Type | undefined;
     return results ? new Record<Type>(results, this.adapter, this.Table) : undefined;
   }
 
-  public Transaction(paramList: QueryParameters[]): void {
-    const stmt = this.adapter.prepare(this.query);
-    const transaction = this.adapter.transaction((paramsArray: QueryParameters[]) => {
+  public async Transaction(paramList: QueryParameters[]): Promise<void> {
+    const stmt = await this.adapter.prepare(this.query);
+    const transactionFn = await this.adapter.transaction((paramsArray: QueryParameters[]) => {
       for (const params of paramsArray) {
-        stmt.run(params);
+        // Use runSync for better-sqlite3 transactions (must be synchronous)
+        // For other adapters, this method should be implemented appropriately
+        if (stmt.runSync) {
+          stmt.runSync(params);
+        } else {
+          // Fallback: call run without await (may not work for all adapters)
+          stmt.run(params);
+        }
       }
     });
-    
-    transaction(paramList);
+
+    transactionFn(paramList);
   }
 }

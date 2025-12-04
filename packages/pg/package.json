@@ -1,0 +1,25 @@
+{
+  "name": "@kirbkis-database-handler/pg",
+  "version": "1.1.0",
+  "author": "iamkirbki",
+  "description": "Postgres adapter implementation",
+  "license": "ISC",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@kirbkis-database-handler/core": "file:../core",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.6",
+    "typescript": "^5.9.3"
+  }
+}

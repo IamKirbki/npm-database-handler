@@ -38,9 +38,9 @@ describe('Table', () => {
     const testDbPath = path.join(__dirname, '..', 'test-table.db');
     let db: BetterSqlite3Database;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         db = new BetterSqlite3Database(testDbPath);
-        await db.CreateTable('users', {
+        db.CreateTable('users', {
             id: "INTEGER PRIMARY KEY AUTOINCREMENT",
             name: 'TEXT NOT NULL',
             email: 'TEXT',
@@ -55,14 +55,14 @@ describe('Table', () => {
     });
 
     describe('Properties', () => {
-        it('should return table name', async () => {
-            const table = await db.Table('users');
+        it('should return table name', () => {
+            const table = db.Table('users');
             expect(table.Name).toBe('users');
         });
 
-        it('should return column information', async () => {
-            const table = await db.Table('users');
-            const columns = await table.TableColumnInformation();
+        it('should return column information', () => {
+            const table = db.Table('users');
+            const columns = table.TableColumnInformation;
 
             expect(columns.length).toBe(4); // id, name, email, age
             expect(columns.find(c => c.name === 'name')).toBeDefined();
@@ -70,9 +70,9 @@ describe('Table', () => {
             expect(columns.find(c => c.name === 'age')).toBeDefined();
         });
 
-        it('should return readable column information', async () => {
-            const table = await db.Table('users');
-            const columns = await table.ReadableTableColumnInformation();
+        it('should return readable column information', () => {
+            const table = db.Table('users');
+            const columns = table.ReadableTableColumnInformation;
 
             const nameCol = columns.find(c => c.name === 'name');
             expect(nameCol?.nullable).toBe(false);
@@ -81,94 +81,94 @@ describe('Table', () => {
     });
 
     describe('Drop', () => {
-        it('should drop the table', async () => {
-            const table = await db.Table('users');
+        it('should drop the table', () => {
+            const table = db.Table('users');
 
-            const columnsBeforeDrop = await table.TableColumnInformation();
+            const columnsBeforeDrop = table.TableColumnInformation;
             expect(columnsBeforeDrop.length).toBeGreaterThan(0);
 
-            await table.Drop();
+            table.Drop();
             
-            const columnsAfterDrop = await table.TableColumnInformation();
+            const columnsAfterDrop = table.TableColumnInformation;
             expect(columnsAfterDrop.length).toBe(0);
         });
     });
 
     describe('Insert', () => {
-        it('should insert a single record', async () => {
-            const table = await db.Table('users');
-            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
-            const records = await table.Records();
+        it('should insert a single record', () => {
+            const table = db.Table('users');
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            const records = table.Records();
             expect(records.length).toBe(1);
             expect((records[0].values as UserRecord).name).toBe('John');
 
         });
 
-        it('should insert multiple records', async () => {
-            const table = await db.Table('users');
+        it('should insert multiple records', () => {
+            const table = db.Table('users');
 
-            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
-            await table.Insert({ name: 'Jane', email: 'jane@example.com', age: 25 });
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            table.Insert({ name: 'Jane', email: 'jane@example.com', age: 25 });
 
-            const records = await table.Records();
+            const records = table.Records();
             expect(records.length).toBe(2);
         });
     });
 
     describe('Records', () => {
-        beforeEach(async () => {
-            const table = await db.Table('users');
-            await table.Insert({
+        beforeEach(() => {
+            const table = db.Table('users');
+            table.Insert({
                 name: 'John',
                 email: 'john@example.com',
                 age: 30
             });
-            await table.Insert({
+            table.Insert({
                 name: 'Jane',
                 email: 'jane@example.com',
                 age: 25
             });
-            await table.Insert({
+            table.Insert({
                 name: 'Bob',
                 email: 'bob@example.com',
                 age: 35
             });
         });
 
-        it('should return all records', async () => {
-            const table = await db.Table('users');
-            const records = await table.Records();
+        it('should return all records', () => {
+            const table = db.Table('users');
+            const records = table.Records();
 
             expect(records.length).toBe(3);
             expect(records[0].values).toHaveProperty('name');
         });
 
-        it('should filter records with where clause', async () => {
-            const table = await db.Table('users');
-            const records = await table.Records({ where: { name: 'John' } });
+        it('should filter records with where clause', () => {
+            const table = db.Table('users');
+            const records = table.Records({ where: { name: 'John' } });
 
             expect(records.length).toBe(1);
             expect((records[0].values as UserRecord).name).toBe('John');
         });
 
-        it('should limit records', async () => {
-            const table = await db.Table('users');
-            const records = await table.Records({ limit: 2 });
+        it('should limit records', () => {
+            const table = db.Table('users');
+            const records = table.Records({ limit: 2 });
 
             expect(records.length).toBe(2);
         });
 
-        it('should order records', async () => {
-            const table = await db.Table('users');
-            const records = await table.Records({ orderBy: 'age DESC' });
+        it('should order records', () => {
+            const table = db.Table('users');
+            const records = table.Records({ orderBy: 'age DESC' });
 
             expect((records[0].values as UserRecord).age).toBe(35);
             expect((records[2].values as UserRecord).age).toBe(25);
         });
 
-        it('should select specific columns', async () => {
-            const table = await db.Table('users');
-            const records = await table.Records({ select: 'name, age' });
+        it('should select specific columns', () => {
+            const table = db.Table('users');
+            const records = table.Records({ select: 'name, age' });
 
             expect(records[0].values).toHaveProperty('name');
             expect(records[0].values).toHaveProperty('age');
@@ -177,56 +177,56 @@ describe('Table', () => {
     });
 
     describe('Record', () => {
-        beforeEach(async () => {
-            const table = await db.Table('users');
-            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+        beforeEach(() => {
+            const table = db.Table('users');
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
         });
 
-        it('should return a single record', async () => {
-            const table = await db.Table('users');
-            const record = await table.Record({ where: { name: 'John' } });
+        it('should return a single record', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'John' } });
 
             expect(record).toBeDefined();
             expect((record?.values as UserRecord).name).toBe('John');
         });
 
-        it('should return undefined for non-existent record', async () => {
-            const table = await db.Table('users');
-            const record = await table.Record({ where: { name: 'NonExistent' } });
+        it('should return undefined for non-existent record', () => {
+            const table = db.Table('users');
+            const record = table.Record({ where: { name: 'NonExistent' } });
 
             expect(record).toBeUndefined();
         });
     });
 
     describe('RecordsCount', () => {
-        it('should return count of records', async () => {
-            const table = await db.Table('users');
-            await table.Insert({
+        it('should return count of records', () => {
+            const table = db.Table('users');
+            table.Insert({
                 name: 'John',
                 email: 'john@example.com',
                 age: 30
             });
-            await table.Insert({
+            table.Insert({
                 name: 'Jane',
                 email: 'jane@example.com',
                 age: 25
             });
 
-            expect(await table.RecordsCount()).toBe(2);
+            expect(table.RecordsCount).toBe(2);
         });
 
-        it('should return 0 for empty table', async () => {
-            const table = await db.Table('users');
-            expect(await table.RecordsCount()).toBe(0);
+        it('should return 0 for empty table', () => {
+            const table = db.Table('users');
+            expect(table.RecordsCount).toBe(0);
         });
     });
 
     describe('Records Error Cases', () => {
-        it('should return empty array for invalid where clause', async () => {
-            const table = await db.Table('users');
-            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+        it('should return empty array for invalid where clause', () => {
+            const table = db.Table('users');
+            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
 
-            const records = await table.Records({ where: { name: 'NonExistent' } });
+            const records = table.Records({ where: { name: 'NonExistent' } });
             expect(records).toHaveLength(0);
         });
     });

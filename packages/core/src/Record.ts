@@ -73,7 +73,7 @@ export default class Record<ColumnValuesType> {
      * // Database is updated and user.values reflects the changes
      * ```
      */
-    public Update(newValues: object): void {
+    public async Update(newValues: object): Promise<void> {
         const setClauses = Object.keys(newValues)
             .map(key => `${key} = @${key}`)
             .join(", ");
@@ -93,7 +93,7 @@ export default class Record<ColumnValuesType> {
         });
         
         _query.Parameters = params;
-        _query.Run();
+        await _query.Run();
 
         this._values = { ...this._values, ...newValues };
     }
@@ -109,14 +109,14 @@ export default class Record<ColumnValuesType> {
      * // Record is permanently deleted from the database
      * ```
      */
-    public Delete(): void {
+    public async Delete(): Promise<void> {
         const whereClauses = Object.keys(this._values as object)
             .map(key => `${key} = @${key}`)
             .join(" AND ");
             
         const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE ${whereClauses};`, this.adapter);
         _query.Parameters = { ...this._values as object };
-        _query.Run();
+        await _query.Run();
     }
 
     /**

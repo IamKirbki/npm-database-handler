@@ -1,7 +1,7 @@
-import { RunResult } from "better-sqlite3";
-
 export default interface IStatementAdapter {
-    run(parameters?: object): RunResult;
-    all(parameters?: object): unknown[];
-    get(parameters?: object): unknown | undefined;
+    run(parameters?: object): Promise<unknown>;
+    all(parameters?: object): Promise<unknown[]>;
+    get(parameters?: object): Promise<unknown | undefined>;
+    // Optional synchronous version for transactions (better-sqlite3 requirement)
+    runSync?(parameters?: object): unknown;
 }

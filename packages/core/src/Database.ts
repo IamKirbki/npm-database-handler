@@ -53,13 +53,13 @@ export default class Database {
    * 
    * @example
    * ```typescript
-   * const users = db.Table('users');
-   * const allUsers = users.Records();
+   * const users = await db.Table('users');
+   * const allUsers = await users.Records();
    * ```
    */
-  public Table(name: string): Table {
+  public async Table(name: string): Promise<Table> {
     Validator.ValidateTableName(name);
-    return new Table(name, this.adapter);
+    return await Table.create(name, this.adapter);
   }
 
   // TODO Make primary key required
@@ -76,7 +76,7 @@ export default class Database {
    * @example
    * ```typescript
    * // Create a users table
-   * const users = db.CreateTable('users', {
+   * const users = await db.CreateTable('users', {
    *   id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
    *   name: 'TEXT NOT NULL',
    *   email: 'TEXT UNIQUE',
@@ -85,10 +85,10 @@ export default class Database {
    * });
    * 
    * // Table is now ready to use
-   * users.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+   * await users.Insert({ name: 'John', email: 'john@example.com', age: 30 });
    * ```
    */
-  public CreateTable(name: string, columns: object): Table {
+  public async CreateTable(name: string, columns: object): Promise<Table> {
     Validator.ValidateTableName(name);
 
     const names = Object.keys(columns || {}).map((colName) => {
@@ -102,12 +102,12 @@ export default class Database {
       return `${colName} ${colType}`;
     }).join(", ");
 
-    const stmt = this.adapter.prepare(
+    const stmt = await this.adapter.prepare(
       `CREATE TABLE IF NOT EXISTS ${name} (${colsDef});`
     );
 
-    stmt.run();
-    return new Table(name, this.adapter);
+    await stmt.run();
+    return await Table.create(name, this.adapter, true);
   }
 
   /**

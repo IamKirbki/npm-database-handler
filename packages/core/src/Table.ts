@@ -36,21 +36,38 @@ export default class Table {
     private readonly adapter: IDatabaseAdapter;
 
     /**
-     * Creates a Table instance
+     * Private constructor - use Table.create() instead
      * 
      * @param name - Name of the table
      * @param adapter - Database adapter instance
-     * @throws Error if the table does not exist in the database
      */
-    constructor(name: string, adapter: IDatabaseAdapter) {
+    private constructor(name: string, adapter: IDatabaseAdapter) {
         this.name = name;
         this.adapter = adapter;
+    }
 
-        if (!this.TableColumnInformation.length) {
-            throw new Error(
-                `Table "${name}" does not exist in the database.\nYou might want to use the CreateTable function.`
-            );
+    /**
+     * Create a Table instance (async factory method)
+     * 
+     * @param name - Name of the table
+     * @param adapter - Database adapter instance
+     * @param skipValidation - Skip table existence validation (used when creating new tables)
+     * @returns Table instance
+     * @throws Error if the table does not exist in the database
+     */
+    public static async create(name: string, adapter: IDatabaseAdapter, skipValidation = false): Promise<Table> {
+        const table = new Table(name, adapter);
+        
+        if (!skipValidation) {
+            const columns = await table.TableColumnInformation();
+            if (!columns.length) {
+                throw new Error(
+                    `Table "${name}" does not exist in the database.\nYou might want to use the CreateTable function.`
+                );
+            }
         }
+        
+        return table;
     }
 
     /**
@@ -69,13 +86,14 @@ export default class Table {
      * 
      * @example
      * ```typescript
-     * const columns = table.TableColumnInformation;
+     * const columns = await table.TableColumnInformation();
      * // [{ cid: 0, name: 'id', type: 'INTEGER', notnull: 0, dflt_value: null, pk: 1 }, ...]
      * ```
      */
-    public get TableColumnInformation(): TableColumnInfo[] {
+    public async TableColumnInformation(): Promise<TableColumnInfo[]> {
         const query = new Query(this, `PRAGMA table_info(${this.name});`, this.adapter);
-        return query.All<TableColumnInfo>().map(record => record.values);
+        const records = await query.All<TableColumnInfo>();
+        return records.map(record => record.values);
     }
 
     /**
@@ -85,12 +103,13 @@ export default class Table {
      * 
      * @example
      * ```typescript
-     * const columns = table.ReadableTableColumnInformation;
+     * const columns = await table.ReadableTableColumnInformation();
      * // [{ name: 'id', type: 'INTEGER', nullable: false, isPrimaryKey: true, defaultValue: null }, ...]
      * ```
      */
-    public get ReadableTableColumnInformation(): ReadableTableColumnInfo[] {
-        return this.TableColumnInformation.map((col) => ({
+    public async ReadableTableColumnInformation(): Promise<ReadableTableColumnInfo[]> {
+        const columns = await this.TableColumnInformation();
+        return columns.map((col) => ({
             name: col.name,
             type: col.type,
             nullable: col.notnull === 0,
@@ -99,10 +118,10 @@ export default class Table {
         }));
     }
 
-    public Drop(): void {
+    public async Drop(): Promise<void> {
         const queryStr = `DROP TABLE IF EXISTS ${this.name};`;
         const query = new Query(this, queryStr, this.adapter);
-        query.Run();
+        await query.Run();
     }
 
     /**
@@ -129,9 +148,9 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type>(
+    public async Records<Type>(
         options?: DefaultQueryOptions & QueryOptions
-    ): Record<Type>[] {
+    ): Promise<Record<Type>[]> {
         const queryStr = QueryStatementBuilder.BuildSelect(this, {
             select: options?.select,
             where: options?.where,
@@ -145,7 +164,7 @@ export default class Table {
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
-        const results: Record<Type>[] = query.All();
+        const results: Record<Type>[] = await query.All();
         
         // Wrap each result in a Record object
         return results;
@@ -172,10 +191,10 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record<Type>(
+    public async Record<Type>(
         options?: DefaultQueryOptions & QueryOptions
-    ): Record<Type> | undefined {
-        const results = this.Records({
+    ): Promise<Record<Type> | undefined> {
+        const results = await this.Records({
             select: options?.select,
             where: options?.where,
             orderBy: options?.orderBy,
@@ -196,10 +215,9 @@ export default class Table {
      * console.log(`Total users: ${totalUsers}`);
      * ```
      */
-    public get RecordsCount(): number {
-        const count = this.adapter
-            .prepare(`SELECT COUNT(*) as count FROM ${this.name};`)
-            .get({}) as { count: number };
+    public async RecordsCount(): Promise<number> {
+        const stmt = await this.adapter.prepare(`SELECT COUNT(*) as count FROM ${this.name};`);
+        const count = await stmt.get({}) as { count: number };
         return count.count || 0;
     }
 
@@ -225,7 +243,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public Insert<Type>(values: QueryParameters): Record<Type> | undefined{
+    public async Insert<Type>(values: QueryParameters): Promise<Record<Type> | undefined>{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {
@@ -236,7 +254,7 @@ export default class Table {
         const query = new Query(this, queryStr, this.adapter);
         query.Parameters = values;
         
-        const result = query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
+        const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
         return this.Record({
             where: { id: result.lastInsertRowid }
         });

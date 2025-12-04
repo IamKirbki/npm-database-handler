@@ -30,27 +30,27 @@ describe('Database', () => {
   });
 
   describe('CreateTable', () => {
-    it('should create a new table with id column', async () => {
+    it('should create a new table with id column', () => {
       db = new BetterSqlite3Database(testDbPath);
-      const table = await db.CreateTable('users', {
+      const table = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
 
       expect(table).toBeDefined();
       expect(table.Name).toBe('users');
 
-      const columns = await table.TableColumnInformation();
+      const columns = table.TableColumnInformation;
       expect(columns.length).toBeGreaterThan(0);
       expect(columns[0].name).toBe('id');
       expect(columns[0].pk).toBe(1);
     });
 
-    it('should not fail when creating table that already exists', async () => {
+    it('should not fail when creating table that already exists', () => {
       db = new BetterSqlite3Database(testDbPath);
-      const table1 = await db.CreateTable('users', {
+      const table1 = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
-      const table2 = await db.CreateTable('users', {
+      const table2 = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
 
@@ -59,21 +59,21 @@ describe('Database', () => {
   });
 
   describe('Table', () => {
-    it('should get an existing table', async () => {
+    it('should get an existing table', () => {
       db = new BetterSqlite3Database(testDbPath);
-      await db.CreateTable('users', {
+      db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
 
-      const table = await db.Table('users');
+      const table = db.Table('users');
       expect(table.Name).toBe('users');
     });
   });
 
   describe('Query', () => {
-    it('should create a query object', async () => {
+    it('should create a query object', () => {
       db = new BetterSqlite3Database(testDbPath);
-      const table = await db.CreateTable('users', {
+      const table = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
 

@@ -7,16 +7,21 @@ export default class BetterSqlite3Statement implements IStatementAdapter {
     constructor(stmt: Statement) {
         this.stmt = stmt;
     }
-    
-    run(parameters?: object): RunResult {
+
+    async run(parameters?: object): Promise<RunResult> {
         return parameters ? this.stmt.run(parameters) : this.stmt.run();
     }
 
-    all(parameters?: object): unknown[] {
+    async all(parameters?: object): Promise<unknown[]> {
         return parameters ? this.stmt.all(parameters) : this.stmt.all();
     }
 
-    get(parameters?: object): unknown | undefined {
+    async get(parameters?: object): Promise<unknown | undefined> {
         return parameters ? this.stmt.get(parameters) : this.stmt.get();
+    }
+
+    // Synchronous version for use in transactions
+    runSync(parameters?: object): RunResult {
+        return parameters ? this.stmt.run(parameters) : this.stmt.run();
     }
 }

@@ -6,23 +6,22 @@ import BetterSqlite3Statement from "./BetterSqlite3Statement";
 export default class BetterSqlite3Adapter implements IDatabaseAdapter {
     private db: Database.Database | null = null;
 
-    connect(databasePath: string): void {
+    async connect(databasePath: string): Promise<void> {
         if (this.db) {
             throw new Error("Database is already connected.");
         }
         this.db = new Database(databasePath);
     }
 
-    prepare(query: string): IStatementAdapter {
+    async prepare(query: string): Promise<IStatementAdapter> {
         if (!this.db) {
             throw new Error("Database is not connected.");
         }
         const stmt = this.db.prepare(query);
-        
         return new BetterSqlite3Statement(stmt);
     }
 
-    exec(query: string): void {
+    async exec(query: string): Promise<void> {
         if (!this.db) {
             throw new Error("Database is not connected.");
         }
@@ -30,7 +29,7 @@ export default class BetterSqlite3Adapter implements IDatabaseAdapter {
         this.db.exec(query);
     }
 
-    transaction(fn: (items: unknown[]) => void): Function {
+    async transaction(fn: (items: unknown[]) => void): Promise<Function> {
         if (!this.db) {
             throw new Error("Database is not connected.");
         }
@@ -38,7 +37,7 @@ export default class BetterSqlite3Adapter implements IDatabaseAdapter {
         return this.db.transaction(fn);
     }
 
-    close(): void {
+    async close(): Promise<void> {
         if (!this.db) {
             throw new Error("Database is not connected.");
         }
