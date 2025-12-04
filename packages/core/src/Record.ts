@@ -1,8 +1,8 @@
-import { Database as DatabaseType } from "better-sqlite3";
 import { inspect } from "util";
 import Table from "@core/Table";
 import Query from "@core/Query";
 import { QueryParameters } from "types/query";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
  * Record class represents a single database row with methods for updates and deletion
@@ -26,7 +26,7 @@ import { QueryParameters } from "types/query";
  * ```
  */
 export default class Record<ColumnValuesType> {
-    private readonly _db: DatabaseType;
+    private readonly adapter: IDatabaseAdapter;
     private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _table: Table;
 
@@ -37,9 +37,9 @@ export default class Record<ColumnValuesType> {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: ColumnValuesType, db: DatabaseType, table: Table) {
+    constructor(values: ColumnValuesType, adapter: IDatabaseAdapter, table: Table) {
         this._values = values;
-        this._db = db;
+        this.adapter = adapter;
         this._table = table;
     }
 
@@ -85,7 +85,7 @@ export default class Record<ColumnValuesType> {
             .join(" AND ");
 
         const query = `UPDATE ${this._table.Name} SET ${setClauses} WHERE ${whereClauses};`;
-        const _query = new Query(this._table, query, this._db);
+        const _query = new Query(this._table, query, this.adapter);
         
         const params: QueryParameters = { ...newValues };
         Object.entries(originalValues).forEach(([key, value]) => {
@@ -114,7 +114,7 @@ export default class Record<ColumnValuesType> {
             .map(key => `${key} = @${key}`)
             .join(" AND ");
             
-        const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE ${whereClauses};`, this._db);
+        const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE ${whereClauses};`, this.adapter);
         _query.Parameters = { ...this._values as object };
         _query.Run();
     }

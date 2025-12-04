@@ -1,4 +1,4 @@
-import { Database as DatabaseType, RunResult } from "better-sqlite3";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import {
     DefaultQueryOptions,
     QueryOptions,
@@ -33,18 +33,18 @@ import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder";
  */
 export default class Table {
     private readonly name: string;
-    private readonly db: DatabaseType;
+    private readonly adapter: IDatabaseAdapter;
 
     /**
      * Creates a Table instance
      * 
      * @param name - Name of the table
-     * @param db - Database connection instance
+     * @param adapter - Database adapter instance
      * @throws Error if the table does not exist in the database
      */
-    constructor(name: string, db: DatabaseType) {
+    constructor(name: string, adapter: IDatabaseAdapter) {
         this.name = name;
-        this.db = db;
+        this.adapter = adapter;
 
         if (!this.TableColumnInformation.length) {
             throw new Error(
@@ -74,7 +74,7 @@ export default class Table {
      * ```
      */
     public get TableColumnInformation(): TableColumnInfo[] {
-        const query = new Query(this, `PRAGMA table_info(${this.name});`, this.db);
+        const query = new Query(this, `PRAGMA table_info(${this.name});`, this.adapter);
         return query.All<TableColumnInfo>().map(record => record.values);
     }
 
@@ -101,7 +101,7 @@ export default class Table {
 
     public Drop(): void {
         const queryStr = `DROP TABLE IF EXISTS ${this.name};`;
-        const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.adapter);
         query.Run();
     }
 
@@ -140,7 +140,7 @@ export default class Table {
             offset: options?.offset,
         });
 
-        const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.adapter);
 
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
@@ -197,9 +197,9 @@ export default class Table {
      * ```
      */
     public get RecordsCount(): number {
-        const count = this.db
+        const count = this.adapter
             .prepare(`SELECT COUNT(*) as count FROM ${this.name};`)
-            .get() as { count: number };
+            .get({}) as { count: number };
         return count.count || 0;
     }
 
@@ -233,10 +233,10 @@ export default class Table {
         }
 
         const queryStr = QueryStatementBuilder.BuildInsert(this, values);
-        const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.adapter);
         query.Parameters = values;
         
-        const result = query.Run<RunResult>();
+        const result = query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
         return this.Record({
             where: { id: result.lastInsertRowid }
         });

@@ -1,4 +1,4 @@
-import { Database as DatabaseType } from "better-sqlite3";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import { QueryParameters } from "types/query";
 import Table from "@core/Table";
 import Record from "@core/Record";
@@ -193,14 +193,14 @@ export default abstract class Model<T extends object> {
      * **Important**: Ensure the table exists in the database before creating a model
      * instance. The Model class does not create tables automatically.
      * 
-     * @param db - Better-sqlite3 Database instance to use for all operations
+     * @param adapter - Database adapter instance to use for all operations
      * 
      * @example
      * ```typescript
-     * import Database from 'better-sqlite3';
+     * import { createDatabase } from '@handler/better-sqlite3';
      * import User from './models/User';
      * 
-     * const db = new Database('./app.db');
+     * const db = createDatabase('./app.db');
      * db.exec(`CREATE TABLE IF NOT EXISTS User (
      *   id TEXT PRIMARY KEY,
      *   name TEXT NOT NULL,
@@ -210,8 +210,8 @@ export default abstract class Model<T extends object> {
      * const userModel = new User(db);
      * ```
      */
-    constructor(db: DatabaseType) {
-        this.Table = new Table(this.constructor.name, db);
+    constructor(adapter: IDatabaseAdapter) {
+        this.Table = new Table(this.constructor.name, adapter);
     }
 
     /**

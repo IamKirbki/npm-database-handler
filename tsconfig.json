@@ -29,7 +29,7 @@
   "include": [
     "packages/**/src/**/*.ts", 
     "packages/**/src/*.ts", 
-    "types/*.d.ts", 
+    "types/*.d.ts", "types/query.ts", "types/table.ts", "types/index.ts", 
   ],
   "exclude": ["node_modules", "dist", "__tests__/**"],
 }

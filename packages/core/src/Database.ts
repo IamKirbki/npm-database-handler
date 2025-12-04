@@ -1,7 +1,7 @@
-import SqliteDatabase, { Database as DatabaseType } from "better-sqlite3";
 import Table from "./Table";
 import Query from "./Query";
 import Validator from "@core/helpers/Validator";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
  * Main Database class for interacting with SQLite databases
@@ -21,7 +21,7 @@ import Validator from "@core/helpers/Validator";
  * ```
  */
 export default class Database {
-  public readonly db: DatabaseType;
+  private adapter: IDatabaseAdapter;
 
   /**
    * Creates a new Database instance
@@ -40,8 +40,8 @@ export default class Database {
    * const db = new Database(':memory:');
    * ```
    */
-  constructor(dbPath: string) {
-    this.db = new SqliteDatabase(dbPath);
+  constructor(adapter: IDatabaseAdapter) {
+    this.adapter = adapter;
   }
 
   /**
@@ -59,7 +59,7 @@ export default class Database {
    */
   public Table(name: string): Table {
     Validator.ValidateTableName(name);
-    return new Table(name, this.db);
+    return new Table(name, this.adapter);
   }
 
   // TODO Make primary key required
@@ -102,12 +102,12 @@ export default class Database {
       return `${colName} ${colType}`;
     }).join(", ");
 
-    const stmt = this.db.prepare(
+    const stmt = this.adapter.prepare(
       `CREATE TABLE IF NOT EXISTS ${name} (${colsDef});`
     );
 
     stmt.run();
-    return new Table(name, this.db);
+    return new Table(name, this.adapter);
   }
 
   /**
@@ -126,6 +126,6 @@ export default class Database {
    * ```
    */
   public Query(table: Table, query: string): Query {
-    return new Query(table, query, this.db);
+    return new Query(table, query, this.adapter);
   }
 }

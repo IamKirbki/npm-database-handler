@@ -1,7 +1,7 @@
 import Table from "@core/Table";
 import { QueryParameters } from "types/index";
-import { Database as DatabaseType } from "better-sqlite3";
 import Record from "@core/Record";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
  * Query class for executing custom SQL queries
@@ -34,7 +34,7 @@ import Record from "@core/Record";
  */
 export default class Query {
   public readonly Table: Table;
-  private readonly db: DatabaseType;
+  private readonly adapter: IDatabaseAdapter;
   private query: string = "";
   public Parameters: QueryParameters = {};
 
@@ -60,10 +60,10 @@ export default class Query {
    * query.Parameters = { id: 1 };
    * ```
    */
-  constructor(Table: Table, Query: string, DB: DatabaseType) {
+  constructor(Table: Table, Query: string, adapter: IDatabaseAdapter) {
     this.Table = Table;
     this.query = Query;
-    this.db = DB;
+    this.adapter = adapter;
   }
 
   /**
@@ -88,7 +88,7 @@ export default class Query {
    * ```
    */
   public Run<Type>(): Type {
-    const stmt = this.db.prepare(this.query);
+    const stmt = this.adapter.prepare(this.query);
     return stmt.run(this.Parameters) as Type;
   }
 
@@ -119,7 +119,7 @@ export default class Query {
    * ```
    */
   public All<Type>(): Record<Type>[] {
-    const stmt = this.db.prepare(this.query);
+    const stmt = this.adapter.prepare(this.query);
     let results = stmt.all(this.Parameters) as Type[];
 
     // This is a fix for a bug where id's passed as numbers don't match string ids in the db
@@ -128,7 +128,7 @@ export default class Query {
       results = stmt.all(this.Parameters) as Type[];
     }
 
-    return results.map(res => new Record<Type>(res, this.db, this.Table));
+    return results.map(res => new Record<Type>(res, this.adapter, this.Table));
   }
 
   /**
@@ -157,50 +157,19 @@ export default class Query {
    * ```
    */
   public Get<Type>(): Record<Type> | undefined {
-    const stmt = this.db.prepare(this.query);
+    const stmt = this.adapter.prepare(this.query);
     const results = stmt.get(this.Parameters) as Type | undefined;
-    return results ? new Record<Type>(results, this.db, this.Table) : undefined;
+    return results ? new Record<Type>(results, this.adapter, this.Table) : undefined;
   }
 
-  /**
-   * Execute the query for multiple parameter sets in an atomic transaction
-   * All operations succeed or all fail together (rollback on any error)
-   * 
-   * Performance: Significantly faster than individual inserts for bulk operations
-   * 
-   * @param items - Array of parameter objects, one for each query execution
-   * @throws Error if any query execution fails (triggers rollback)
-   * 
-   * @example
-   * ```typescript
-   * // Bulk insert users
-   * const query = db.Query(users, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
-   * query.Transaction([
-   *   { name: 'John', email: 'john@example.com', age: 30 },
-   *   { name: 'Jane', email: 'jane@example.com', age: 25 },
-   *   { name: 'Bob', email: 'bob@example.com', age: 35 }
-   * ]);
-   * // All 3 users inserted, or none if any fails
-   * 
-   * // Bulk update
-   * const update = db.Query(users, 'UPDATE users SET status = @status WHERE id = @id');
-   * update.Transaction([
-   *   { id: 1, status: 'active' },
-   *   { id: 2, status: 'inactive' },
-   *   { id: 3, status: 'active' }
-   * ]);
-   * ```
-   */
-  public Transaction(items: QueryParameters[]): void {
-    const stmt = this.db.prepare(this.query);
-
-    const transactionFn = this.db.transaction((items: QueryParameters[]) => {
-      for (const item of items) {
-        stmt.run(item);
+  public Transaction(paramList: QueryParameters[]): void {
+    const stmt = this.adapter.prepare(this.query);
+    const transaction = this.adapter.transaction((paramsArray: QueryParameters[]) => {
+      for (const params of paramsArray) {
+        stmt.run(params);
       }
     });
-
-    transactionFn(items);
+    
+    transaction(paramList);
   }
-
 }
