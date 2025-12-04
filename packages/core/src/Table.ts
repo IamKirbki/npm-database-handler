@@ -6,10 +6,10 @@ import {
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
-} from "../types/index";
-import Query from "./Query";
-import Record from "./Record";
-import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
+} from "types/index";
+import Query from "@core/Query";
+import Record from "@core/Record";
+import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder";
 
 /**
  * Table class for interacting with a specific database table
@@ -74,9 +74,8 @@ export default class Table {
      * ```
      */
     public get TableColumnInformation(): TableColumnInfo[] {
-        return this.db
-            .prepare(`PRAGMA table_info(${this.name});`)
-            .all() as TableColumnInfo[];
+        const query = new Query(this, `PRAGMA table_info(${this.name});`, this.db);
+        return query.All<TableColumnInfo>().map(record => record.values);
     }
 
     /**
@@ -130,7 +129,7 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type extends { id: number | string }>(
+    public Records<Type>(
         options?: DefaultQueryOptions & QueryOptions
     ): Record<Type>[] {
         const queryStr = QueryStatementBuilder.BuildSelect(this, {
@@ -173,7 +172,7 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record<Type extends { id: number | string }>(
+    public Record<Type>(
         options?: DefaultQueryOptions & QueryOptions
     ): Record<Type> | undefined {
         const results = this.Records({
@@ -226,7 +225,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public Insert<Type extends { id: number | string }>(values: QueryParameters): Record<Type> | undefined{
+    public Insert<Type>(values: QueryParameters): Record<Type> | undefined{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {

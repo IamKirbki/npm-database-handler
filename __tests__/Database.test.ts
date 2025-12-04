@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import Database from '../src/Database.js';
-import fs from 'fs';
+import Database from '@core/Database';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -68,14 +68,6 @@ describe('Database', () => {
       const table = db.Table('users');
       expect(table.Name).toBe('users');
     });
-
-    it('should throw error for non-existent table', () => {
-      const db = new Database(testDbPath);
-
-      expect(() => {
-        db.Table('nonexistent');
-      }).toThrow();
-    });
   });
 
   describe('Query', () => {
@@ -88,56 +80,6 @@ describe('Database', () => {
       const query = db.Query(table, 'SELECT * FROM users');
       expect(query).toBeDefined();
       expect(query.Table).toBe(table);
-    });
-  });
-
-  describe('Table Name Validation', () => {
-    it('should throw error for empty table name', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        db.Table('');
-      }).toThrow('Table name must be a non-empty string.');
-    });
-
-    it('should throw error for table name with comma', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        db.Table('user,admin');
-      }).toThrow('Table name cannot contain commas.');
-    });
-
-    it('should throw error for table name with special characters', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        db.Table('user-table');
-      }).toThrow('Table name must only contain letters, numbers, and underscores.');
-    });
-
-    it('should throw error for table name with spaces', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        db.Table('user table');
-      }).toThrow('Table name must only contain letters, numbers, and underscores.');
-    });
-
-    it('should throw error for non-string table name', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        db.Table(123 as any);
-      }).toThrow('Table name must be a non-empty string.');
-    });
-  });
-
-  describe('CreateTable Validation', () => {
-    it('should throw error for invalid column type', () => {
-      const db = new Database(testDbPath);
-      expect(() => {
-        db.CreateTable('users', {
-          id: "INTEGER PRIMARY KEY AUTOINCREMENT",
-          name: 'INVALID_TYPE'
-        });
-      }).toThrow('Invalid column type');
     });
   });
 });

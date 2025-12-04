@@ -18,9 +18,18 @@
     "noUnusedParameters": true,
     "preserveConstEnums": true,
     "experimentalDecorators": true,
-    "importHelpers": false
+    "importHelpers": false,
+    "baseUrl": ".",
+    "types": ["vitest"],
+    "paths": {
+      "@core/*": ["packages/core/src/*"],
+    }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  
+  "include": [
+    "packages/core/src/**/*.ts", 
+    "packages/core/src/*.ts", 
+    "types/*.d.ts", "__tests__/**/*.ts", 
+    "packages/core/src/helpers/Validator.ts.disabled"
+  ],
+  "exclude": ["node_modules", "dist"]
 }

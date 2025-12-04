@@ -1,8 +1,8 @@
-import Table from "./Table";
+import Table from "@core/Table";
 import { QueryParameters } from "types/index";
 import { Database as DatabaseType } from "better-sqlite3";
-import Record from "./Record";
-import Validator from "./helpers/Validator";
+import Record from "@core/Record";
+import Validator from "@core/helpers/Validator";
 
 /**
  * Query class for executing custom SQL queries with parameter validation
@@ -128,7 +128,7 @@ export default class Query {
    * });
    * ```
    */
-  public All<Type extends { id: number | string }>(): Record<Type>[] {
+  public All<Type>(): Record<Type>[] {
     this.Validate();
     const stmt = this.db.prepare(this.query);
     let results = stmt.all(this.Parameters) as Type[];
@@ -169,7 +169,7 @@ export default class Query {
    * }
    * ```
    */
-  public Get<Type extends { id: number | string }>(): Record<Type> | undefined {
+  public Get<Type>(): Record<Type> | undefined {
     this.Validate();
     const stmt = this.db.prepare(this.query);
     const results = stmt.get(this.Parameters) as Type | undefined;

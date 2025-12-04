@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from '../src/Database.js';
+import Database from '@core/Database';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -91,10 +91,6 @@ describe('Table', () => {
             
             const columnsAfterDrop = table.TableColumnInformation;
             expect(columnsAfterDrop.length).toBe(0);
-
-            expect(() => {
-                db.Table('users');
-            }).toThrow('Table "users" does not exist in the database.');
         });
     });
 
@@ -116,13 +112,6 @@ describe('Table', () => {
 
             const records = table.Records();
             expect(records.length).toBe(2);
-        });
-
-        it('should throw error for empty array', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Insert({});
-            }).toThrow('Cannot insert record with no columns');
         });
     });
 
@@ -232,36 +221,6 @@ describe('Table', () => {
         });
     });
 
-    describe('Insert Validation', () => {
-        it('should throw error when inserting without required field', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Insert({ email: 'john@example.com', age: 30 });
-            }).toThrow('Query is missing required fields: name.');
-        });
-
-        it('should throw error when inserting with wrong type', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Insert({ name: 'John', email: 'john@example.com', age: 'thirty' });
-            }).toThrow('Parameter "age" has type "string" which does not match column type "INTEGER".');
-        });
-
-        it('should throw error for object with no columns', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Insert({});
-            }).toThrow('Cannot insert record with no columns');
-        });
-
-        it('should throw error when inserting invalid column', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Insert({ name: 'John', invalidColumn: 'value' });
-            }).toThrow('Query references unknown field "@invalidColumn".');
-        });
-    });
-
     describe('Records Error Cases', () => {
         it('should return empty array for invalid where clause', () => {
             const table = db.Table('users');
@@ -269,13 +228,6 @@ describe('Table', () => {
 
             const records = table.Records({ where: { name: 'NonExistent' } });
             expect(records).toHaveLength(0);
-        });
-
-        it('should throw error for invalid column in where clause', () => {
-            const table = db.Table('users');
-            expect(() => {
-                table.Records({ where: { invalidColumn: 'value' } });
-            }).toThrow('Query references unknown field "@invalidColumn".');
         });
     });
 

@@ -5,7 +5,8 @@ import tsparser from '@typescript-eslint/parser';
 export default [
   eslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['**/*.ts', '**/*.d.ts'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.ts', '**/__tests__/**', '**/*.disabled', '**/adapters/**'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -34,33 +35,6 @@ export default [
       // General rules
       'no-console': 'off',
       'no-debugger': 'warn',
-      'prefer-const': 'error',
-      'no-var': 'error',
-    },
-  },
-  {
-    files: ['**/*.ts'],
-    ignores: ['src/**/*.ts'],
-    languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-      'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
     },

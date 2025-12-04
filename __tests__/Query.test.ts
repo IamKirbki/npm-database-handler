@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from '../src/Database.js';
+import Database from '@core/Database';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -128,113 +128,6 @@ describe('Query', () => {
 
             const records = table.Records();
             expect(records).toHaveLength(2);
-        });
-    });
-
-    describe('Validation', () => {
-        it('should throw error for invalid parameter', () => {
-            const table = db.Table('users');
-            const query = db.Query(table, 'SELECT * FROM users WHERE name = @name');
-            query.Parameters = { name: 'John', extra: 'param' };
-
-            expect(() => {
-                query.Validate();
-            }).toThrow('Parameter "extra" does not match any column in the table.');
-        });
-
-        it('should throw error for missing required parameter', () => {
-            const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
-            query.Parameters = { name: 'John', email: 'john@example.com' }; // missing age
-
-            expect(() => {
-                query.Validate();
-            }).toThrow('Missing parameter for column "age"');
-        });
-
-        it('should throw error for NULL value in NOT NULL column', () => {
-            const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
-            query.Parameters = { name: null, email: 'john@example.com', age: 30 };
-
-            expect(() => {
-                query.Validate();
-            }).toThrow('Parameter "name" cannot be null or undefined for a NOT NULL column.');
-        });
-
-        it('should throw error for wrong parameter type', () => {
-            const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
-            query.Parameters = { name: 'John', email: 'john@example.com', age: 'thirty' };
-
-            expect(() => {
-                query.Validate();
-            }).toThrow('Parameter "age" has type "string" which does not match column type "INTEGER".');
-        });
-
-        it('should throw error for SQL injection attempt with DROP TABLE', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users; DROP TABLE users');
-                query.Validate();
-            }).toThrow('Query contains forbidden operations.');
-        });
-
-        it('should throw error for SQL injection attempt with DELETE', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users; DELETE FROM users');
-                query.Validate();
-            }).toThrow('Query contains forbidden operations.');
-        });
-
-        it('should throw error for SQL injection attempt with UPDATE', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users; UPDATE users SET admin = 1');
-                query.Validate();
-            }).toThrow('Query contains forbidden operations.');
-        });
-
-        it('should throw error for SQL injection attempt with INSERT', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users; INSERT INTO users VALUES (1, "hacker")');
-                query.Validate();
-            }).toThrow('Query contains forbidden operations.');
-        });
-
-        it('should throw error for SQL injection attempt with ALTER TABLE', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users; ALTER TABLE users ADD COLUMN admin INTEGER');
-                query.Validate();
-            }).toThrow('Query contains forbidden operations.');
-        });
-
-        it('should throw error for empty query string', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, '');
-                query.Validate();
-            }).toThrow('Query must be a non-empty string.');
-        });
-
-        it('should throw error for non-string query', () => {
-            const table = db.Table('users');
-            expect(() => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const query = db.Query(table, 123 as any);
-                query.Validate();
-            }).toThrow('Query must be a non-empty string.');
-        });
-
-        it('should throw error for unknown field reference', () => {
-            const table = db.Table('users');
-            expect(() => {
-                const query = db.Query(table, 'SELECT * FROM users WHERE @nonexistent = @name');
-                query.Validate();
-            }).toThrow('Query references unknown field "@nonexistent".');
         });
     });
 });

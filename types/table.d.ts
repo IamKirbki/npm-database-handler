@@ -1,5 +1,5 @@
-import { QueryParameters } from "./index";
-import Table from "../src/Table";
+import { QueryParameters } from "index";
+import Table from "@core/Table";
 
 export type TableColumnInfo = {
     cid: number;

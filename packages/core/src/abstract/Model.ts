@@ -1,7 +1,7 @@
 import { Database as DatabaseType } from "better-sqlite3";
 import { QueryParameters } from "types/query";
-import Table from "../Table";
-import Record from "../Record";
+import Table from "@core/Table";
+import Record from "@core/Record";
 
 /**
  * **Model** - Abstract base class for database models providing a fluent ORM-like interface.
@@ -139,7 +139,7 @@ import Record from "../Record";
  * @see Table - Underlying table management class
  * @see Record - Individual record manipulation class
  */
-export default abstract class Model<T extends { id: string }> {
+export default abstract class Model<T extends object> {
     /**
      * Internal Table instance managing database operations.
      * 
@@ -396,7 +396,7 @@ export default abstract class Model<T extends { id: string }> {
      * ```
      */
     public create(data: T): Record<T> | undefined {
-        return this.Table.Insert(data);
+        return this.Table.Insert(data as unknown as QueryParameters);
     }
 
     /**

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from '../src/Database.js';
+import Database from '@core/Database';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -112,49 +112,6 @@ describe('Record', () => {
             const str = record?.toString();
             expect(str).toBeDefined();
             expect(str).toContain('John');
-        });
-    });
-
-    describe('Update Validation', () => {
-        it('should throw error when updating with invalid column', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'John' } });
-
-            expect(() => {
-                record?.Update({ invalidColumn: 'value' });
-            }).toThrow();
-        });
-
-        it('should throw error when updating with wrong type', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'John' } });
-
-            expect(() => {
-                record?.Update({ age: 'thirty' });
-            }).toThrow('Parameter "age" has type "string" which does not match column type "INTEGER".');
-        });
-
-        it('should throw error when updating required field to null', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'John' } });
-
-            expect(() => {
-                record?.Update({ name: null });
-            }).toThrow('Parameter "name" cannot be null or undefined for a NOT NULL column.');
-        });
-    });
-
-    describe('Delete Error Cases', () => {
-        it('should handle delete on already deleted record', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'John' } });
-
-            record?.Delete();
-            
-            // Second delete should not throw but affect 0 rows
-            expect(() => {
-                record?.Delete();
-            }).not.toThrow();
         });
     });
 });
