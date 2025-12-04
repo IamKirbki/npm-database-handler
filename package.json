@@ -1,16 +1,17 @@
 {
-  "name": "kirbkis-bettersqlite3-handler",
-  "version": "1.1.0",
+  "name": "@kirbkis-database-handler/workspace",
+  "version": "1.2.0",
   "author": "iamkirbki",
-  "description": "My handler for better-sqlite3",
+  "description": "My handler for databases",
   "license": "ISC",
-  "private": false,
+  "private": true,
   "type": "module",
-  "main": "dist/packages/core/src/index.esm.js",
-  "module": "dist/packages/core/src/index.esm.js",
-  "types": "dist/packages/core/src/index.d.ts",
+  "workspaces": [
+    "packages/core",
+    "packages/better-sqlite3"
+  ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "npm run build --workspaces",
     "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",

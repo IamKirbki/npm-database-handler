@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from '@core/Database';
+import { BetterSqlite3Database } from '../src/index';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,10 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Query', () => {
     const testDbPath = path.join(__dirname, '..', 'test-query.db');
-    let db: Database;
+    let db: BetterSqlite3Database;
 
     beforeEach(() => {
-        db = new Database(testDbPath);
+        db = new BetterSqlite3Database(testDbPath);
         db.CreateTable('users', {
             id: "INTEGER PRIMARY KEY AUTOINCREMENT",
             name: 'TEXT NOT NULL',
@@ -114,20 +114,20 @@ describe('Query', () => {
             const result = query.Run<{ changes: number; lastInsertRowid: number }>();
             expect(result.changes).toBe(1);
         });
-    });
 
-    describe('Transaction', () => {
-        it('should execute multiple queries in transaction', () => {
-            const table = db.Table('users');
-            const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
+        describe('Transaction', () => {
+            it('should execute multiple queries in transaction', () => {
+                const table = db.Table('users');
+                const query = db.Query(table, 'INSERT INTO users (name, email, age) VALUES (@name, @email, @age)');
 
-            query.Transaction([
-                { name: 'John', email: 'john@example.com', age: 30 },
-                { name: 'Jane', email: 'jane@example.com', age: 25 },
-            ]);
+                query.Transaction([
+                    { name: 'John', email: 'john@example.com', age: 30 },
+                    { name: 'Jane', email: 'jane@example.com', age: 25 },
+                ]);
 
-            const records = table.Records();
-            expect(records).toHaveLength(2);
+                const records = table.Records();
+                expect(records).toHaveLength(2);
+            });
         });
     });
 });

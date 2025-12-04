@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import Database from '@core/Database';
+import { BetterSqlite3Database } from '../src/index';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -36,10 +36,10 @@ interface UserRecord {
 
 describe('Table', () => {
     const testDbPath = path.join(__dirname, '..', 'test-table.db');
-    let db: Database;
+    let db: BetterSqlite3Database;
 
     beforeEach(() => {
-        db = new Database(testDbPath);
+        db = new BetterSqlite3Database(testDbPath);
         db.CreateTable('users', {
             id: "INTEGER PRIMARY KEY AUTOINCREMENT",
             name: 'TEXT NOT NULL',

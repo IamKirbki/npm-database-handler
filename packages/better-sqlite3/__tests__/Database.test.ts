@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import Database from '@core/Database';
+import { BetterSqlite3Database } from '../src/index';
 import path from 'path';    
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Database', () => {
   const testDbPath = path.join(__dirname, '..', 'test.db');
+  let db: BetterSqlite3Database;
 
   afterEach(() => {
     // Clean up test database
@@ -18,20 +19,19 @@ describe('Database', () => {
 
   describe('Constructor', () => {
     it('should create a database instance', () => {
-      const db = new Database(testDbPath);
-      expect(db).toBeInstanceOf(Database);
-      expect(db.db).toBeDefined();
+      db = new BetterSqlite3Database(testDbPath);
+      expect(db).toBeInstanceOf(BetterSqlite3Database);
     });
 
     it('should create an in-memory database', () => {
-      const db = new Database(':memory:');
-      expect(db).toBeInstanceOf(Database);
+      db = new BetterSqlite3Database(':memory:');
+      expect(db).toBeInstanceOf(BetterSqlite3Database);
     });
   });
 
   describe('CreateTable', () => {
     it('should create a new table with id column', () => {
-      const db = new Database(testDbPath);
+      db = new BetterSqlite3Database(testDbPath);
       const table = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
@@ -46,7 +46,7 @@ describe('Database', () => {
     });
 
     it('should not fail when creating table that already exists', () => {
-      const db = new Database(testDbPath);
+      db = new BetterSqlite3Database(testDbPath);
       const table1 = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
@@ -60,7 +60,7 @@ describe('Database', () => {
 
   describe('Table', () => {
     it('should get an existing table', () => {
-      const db = new Database(testDbPath);
+      db = new BetterSqlite3Database(testDbPath);
       db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });
@@ -72,7 +72,7 @@ describe('Database', () => {
 
   describe('Query', () => {
     it('should create a query object', () => {
-      const db = new Database(testDbPath);
+      db = new BetterSqlite3Database(testDbPath);
       const table = db.CreateTable('users', {
         id: "INTEGER PRIMARY KEY AUTOINCREMENT"
       });

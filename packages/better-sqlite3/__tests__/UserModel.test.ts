@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import User from "../packages/core/src/abstract/User.js";
-import Database from '../packages/core/src/Database.js';
+import User from "@core/abstract/User";
+import { BetterSqlite3Database } from '../src/index';
+import BetterSqlite3Adapter from '../src/BetterSqlite3Adapter';
 import path from "path";
 import fs from 'fs';
 import { fileURLToPath } from "url";
@@ -9,23 +10,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("User Model CRUD Tests", () => {
     let user: User;
-    let db: Database;
+    let db: BetterSqlite3Database;
+    let adapter: BetterSqlite3Adapter;
     let testDbPath: string;
 
     beforeEach(() => {
         // Create unique test database for each test
         testDbPath = path.join(__dirname, '..', `test-${Date.now()}-${Math.random()}.db`);
-        db = new Database(testDbPath);
+        db = new BetterSqlite3Database(testDbPath);
         db.CreateTable("User", {
             id: "TEXT PRIMARY KEY",
             name: "TEXT"
         });
-        user = new User(db.db);
+        adapter = new BetterSqlite3Adapter();
+        adapter.connect(testDbPath);
+        user = new User(adapter);
     });
 
     afterEach(() => {
         // Close database connection before cleanup
-        db.db.close();
+        adapter.close();
         
         // Clean up test database
         if (fs.existsSync(testDbPath)) {

@@ -22,12 +22,13 @@
     "baseUrl": ".",
     "paths": {
       "@core/*": ["packages/core/src/*"],
+      "@better-sqlite3/*": ["packages/better-sqlite3/src/*"],
       "vitest": ["node_modules/vitest"]
     }
   },
   "include": [
-    "packages/core/src/**/*.ts", 
-    "packages/core/src/*.ts", 
+    "packages/**/src/**/*.ts", 
+    "packages/**/src/*.ts", 
     "types/*.d.ts", 
   ],
   "exclude": ["node_modules", "dist", "__tests__/**"],
