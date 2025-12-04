@@ -1,3 +1,4 @@
+import tsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -5,6 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  plugins: [tsConfigPaths()],
   test: {
     globals: true,
     environment: 'node',
@@ -13,7 +15,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
-        'src/index.ts',
+        './packages/core/src/index.ts',
         '**/*.d.ts',
         'dist/**',
         'node_modules/**',

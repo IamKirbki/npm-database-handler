@@ -20,16 +20,15 @@
     "experimentalDecorators": true,
     "importHelpers": false,
     "baseUrl": ".",
-    "types": ["vitest"],
     "paths": {
       "@core/*": ["packages/core/src/*"],
+      "vitest": ["node_modules/vitest"]
     }
   },
   "include": [
     "packages/core/src/**/*.ts", 
     "packages/core/src/*.ts", 
-    "types/*.d.ts", "__tests__/**/*.ts", 
-    "packages/core/src/helpers/Validator.ts.disabled"
+    "types/*.d.ts", 
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "__tests__/**"],
 }

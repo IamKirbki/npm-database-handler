@@ -2,14 +2,11 @@ import Table from "@core/Table";
 import { QueryParameters } from "types/index";
 import { Database as DatabaseType } from "better-sqlite3";
 import Record from "@core/Record";
-import Validator from "@core/helpers/Validator";
 
 /**
- * Query class for executing custom SQL queries with parameter validation
+ * Query class for executing custom SQL queries
  * 
  * Features:
- * - Validates parameter types against table schema before execution
- * - Prevents SQL injection through query structure validation
  * - Supports named parameters using @fieldName syntax
  * - Provides type-safe query execution (Run, All, Get)
  * - Transaction support for atomic multi-insert/update operations
@@ -71,13 +68,9 @@ export default class Query {
 
   /**
    * Execute a query that modifies data (INSERT, UPDATE, DELETE)
-   * Validates query and parameters before execution
    * 
    * @template Type - Expected return type (typically { lastInsertRowid: number, changes: number })
    * @returns Result object with lastInsertRowid and changes count
-   * @throws Error if query validation fails
-   * @throws Error if parameter types don't match column types
-   * @throws Error if required parameters are missing
    * 
    * @example
    * ```typescript
@@ -95,7 +88,6 @@ export default class Query {
    * ```
    */
   public Run<Type>(): Type {
-    this.Validate();
     const stmt = this.db.prepare(this.query);
     return stmt.run(this.Parameters) as Type;
   }
@@ -104,10 +96,8 @@ export default class Query {
    * Execute a SELECT query and return all matching rows as Record objects
    * Each row is wrapped in a Record instance for convenient updates/deletes
    * 
-   * @template Type - Expected row type (must include id: number | string)
+   * @template Type - Expected row type
    * @returns Array of Record objects containing the query results
-   * @throws Error if query validation fails
-   * @throws Error if parameter types don't match column types
    * 
    * @example
    * ```typescript
@@ -129,7 +119,6 @@ export default class Query {
    * ```
    */
   public All<Type>(): Record<Type>[] {
-    this.Validate();
     const stmt = this.db.prepare(this.query);
     let results = stmt.all(this.Parameters) as Type[];
 
@@ -146,10 +135,8 @@ export default class Query {
    * Execute a SELECT query and return the first matching row as a Record object
    * Returns undefined if no rows match the query
    * 
-   * @template Type - Expected row type (must include id: number | string)
+   * @template Type - Expected row type
    * @returns Single Record object or undefined if no match found
-   * @throws Error if query validation fails
-   * @throws Error if parameter types don't match column types
    * 
    * @example
    * ```typescript
@@ -170,7 +157,6 @@ export default class Query {
    * ```
    */
   public Get<Type>(): Record<Type> | undefined {
-    this.Validate();
     const stmt = this.db.prepare(this.query);
     const results = stmt.get(this.Parameters) as Type | undefined;
     return results ? new Record<Type>(results, this.db, this.Table) : undefined;
@@ -179,12 +165,10 @@ export default class Query {
   /**
    * Execute the query for multiple parameter sets in an atomic transaction
    * All operations succeed or all fail together (rollback on any error)
-   * Each parameter set is validated before execution
    * 
    * Performance: Significantly faster than individual inserts for bulk operations
    * 
    * @param items - Array of parameter objects, one for each query execution
-   * @throws Error if any validation fails for any parameter set
    * @throws Error if any query execution fails (triggers rollback)
    * 
    * @example
@@ -212,55 +196,11 @@ export default class Query {
 
     const transactionFn = this.db.transaction((items: QueryParameters[]) => {
       for (const item of items) {
-        // Set parameters for this item
-        this.Parameters = item;
-
-        // Validate each item
-        this.Validate();
-
-        // Run with sorted parameters
-        stmt.run(this.Parameters);
+        stmt.run(item);
       }
     });
 
     transactionFn(items);
   }
 
-  /**
-   * Validate both the query structure and parameter types
-   * Called automatically by Run(), All(), Get(), and Transaction()
-   * Can also be called manually to check validity before execution
-   * 
-   * Validations performed:
-   * - Query is a non-empty string
-   * - No SQL injection patterns (semicolon followed by DROP/DELETE/UPDATE/INSERT/ALTER)
-   * - All @fieldName references exist in the table schema
-   * - All required (NOT NULL) fields are provided for INSERT queries
-   * - All parameter keys match column names in the table
-   * - All parameter values match their column types (string for TEXT, number for INTEGER, etc.)
-   * - No null/undefined values for NOT NULL columns
-   * 
-   * @throws Error if query structure is invalid or contains forbidden operations
-   * @throws Error if parameters don't match table schema
-   * @throws Error if parameter types don't match column types
-   * @throws Error if required fields are missing
-   * 
-   * @example
-   * ```typescript
-   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (@name, @age)');
-   * query.Parameters = { name: 'John', age: 30 };
-   * 
-   * // Validate without executing
-   * try {
-   *   query.Validate();
-   *   console.log('Query is valid');
-   * } catch (error) {
-   *   console.error('Validation failed:', error.message);
-   * }
-   * ```
-   */
-  public Validate() {
-    Validator.ValidateQuery(this.query, this.Table.TableColumnInformation);
-    Validator.ValidateQueryParameters(this.query, this.Parameters, this.Table.TableColumnInformation);
-  }
 }
