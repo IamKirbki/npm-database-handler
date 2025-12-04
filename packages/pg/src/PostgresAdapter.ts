@@ -21,8 +21,9 @@ export default class PostgresAdapter implements IDatabaseAdapter {
         const statement = new PostgresStatement(query, client);
         await statement.run();
     }
-
-    async transaction(fn: (items: any[]) => void): Promise<Function> {
+    
+    // eslint-disable-next-line no-unused-vars
+    async transaction(fn: (items: unknown[]) => void): Promise<Function> {
         const client = this.pool ? await this.pool.connect() : undefined;
         if (!client) {
             throw new Error("Database client is not available for transaction.");

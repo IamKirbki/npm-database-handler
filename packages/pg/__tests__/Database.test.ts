@@ -41,7 +41,7 @@ describe('Database', () => {
       expect(table.Name).toBe('users');
 
       const columns = await table.TableColumnInformation();
-      console.log(columns);
+      
       expect(columns.length).toBeGreaterThan(0);
       const idColumn = columns.find(col => col.name === 'id' || col.column_name === 'id');
       expect(idColumn).toBeDefined();

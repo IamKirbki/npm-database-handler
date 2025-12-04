@@ -117,7 +117,7 @@ export default class Table {
     }
 
     public async Drop(): Promise<void> {
-        const queryStr = `DROP TABLE IF EXISTS \"${this.name}\";`;
+        const queryStr = `DROP TABLE IF EXISTS "${this.name}";`;
         const query = new Query(this, queryStr, this.adapter);
         await query.Run();
     }

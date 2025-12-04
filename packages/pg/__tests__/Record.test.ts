@@ -45,7 +45,6 @@ describe('Record', () => {
     describe('Properties', () => {
         it('should have values property', async () => {
             const table = await db.Table('users');
-            console.log(table);
             const record = await table.Record({ where: { name: 'John' } });
     
             expect(record).toBeDefined();

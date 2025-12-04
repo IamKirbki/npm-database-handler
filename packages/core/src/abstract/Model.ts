@@ -206,7 +206,8 @@ export default abstract class Model<T extends object> {
      * const userModel = await User.create(db);
      * ```
      */
-    public static async create<M extends Model<any>>(
+    public static async create<M extends Model<object>>(
+        // eslint-disable-next-line no-unused-vars
         this: new (table: Table) => M,
         adapter: IDatabaseAdapter
     ): Promise<M> {

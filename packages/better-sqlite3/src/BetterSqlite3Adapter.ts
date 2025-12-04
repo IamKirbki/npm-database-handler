@@ -30,6 +30,7 @@ export default class BetterSqlite3Adapter implements IDatabaseAdapter {
         this.db.exec(query);
     }
 
+    // eslint-disable-next-line no-unused-vars
     async transaction(fn: (items: unknown[]) => void): Promise<Function> {
         if (!this.db) {
             throw new Error("Database is not connected.");
@@ -44,9 +45,9 @@ export default class BetterSqlite3Adapter implements IDatabaseAdapter {
         }
         
         const stmt = this.db.prepare(`PRAGMA table_info(${tableName})`);
-        const rows = stmt.all();
+        const rows = stmt.all() as Array<{ cid: number; name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>;
 
-        return rows.map((row: any) => ({
+        return rows.map((row) => ({
             cid: row.cid,
             name: row.name,
             type: row.type,
