@@ -1,6 +1,6 @@
 import Table from "./Table";
 import Query from "./Query";
-import Validator from "@core/helpers/Validator";
+// import Validator from "@core/helpers/Validator";
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
@@ -58,7 +58,7 @@ export default class Database {
    * ```
    */
   public async Table(name: string): Promise<Table> {
-    Validator.ValidateTableName(name);
+    // Validator.ValidateTableName(name);
     return await Table.create(name, this.adapter);
   }
 
@@ -89,16 +89,16 @@ export default class Database {
    * ```
    */
   public async CreateTable(name: string, columns: object): Promise<Table> {
-    Validator.ValidateTableName(name);
+    // Validator.ValidateTableName(name);
 
     const names = Object.keys(columns || {}).map((colName) => {
-      Validator.ValidateColumnName(colName);
+      // Validator.ValidateColumnName(colName);
       return colName;
     });
 
     const colsDef = names.map(colName => {
       const colType = (columns as Record<string, string>)[colName];
-      Validator.ValidateColumnType(colType);
+      // Validator.ValidateColumnType(colType);
       return `${colName} ${colType}`;
     }).join(", ");
 

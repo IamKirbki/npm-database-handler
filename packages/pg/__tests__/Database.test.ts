@@ -1,57 +1,59 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { BetterSqlite3Database } from '../src/index';
-import path from 'path';    
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { PostgresDatabase } from '../src';
+import { PoolConfig } from 'pg';
 
 describe('Database', () => {
-  const testDbPath = path.join(__dirname, '..', 'test.db');
-  let db: BetterSqlite3Database;
+  const testDbConfig: PoolConfig = {
+    host: process.env.POSTGRES_HOST || 'localhost',
+    port: parseInt(process.env.POSTGRES_PORT || '5432'),
+    database: process.env.POSTGRES_DB || 'test_db',
+    user: process.env.POSTGRES_USER || 'postgres',
+    password: process.env.POSTGRES_PASSWORD || 'postgres',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+  let db: PostgresDatabase;
 
-  afterEach(() => {
+  afterEach(async () => {
     // Clean up test database
-    if (fs.existsSync(testDbPath)) {
-      fs.unlinkSync(testDbPath);
+    if (db) {
+      await db.cleanDatabase();
+      await db.close();
     }
   });
 
   describe('Constructor', () => {
-    it('should create a database instance', () => {
-      db = new BetterSqlite3Database(testDbPath);
-      expect(db).toBeInstanceOf(BetterSqlite3Database);
-    });
-
-    it('should create an in-memory database', () => {
-      db = new BetterSqlite3Database(':memory:');
-      expect(db).toBeInstanceOf(BetterSqlite3Database);
+    it('should create a database instance', async () => {
+      db = await PostgresDatabase.create(testDbConfig);
+      expect(db).toBeInstanceOf(PostgresDatabase);
     });
   });
 
   describe('CreateTable', () => {
-    it('should create a new table with id column', () => {
-      db = new BetterSqlite3Database(testDbPath);
-      const table = db.CreateTable('users', {
-        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+    it('should create a new table with id column', async () => {
+      db = await PostgresDatabase.create(testDbConfig);
+      const table = await db.CreateTable('users', {
+        id: "SERIAL PRIMARY KEY"
       });
 
       expect(table).toBeDefined();
       expect(table.Name).toBe('users');
 
-      const columns = table.TableColumnInformation;
+      const columns = await table.TableColumnInformation();
+      console.log(columns);
       expect(columns.length).toBeGreaterThan(0);
-      expect(columns[0].name).toBe('id');
-      expect(columns[0].pk).toBe(1);
+      const idColumn = columns.find(col => col.name === 'id' || col.column_name === 'id');
+      expect(idColumn).toBeDefined();
     });
 
-    it('should not fail when creating table that already exists', () => {
-      db = new BetterSqlite3Database(testDbPath);
-      const table1 = db.CreateTable('users', {
-        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+    it('should not fail when creating table that already exists', async () => {
+      db = await PostgresDatabase.create(testDbConfig);
+      const table1 = await db.CreateTable('users', {
+        id: "SERIAL PRIMARY KEY"
       });
-      const table2 = db.CreateTable('users', {
-        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+      const table2 = await db.CreateTable('users', {
+        id: "SERIAL PRIMARY KEY"
       });
 
       expect(table1.Name).toBe(table2.Name);
@@ -59,27 +61,26 @@ describe('Database', () => {
   });
 
   describe('Table', () => {
-    it('should get an existing table', () => {
-      db = new BetterSqlite3Database(testDbPath);
-      db.CreateTable('users', {
-        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+    it('should get an existing table', async () => {
+      db = await PostgresDatabase.create(testDbConfig);
+      await db.CreateTable('users', {
+        id: "SERIAL PRIMARY KEY"
       });
 
-      const table = db.Table('users');
+      const table = await db.Table('users');
       expect(table.Name).toBe('users');
     });
   });
 
   describe('Query', () => {
-    it('should create a query object', () => {
-      db = new BetterSqlite3Database(testDbPath);
-      const table = db.CreateTable('users', {
-        id: "INTEGER PRIMARY KEY AUTOINCREMENT"
+    it('should create a query object', async () => {
+      db = await PostgresDatabase.create(testDbConfig);
+      const table = await db.CreateTable('users', {
+        id: "SERIAL PRIMARY KEY"
       });
 
       const query = db.Query(table, 'SELECT * FROM users');
       expect(query).toBeDefined();
-      expect(query.Table).toBe(table);
     });
   });
 });

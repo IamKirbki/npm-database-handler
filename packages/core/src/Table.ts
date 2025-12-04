@@ -91,7 +91,8 @@ export default class Table {
      * ```
      */
     public async TableColumnInformation(): Promise<TableColumnInfo[]> {
-        const query = new Query(this, `PRAGMA table_info(${this.name});`, this.adapter);
+        // const query = new Query(this, `PRAGMA table_info(${this.name});`, this.adapter);
+        const query = new Query(this, `SELECT * FROM information_schema.columns WHERE table_name = '${this.name}'`, this.adapter);
         const records = await query.All<TableColumnInfo>();
         return records.map(record => record.values);
     }

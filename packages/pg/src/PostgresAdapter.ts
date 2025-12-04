@@ -22,7 +22,34 @@ export default class PostgresAdapter implements IDatabaseAdapter {
     }
 
     async transaction(fn: (items: any[]) => void): Promise<Function> {
-        throw new Error("Method not implemented.");
+        const client = this.pool ? await this.pool.connect() : undefined;
+        if (!client) {
+            throw new Error("Database client is not available for transaction.");
+        }
+
+        await client.query('BEGIN');
+
+        const rollback = async () => {
+            await client.query('ROLLBACK');
+            client.release();
+        };
+
+        const commit = async () => {
+            await client.query('COMMIT');
+            client.release();
+        };
+
+        try {
+            fn([]);
+            await commit();
+        } catch (error) {
+            await rollback();
+            throw error;
+        } finally {
+            client.release();
+        }
+
+        return commit;
     }
 
     async close(): Promise<void> {
