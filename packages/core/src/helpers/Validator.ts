@@ -1,4 +1,4 @@
-import { QueryParameters, TableColumnInfo } from "types/index";
+import { QueryParameters, TableColumnInfo } from "../types/index";
 
 /**
  * Validator class for validating table names, column names, column types, SQL queries, and query parameters

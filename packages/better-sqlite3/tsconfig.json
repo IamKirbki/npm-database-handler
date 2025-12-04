@@ -1,14 +1,20 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "baseUrl": ".",
     "types": ["vitest"],
     "paths": {
       "@core/*": ["../core/src/*"]
     }
   },
+  "references": [
+    { "path": "../core" }
+  ],
   "include": [
     "src/**/*.ts"
   ],

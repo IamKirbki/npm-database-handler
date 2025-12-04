@@ -6,7 +6,7 @@ import {
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
-} from "types/index";
+} from "./types/index";
 import Query from "@core/Query";
 import Record from "@core/Record";
 import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder";

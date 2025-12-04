@@ -1,7 +1,7 @@
 import { inspect } from "util";
 import Table from "@core/Table";
 import Query from "@core/Query";
-import { QueryParameters } from "types/query";
+import { QueryParameters } from "./types/query";
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**

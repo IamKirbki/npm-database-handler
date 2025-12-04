@@ -1,5 +1,5 @@
 import Table from "@core/Table";
-import { QueryParameters } from "types/index";
+import { QueryParameters } from "./types/index";
 import Record from "@core/Record";
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
