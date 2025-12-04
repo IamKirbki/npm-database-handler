@@ -36,22 +36,34 @@ export default class PostgresStatement implements IStatementAdapter {
 
     async run(parameters?: object): Promise<unknown> {
         const { query, values } = this.transformQuery(parameters);
-        const res = this.client?.query(query, values);
-        this.client?.release();
-        return res;
+        try {
+            const res = await this.client?.query(query, values);
+            return res;
+        } finally {
+            this.client?.release();
+            this.client = undefined; // Prevent double release
+        }
     }
 
     async all(parameters?: object): Promise<unknown[]> {
         const { query, values } = this.transformQuery(parameters);
-        const res = this.client?.query(query, values).then(result => result.rows);
-        this.client?.release();
-        return res || [];
+        try {
+            const res = await this.client?.query(query, values);
+            return res?.rows || [];
+        } finally {
+            this.client?.release();
+            this.client = undefined; // Prevent double release
+        }
     }
 
     async get(parameters?: object): Promise<unknown | undefined> {
         const { query, values } = this.transformQuery(parameters);
-        const res = await this.client?.query(query, values);
-        this.client?.release();
-        return res?.rows[0];
+        try {
+            const res = await this.client?.query(query, values);
+            return res?.rows[0];
+        } finally {
+            this.client?.release();
+            this.client = undefined; // Prevent double release
+        }
     }
 }

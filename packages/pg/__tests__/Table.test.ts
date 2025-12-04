@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { BetterSqlite3Database } from '../src/index';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { PostgresDatabase } from '../src/index';
+import { PoolConfig } from 'pg';
 
 interface UserRecord {
     id: number;
@@ -13,56 +9,45 @@ interface UserRecord {
     age: number;
 }
 
-// interface JoinedUserOrder {
-//     id: number;
-//     name: string;
-//     email: string;
-//     age: number;
-//     user_id: number;
-//     total: number;
-//     status?: string;
-// }
-
-// interface CompleteJoinResult {
-//     id: number;
-//     name: string;
-//     email: string;
-//     total: number;
-//     status: string;
-//     product_name: string;
-//     price: number;
-//     category_name: string;
-// }
-
 describe('Table', () => {
-    const testDbPath = path.join(__dirname, '..', 'test-table.db');
-    let db: BetterSqlite3Database;
+    const testDbConfig: PoolConfig = {
+        host: process.env.POSTGRES_HOST || 'localhost',
+        port: parseInt(process.env.POSTGRES_PORT || '5432'),
+        database: process.env.POSTGRES_DB || 'test_db',
+        user: process.env.POSTGRES_USER || 'postgres',
+        password: process.env.POSTGRES_PASSWORD || 'postgres',
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+    };
+    let db: PostgresDatabase;
 
-    beforeEach(() => {
-        db = new BetterSqlite3Database(testDbPath);
-        db.CreateTable('users', {
-            id: "INTEGER PRIMARY KEY AUTOINCREMENT",
-            name: 'TEXT NOT NULL',
-            email: 'TEXT',
+    beforeEach(async () => {
+        db = await PostgresDatabase.create(testDbConfig);
+        await db.CreateTable('users', {
+            id: 'SERIAL PRIMARY KEY',
+            name: 'VARCHAR(255) NOT NULL',
+            email: 'VARCHAR(255)',
             age: 'INTEGER'
         });
     });
 
-    afterEach(() => {
-        if (fs.existsSync(testDbPath)) {
-            fs.unlinkSync(testDbPath);
+    afterEach(async () => {
+        if (db) {
+            await db.cleanDatabase();
+            await db.close();
         }
     });
 
     describe('Properties', () => {
-        it('should return table name', () => {
-            const table = db.Table('users');
+        it('should return table name', async () => {
+            const table = await db.Table('users');
             expect(table.Name).toBe('users');
         });
 
-        it('should return column information', () => {
-            const table = db.Table('users');
-            const columns = table.TableColumnInformation;
+        it('should return column information', async () => {
+            const table = await db.Table('users');
+            const columns = await table.TableColumnInformation();
 
             expect(columns.length).toBe(4); // id, name, email, age
             expect(columns.find(c => c.name === 'name')).toBeDefined();
@@ -70,105 +55,105 @@ describe('Table', () => {
             expect(columns.find(c => c.name === 'age')).toBeDefined();
         });
 
-        it('should return readable column information', () => {
-            const table = db.Table('users');
-            const columns = table.ReadableTableColumnInformation;
+        it('should return readable column information', async () => {
+            const table = await db.Table('users');
+            const columns = await table.ReadableTableColumnInformation();
 
             const nameCol = columns.find(c => c.name === 'name');
             expect(nameCol?.nullable).toBe(false);
-            expect(nameCol?.type).toBe('TEXT');
+            expect(nameCol?.type).toBe('character varying');
         });
     });
 
     describe('Drop', () => {
-        it('should drop the table', () => {
-            const table = db.Table('users');
+        it('should drop the table', async () => {
+            const table = await db.Table('users');
 
-            const columnsBeforeDrop = table.TableColumnInformation;
+            const columnsBeforeDrop = await table.TableColumnInformation();
             expect(columnsBeforeDrop.length).toBeGreaterThan(0);
 
-            table.Drop();
+            await table.Drop();
             
-            const columnsAfterDrop = table.TableColumnInformation;
+            const columnsAfterDrop = await table.TableColumnInformation();
             expect(columnsAfterDrop.length).toBe(0);
         });
     });
 
     describe('Insert', () => {
-        it('should insert a single record', () => {
-            const table = db.Table('users');
-            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
-            const records = table.Records();
+        it('should insert a single record', async () => {
+            const table = await db.Table('users');
+            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            const records = await table.Records();
             expect(records.length).toBe(1);
             expect((records[0].values as UserRecord).name).toBe('John');
 
         });
 
-        it('should insert multiple records', () => {
-            const table = db.Table('users');
+        it('should insert multiple records', async () => {
+            const table = await db.Table('users');
 
-            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
-            table.Insert({ name: 'Jane', email: 'jane@example.com', age: 25 });
+            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+            await table.Insert({ name: 'Jane', email: 'jane@example.com', age: 25 });
 
-            const records = table.Records();
+            const records = await table.Records();
             expect(records.length).toBe(2);
         });
     });
 
     describe('Records', () => {
-        beforeEach(() => {
-            const table = db.Table('users');
-            table.Insert({
+        beforeEach(async () => {
+            const table = await db.Table('users');
+            await table.Insert({
                 name: 'John',
                 email: 'john@example.com',
                 age: 30
             });
-            table.Insert({
+            await table.Insert({
                 name: 'Jane',
                 email: 'jane@example.com',
                 age: 25
             });
-            table.Insert({
+            await table.Insert({
                 name: 'Bob',
                 email: 'bob@example.com',
                 age: 35
             });
         });
 
-        it('should return all records', () => {
-            const table = db.Table('users');
-            const records = table.Records();
+        it('should return all records', async () => {
+            const table = await db.Table('users');
+            const records = await table.Records();
 
             expect(records.length).toBe(3);
             expect(records[0].values).toHaveProperty('name');
         });
 
-        it('should filter records with where clause', () => {
-            const table = db.Table('users');
-            const records = table.Records({ where: { name: 'John' } });
+        it('should filter records with where clause', async () => {
+            const table = await db.Table('users');
+            const records = await table.Records({ where: { name: 'John' } });
 
             expect(records.length).toBe(1);
             expect((records[0].values as UserRecord).name).toBe('John');
         });
 
-        it('should limit records', () => {
-            const table = db.Table('users');
-            const records = table.Records({ limit: 2 });
+        it('should limit records', async () => {
+            const table = await db.Table('users');
+            const records = await table.Records({ limit: 2 });
 
             expect(records.length).toBe(2);
         });
 
-        it('should order records', () => {
-            const table = db.Table('users');
-            const records = table.Records({ orderBy: 'age DESC' });
+        it('should order records', async () => {
+            const table = await db.Table('users');
+            const records = await table.Records({ orderBy: 'age DESC' });
 
             expect((records[0].values as UserRecord).age).toBe(35);
             expect((records[2].values as UserRecord).age).toBe(25);
         });
 
-        it('should select specific columns', () => {
-            const table = db.Table('users');
-            const records = table.Records({ select: 'name, age' });
+        it('should select specific columns', async () => {
+            const table = await db.Table('users');
+            const records = await table.Records({ select: 'name, age' });
 
             expect(records[0].values).toHaveProperty('name');
             expect(records[0].values).toHaveProperty('age');
@@ -177,56 +162,56 @@ describe('Table', () => {
     });
 
     describe('Record', () => {
-        beforeEach(() => {
-            const table = db.Table('users');
-            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+        beforeEach(async () => {
+            const table = await db.Table('users');
+            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
         });
 
-        it('should return a single record', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'John' } });
+        it('should return a single record', async () => {
+            const table = await db.Table('users');
+            const record = await table.Record({ where: { name: 'John' } });
 
             expect(record).toBeDefined();
             expect((record?.values as UserRecord).name).toBe('John');
         });
 
-        it('should return undefined for non-existent record', () => {
-            const table = db.Table('users');
-            const record = table.Record({ where: { name: 'NonExistent' } });
+        it('should return undefined for non-existent record', async () => {
+            const table = await db.Table('users');
+            const record = await table.Record({ where: { name: 'NonExistent' } });
 
             expect(record).toBeUndefined();
         });
     });
 
     describe('RecordsCount', () => {
-        it('should return count of records', () => {
-            const table = db.Table('users');
-            table.Insert({
+        it('should return count of records', async () => {
+            const table = await db.Table('users');
+            await table.Insert({
                 name: 'John',
                 email: 'john@example.com',
                 age: 30
             });
-            table.Insert({
+            await table.Insert({
                 name: 'Jane',
                 email: 'jane@example.com',
                 age: 25
             });
 
-            expect(table.RecordsCount).toBe(2);
+            expect(await table.RecordsCount()).toBe(2);
         });
 
-        it('should return 0 for empty table', () => {
-            const table = db.Table('users');
-            expect(table.RecordsCount).toBe(0);
+        it('should return 0 for empty table', async () => {
+            const table = await db.Table('users');
+            expect(await table.RecordsCount()).toBe(0);
         });
     });
 
     describe('Records Error Cases', () => {
-        it('should return empty array for invalid where clause', () => {
-            const table = db.Table('users');
-            table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+        it('should return empty array for invalid where clause', async () => {
+            const table = await db.Table('users');
+            await table.Insert({ name: 'John', email: 'john@example.com', age: 30 });
 
-            const records = table.Records({ where: { name: 'NonExistent' } });
+            const records = await table.Records({ where: { name: 'NonExistent' } });
             expect(records).toHaveLength(0);
         });
     });
@@ -274,7 +259,7 @@ describe('Table', () => {
     //         ]);
     //     });
 
-    //     it('should perform simple INNER JOIN between two tables', () => {
+    //     it('should perform simple INNER JOIN between two tables', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -288,7 +273,7 @@ describe('Table', () => {
     //         expect(results.length).toBeGreaterThan(0);
     //     });
 
-    //     it('should join tables and return correct data', () => {
+    //     it('should join tables and return correct data', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -307,7 +292,7 @@ describe('Table', () => {
     //         expect(firstResult).toHaveProperty('total');
     //     });
 
-    //     it('should support multiple INNER JOINs', () => {
+    //     it('should support multiple INNER JOINs', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -334,7 +319,7 @@ describe('Table', () => {
     //         expect(results.length).toBeGreaterThan(0);
     //     });
 
-    //     it('should support nested INNER JOINs', () => {
+    //     it('should support nested INNER JOINs', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
     //         const productsTable = db.Table('products');
@@ -358,7 +343,7 @@ describe('Table', () => {
     //         expect(results.length).toBeGreaterThan(0);
     //     });
 
-    //     it('should support select option with INNER JOIN', () => {
+    //     it('should support select option with INNER JOIN', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -376,7 +361,7 @@ describe('Table', () => {
     //         expect(firstResult).toHaveProperty('total');
     //     });
 
-    //     it('should support orderBy option with INNER JOIN', () => {
+    //     it('should support orderBy option with INNER JOIN', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -392,7 +377,7 @@ describe('Table', () => {
     //         expect(results[0].values.total).toBeGreaterThanOrEqual(results[1].values.total);
     //     });
 
-    //     it('should support limit option with INNER JOIN', () => {
+    //     it('should support limit option with INNER JOIN', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -404,7 +389,7 @@ describe('Table', () => {
     //         expect(results.length).toBe(2);
     //     });
 
-    //     it('should support offset option with INNER JOIN', () => {
+    //     it('should support offset option with INNER JOIN', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -416,7 +401,7 @@ describe('Table', () => {
     //         expect(results.length).toBe(2); // 4 total - 2 offset = 2
     //     });
 
-    //     it('should combine multiple query options with INNER JOIN', () => {
+    //     it('should combine multiple query options with INNER JOIN', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -433,7 +418,7 @@ describe('Table', () => {
     //         expect(results.length).toBe(2);
     //     });
 
-    //     // it('should use all INNER JOIN features together - comprehensive test', () => {
+    //     // it('should use all INNER JOIN features together - comprehensive test', async () => {
     //     //     const usersTable = db.Table('users');
     //     //     const ordersTable = db.Table('orders');
     //     //     const productsTable = db.Table('products');
@@ -531,13 +516,13 @@ describe('Table', () => {
     //         });
     //     });
 
-    //     it('should throw error when joining with non-existent table', () => {
+    //     it('should throw error when joining with non-existent table', async () => {
     //         expect(() => {
     //             db.Table('nonexistent_table');
     //         }).toThrow('does not exist in the database');
     //     });
 
-    //     it('should return empty array when no matching records in join', () => {
+    //     it('should return empty array when no matching records in join', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -552,7 +537,7 @@ describe('Table', () => {
     //         expect(results.length).toBe(0);
     //     });
 
-    //     it('should handle invalid ON clause gracefully', () => {
+    //     it('should handle invalid ON clause gracefully', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -566,7 +551,7 @@ describe('Table', () => {
     //         }).toThrow();
     //     });
 
-    //     it('should throw error for invalid select columns', () => {
+    //     it('should throw error for invalid select columns', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -580,7 +565,7 @@ describe('Table', () => {
     //         }).toThrow();
     //     });
 
-    //     it('should throw error for invalid orderBy column', () => {
+    //     it('should throw error for invalid orderBy column', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -594,7 +579,7 @@ describe('Table', () => {
     //         }).toThrow();
     //     });
 
-    //     it('should handle negative limit gracefully', () => {
+    //     it('should handle negative limit gracefully', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -609,7 +594,7 @@ describe('Table', () => {
     //         expect(results).toBeDefined();
     //     });
 
-    //     it('should handle negative offset gracefully', () => {
+    //     it('should handle negative offset gracefully', async () => {
     //         const usersTable = db.Table('users');
     //         const ordersTable = db.Table('orders');
 
@@ -625,7 +610,7 @@ describe('Table', () => {
     //         expect(results.length).toBe(1);
     //     });
 
-    //     it('should throw error when joining table with itself without alias', () => {
+    //     it('should throw error when joining table with itself without alias', async () => {
     //         const usersTable = db.Table('users');
 
     //         // Self-join without proper aliasing should fail

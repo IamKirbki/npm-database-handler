@@ -170,11 +170,11 @@ export default abstract class Model<T extends object> {
     private QueryParams: QueryParameters = {};
 
     /**
-     * Private constructor - use static create() factory instead
+     * Protected constructor - use static create() factory instead
      * 
      * @param table - Table instance for database operations
      */
-    private constructor(table: Table) {
+    protected constructor(table: Table) {
         this.Table = table;
     }
 

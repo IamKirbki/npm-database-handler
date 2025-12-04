@@ -91,10 +91,7 @@ export default class Table {
      * ```
      */
     public async TableColumnInformation(): Promise<TableColumnInfo[]> {
-        // const query = new Query(this, `PRAGMA table_info(${this.name});`, this.adapter);
-        const query = new Query(this, `SELECT * FROM information_schema.columns WHERE table_name = '${this.name}'`, this.adapter);
-        const records = await query.All<TableColumnInfo>();
-        return records.map(record => record.values);
+        return this.adapter.tableColumnInformation(this.name);
     }
 
     /**
@@ -120,7 +117,7 @@ export default class Table {
     }
 
     public async Drop(): Promise<void> {
-        const queryStr = `DROP TABLE IF EXISTS ${this.name};`;
+        const queryStr = `DROP TABLE IF EXISTS \"${this.name}\";`;
         const query = new Query(this, queryStr, this.adapter);
         await query.Run();
     }
@@ -217,9 +214,9 @@ export default class Table {
      * ```
      */
     public async RecordsCount(): Promise<number> {
-        const stmt = await this.adapter.prepare(`SELECT COUNT(*) as count FROM ${this.name};`);
-        const count = await stmt.get({}) as { count: number };
-        return count.count || 0;
+        const stmt = await this.adapter.prepare(`SELECT COUNT(*) as count FROM "${this.name}";`);
+        const count = await stmt.get({}) as { count: string };
+        return parseInt(count.count) || 0;
     }
 
     /**
@@ -256,8 +253,16 @@ export default class Table {
         query.Parameters = values;
         
         const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
+        
+        // For PostgreSQL compatibility: use 'id' from values if lastInsertRowid is undefined
+        const recordId = result?.lastInsertRowid ?? values.id;
+        
+        if (recordId === undefined) {
+            return undefined;
+        }
+        
         return this.Record({
-            where: { id: result.lastInsertRowid }
+            where: { id: recordId }
         });
     }
 

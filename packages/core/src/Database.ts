@@ -99,11 +99,11 @@ export default class Database {
     const colsDef = names.map(colName => {
       const colType = (columns as Record<string, string>)[colName];
       // Validator.ValidateColumnType(colType);
-      return `${colName} ${colType}`;
+      return `"${colName}" ${colType}`;
     }).join(", ");
 
     const stmt = await this.adapter.prepare(
-      `CREATE TABLE IF NOT EXISTS ${name} (${colsDef});`
+      `CREATE TABLE IF NOT EXISTS "${name}" (${colsDef});`
     );
 
     await stmt.run();

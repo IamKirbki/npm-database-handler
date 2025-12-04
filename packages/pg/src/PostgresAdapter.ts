@@ -2,6 +2,7 @@ import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import IStatementAdapter from "@core/interfaces/IStatementAdapter";
 import { Pool, PoolConfig } from "pg";
 import PostgresStatement from "./PostgresStatement";
+import { TableColumnInfo } from "@core/types/table";
 
 export default class PostgresAdapter implements IDatabaseAdapter {
     private pool: Pool | null = null;
@@ -45,11 +46,34 @@ export default class PostgresAdapter implements IDatabaseAdapter {
         } catch (error) {
             await rollback();
             throw error;
-        } finally {
-            client.release();
         }
 
         return commit;
+    }
+
+    async tableColumnInformation(tableName: string): Promise<TableColumnInfo[]> {
+        const client = this.pool ? await this.pool.connect() : undefined;
+        if (!client) {
+            throw new Error("Database client is not available.");
+        }
+
+        const query = `
+            SELECT *
+            FROM information_schema.columns
+            WHERE table_name = $1
+        `;
+
+        const res = await client.query(query, [tableName]);
+        client.release();
+
+        return res.rows.map((row: { column_name: string; data_type: string; is_nullable: string; column_default: string | null }, index: number) => ({
+            cid: index,
+            name: row.column_name,
+            type: row.data_type,
+            notnull: row.is_nullable === 'NO' ? 1 : 0,
+            dflt_value: row.column_default,
+            pk: 0 // PostgreSQL does not provide primary key info in this query
+        }));
     }
 
     async close(): Promise<void> {
@@ -58,5 +82,5 @@ export default class PostgresAdapter implements IDatabaseAdapter {
             this.pool = null;
         }
     }
-    
+
 } 

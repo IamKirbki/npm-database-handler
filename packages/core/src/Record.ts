@@ -84,7 +84,7 @@ export default class Record<ColumnValuesType> {
             .map(key => `${key} = @where_${key}`)
             .join(" AND ");
 
-        const query = `UPDATE ${this._table.Name} SET ${setClauses} WHERE ${whereClauses};`;
+        const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
         const _query = new Query(this._table, query, this.adapter);
         
         const params: QueryParameters = { ...newValues };
@@ -114,7 +114,7 @@ export default class Record<ColumnValuesType> {
             .map(key => `${key} = @${key}`)
             .join(" AND ");
             
-        const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE ${whereClauses};`, this.adapter);
+        const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this.adapter);
         _query.Parameters = { ...this._values as object };
         await _query.Run();
     }

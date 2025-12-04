@@ -62,7 +62,7 @@ export default class QueryStatementBuilder {
         const queryParts: string[] = [];
 
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
-        queryParts.push(`FROM ${table.Name}`);
+        queryParts.push(`FROM "${table.Name}"`);
 
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
@@ -94,7 +94,7 @@ export default class QueryStatementBuilder {
         const columns = Object.keys(record);
         const placeholders = columns.map(col => `@${col}`);
 
-        queryParts.push(`INSERT INTO ${table.Name}`);
+        queryParts.push(`INSERT INTO "${table.Name}"`);
         queryParts.push(`(${columns.join(", ")})`);
         queryParts.push(`VALUES (${placeholders.join(", ")})`);
 
@@ -131,7 +131,7 @@ export default class QueryStatementBuilder {
         const queryParts: string[] = [];
         const setClauses = Object.keys(record).map(col => `${col} = @${col}`);
 
-        queryParts.push(`UPDATE ${table.Name}`);
+        queryParts.push(`UPDATE "${table.Name}"`);
         queryParts.push(`SET ${setClauses.join(", ")}`);
         queryParts.push(this.BuildWhere(where));
 
@@ -161,7 +161,7 @@ export default class QueryStatementBuilder {
     public static BuildDelete(table: Table, where: QueryParameters): string {
         const queryParts: string[] = [];
 
-        queryParts.push(`DELETE FROM ${table.Name}`);
+        queryParts.push(`DELETE FROM "${table.Name}"`);
         queryParts.push(this.BuildWhere(where));
 
         return queryParts.join(" ");
@@ -190,7 +190,7 @@ export default class QueryStatementBuilder {
      */
     public static BuildCount(table: Table, where?: QueryParameters): string {
         const queryParts: string[] = [];
-        queryParts.push(`SELECT COUNT(*) as count FROM ${table.Name}`);
+        queryParts.push(`SELECT COUNT(*) as count FROM "${table.Name}"`);
         queryParts.push(this.BuildWhere(where));
 
         return queryParts.join(" ");
@@ -287,7 +287,7 @@ export default class QueryStatementBuilder {
     ) {
         const queryParts: string[] = [];
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
-        queryParts.push(`FROM ${fromTable.Name}`);
+        queryParts.push(`FROM "${fromTable.Name}"`);
         queryParts.push(this.BuildJoinPart(fromTable, joins));
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));

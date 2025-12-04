@@ -2,6 +2,7 @@ import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import IStatementAdapter from "@core/interfaces/IStatementAdapter";
 import Database from "better-sqlite3";
 import BetterSqlite3Statement from "./BetterSqlite3Statement";
+import { TableColumnInfo } from "@core/types/index";
 
 export default class BetterSqlite3Adapter implements IDatabaseAdapter {
     private db: Database.Database | null = null;
@@ -35,6 +36,24 @@ export default class BetterSqlite3Adapter implements IDatabaseAdapter {
         }
 
         return this.db.transaction(fn);
+    }
+
+    async tableColumnInformation(tableName: string): Promise<TableColumnInfo[]> {
+        if (!this.db) {
+            throw new Error("Database is not connected.");
+        }
+        
+        const stmt = this.db.prepare(`PRAGMA table_info(${tableName})`);
+        const rows = stmt.all();
+
+        return rows.map((row: any) => ({
+            cid: row.cid,
+            name: row.name,
+            type: row.type,
+            notnull: row.notnull,
+            dflt_value: row.dflt_value,
+            pk: row.pk
+        }));
     }
 
     async close(): Promise<void> {
