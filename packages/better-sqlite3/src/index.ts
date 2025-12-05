@@ -8,3 +8,4 @@ export class BetterSqlite3Database extends Database {
     super(adapter);
   }
 }
+export { BetterSqlite3Adapter };
