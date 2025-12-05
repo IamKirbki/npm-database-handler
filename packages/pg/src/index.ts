@@ -33,3 +33,5 @@ export class PostgresDatabase extends Database {
         }
     }
 }
+
+export { PostgresAdapter };
