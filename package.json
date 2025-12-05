@@ -1,10 +1,10 @@
 {
-  "name": "@kirbkis-database-handler/workspace",
-  "version": "1.2.0",
-  "author": "iamkirbki",
-  "description": "My handler for databases",
-  "license": "ISC",
+  "name": "kirbkis-database-handler-monorepo",
+  "version": "1.0.0",
   "private": false,
+  "description": "Monorepo for @kirbkis-database-handler packages",
+  "author": "iamkirbki",
+  "license": "ISC",
   "type": "module",
   "workspaces": [
     "packages/core",
@@ -12,9 +12,9 @@
     "packages/pg"
   ],
   "scripts": {
-    "build": "tsc --build",
-    "build:clean": "tsc --build --clean",
-    "prepare": "npm run build",
+    "build": "npm run build --workspaces --if-present",
+    "build:clean": "npm run clean --workspaces --if-present",
+    "clean": "rm -rf packages/*/dist",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -23,7 +23,6 @@
     "lint:check": "eslint ."
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
     "jiti": "^2.6.1"
   },
   "devDependencies": {

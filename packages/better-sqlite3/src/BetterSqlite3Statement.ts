@@ -1,5 +1,5 @@
 import { RunResult, Statement } from "better-sqlite3";
-import IStatementAdapter from "@core/interfaces/IStatementAdapter";
+import { IStatementAdapter } from "@iamkirbki/database-handler-core";
 
 export default class BetterSqlite3Statement implements IStatementAdapter {
     private stmt: Statement;

@@ -1,6 +1,6 @@
 {
-  "name": "@kirbkis-database-handler/core",
-  "version": "1.1.0",
+  "name": "@iamkirbki/database-handler-core",
+  "version": "2.0.0",
   "author": "iamkirbki",
   "description": "Core database abstractions and interfaces",
   "license": "ISC",
@@ -11,10 +11,20 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "database",
+    "orm",
+    "query-builder",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamKirbki/bettersqlite3-handler.git",
+    "directory": "packages/core"
+  },
   "scripts": {
     "build": "tsc"
   },
-  "peerDependencies": {},
   "devDependencies": {
     "typescript": "^5.9.3"
   }

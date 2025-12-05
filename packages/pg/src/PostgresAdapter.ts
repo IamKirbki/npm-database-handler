@@ -1,8 +1,6 @@
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
-import IStatementAdapter from "@core/interfaces/IStatementAdapter";
+import { IDatabaseAdapter, IStatementAdapter, TableColumnInfo } from "@iamkirbki/database-handler-core";
 import { Pool, PoolConfig } from "pg";
 import PostgresStatement from "./PostgresStatement";
-import { TableColumnInfo } from "@core/types/table";
 
 export default class PostgresAdapter implements IDatabaseAdapter {
     private pool: Pool | null = null;
