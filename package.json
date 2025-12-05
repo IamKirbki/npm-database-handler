@@ -4,7 +4,7 @@
   "author": "iamkirbki",
   "description": "My handler for databases",
   "license": "ISC",
-  "private": true,
+  "private": false,
   "type": "module",
   "workspaces": [
     "packages/core",
