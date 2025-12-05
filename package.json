@@ -12,7 +12,8 @@
     "packages/pg"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "tsc --build",
+    "build:clean": "tsc --build --clean",
     "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",

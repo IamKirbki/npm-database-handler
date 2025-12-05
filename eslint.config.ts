@@ -3,10 +3,19 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/coverage/**',
+      '**/*.config.js'
+    ],
+  },
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.d.ts'],
-    ignores: ['dist/**', 'node_modules/**', '*.config.ts', '**/__tests__/**', '**/*.disabled', '**/interfaces/**'],
+    ignores: ['**/__tests__/**', '**/*.disabled', '**/interfaces/**', '**/*.config.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -41,7 +50,6 @@ export default [
   },
   {
     files: ['**/*.js', '**/*.mjs'],
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '**/dist/**', 'packages/*/dist/**'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

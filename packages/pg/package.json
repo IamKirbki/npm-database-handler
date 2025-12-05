@@ -15,7 +15,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@kirbkis-database-handler/core": "file:../core",
+    "@kirbkis-database-handler/core": "workspace:*",
     "pg": "^8.16.3"
   },
   "devDependencies": {

@@ -15,7 +15,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@kirbkis-database-handler/core": "file:../core",
+    "@kirbkis-database-handler/core": "workspace:*",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {
