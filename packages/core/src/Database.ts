@@ -1,7 +1,7 @@
-import SqliteDatabase, { Database as DatabaseType } from "better-sqlite3";
 import Table from "./Table";
 import Query from "./Query";
-import Validator from "./helpers/Validator";
+// import Validator from "@core/helpers/Validator";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
  * Main Database class for interacting with SQLite databases
@@ -21,7 +21,7 @@ import Validator from "./helpers/Validator";
  * ```
  */
 export default class Database {
-  public readonly db: DatabaseType;
+  private adapter: IDatabaseAdapter;
 
   /**
    * Creates a new Database instance
@@ -40,8 +40,8 @@ export default class Database {
    * const db = new Database(':memory:');
    * ```
    */
-  constructor(dbPath: string) {
-    this.db = new SqliteDatabase(dbPath);
+  constructor(adapter: IDatabaseAdapter) {
+    this.adapter = adapter;
   }
 
   /**
@@ -53,13 +53,13 @@ export default class Database {
    * 
    * @example
    * ```typescript
-   * const users = db.Table('users');
-   * const allUsers = users.Records();
+   * const users = await db.Table('users');
+   * const allUsers = await users.Records();
    * ```
    */
-  public Table(name: string): Table {
-    Validator.ValidateTableName(name);
-    return new Table(name, this.db);
+  public async Table(name: string): Promise<Table> {
+    // Validator.ValidateTableName(name);
+    return await Table.create(name, this.adapter);
   }
 
   // TODO Make primary key required
@@ -76,7 +76,7 @@ export default class Database {
    * @example
    * ```typescript
    * // Create a users table
-   * const users = db.CreateTable('users', {
+   * const users = await db.CreateTable('users', {
    *   id: 'INTEGER PRIMARY KEY AUTOINCREMENT',
    *   name: 'TEXT NOT NULL',
    *   email: 'TEXT UNIQUE',
@@ -85,29 +85,29 @@ export default class Database {
    * });
    * 
    * // Table is now ready to use
-   * users.Insert({ name: 'John', email: 'john@example.com', age: 30 });
+   * await users.Insert({ name: 'John', email: 'john@example.com', age: 30 });
    * ```
    */
-  public CreateTable(name: string, columns: object): Table {
-    Validator.ValidateTableName(name);
+  public async CreateTable(name: string, columns: object): Promise<Table> {
+    // Validator.ValidateTableName(name);
 
     const names = Object.keys(columns || {}).map((colName) => {
-      Validator.ValidateColumnName(colName);
+      // Validator.ValidateColumnName(colName);
       return colName;
     });
 
     const colsDef = names.map(colName => {
       const colType = (columns as Record<string, string>)[colName];
-      Validator.ValidateColumnType(colType);
-      return `${colName} ${colType}`;
+      // Validator.ValidateColumnType(colType);
+      return `"${colName}" ${colType}`;
     }).join(", ");
 
-    const stmt = this.db.prepare(
-      `CREATE TABLE IF NOT EXISTS ${name} (${colsDef});`
+    const stmt = await this.adapter.prepare(
+      `CREATE TABLE IF NOT EXISTS "${name}" (${colsDef});`
     );
 
-    stmt.run();
-    return new Table(name, this.db);
+    await stmt.run();
+    return await Table.create(name, this.adapter, true);
   }
 
   /**
@@ -126,6 +126,6 @@ export default class Database {
    * ```
    */
   public Query(table: Table, query: string): Query {
-    return new Query(table, query, this.db);
+    return new Query(table, query, this.adapter);
   }
 }

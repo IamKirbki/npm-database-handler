@@ -1,0 +1,25 @@
+{
+  "name": "@kirbkis-database-handler/better-sqlite3",
+  "version": "1.1.0",
+  "author": "iamkirbki",
+  "description": "Better-sqlite3 adapter implementation",
+  "license": "ISC",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@kirbkis-database-handler/core": "^1.1.0",
+    "better-sqlite3": "^11.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "typescript": "^5.9.3"
+  }
+}

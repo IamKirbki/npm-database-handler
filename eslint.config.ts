@@ -3,9 +3,19 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 
 export default [
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/coverage/**',
+      '**/*.config.js'
+    ],
+  },
   eslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['**/*.ts', '**/*.d.ts'],
+    ignores: ['**/__tests__/**', '**/*.disabled', '**/interfaces/**', '**/*.config.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -39,41 +49,11 @@ export default [
     },
   },
   {
-    files: ['**/*.ts'],
-    ignores: ['src/**/*.ts'],
-    languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-      'no-console': 'off',
-      'prefer-const': 'error',
-      'no-var': 'error',
-    },
-  },
-  {
     files: ['**/*.js', '**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
-  },
-  {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js'],
   },
 ];
 

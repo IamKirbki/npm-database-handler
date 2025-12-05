@@ -1,4 +1,4 @@
-import { Database as DatabaseType, RunResult } from "better-sqlite3";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import {
     DefaultQueryOptions,
     QueryOptions,
@@ -6,10 +6,10 @@ import {
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
-} from "../types/index";
-import Query from "./Query";
-import Record from "./Record";
-import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
+} from "./types/index";
+import Query from "@core/Query";
+import Record from "@core/Record";
+import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder";
 
 /**
  * Table class for interacting with a specific database table
@@ -33,24 +33,41 @@ import QueryStatementBuilder from "./helpers/QueryStatementBuilder";
  */
 export default class Table {
     private readonly name: string;
-    private readonly db: DatabaseType;
+    private readonly adapter: IDatabaseAdapter;
 
     /**
-     * Creates a Table instance
+     * Private constructor - use Table.create() instead
      * 
      * @param name - Name of the table
-     * @param db - Database connection instance
+     * @param adapter - Database adapter instance
+     */
+    private constructor(name: string, adapter: IDatabaseAdapter) {
+        this.name = name;
+        this.adapter = adapter;
+    }
+
+    /**
+     * Create a Table instance (async factory method)
+     * 
+     * @param name - Name of the table
+     * @param adapter - Database adapter instance
+     * @param skipValidation - Skip table existence validation (used when creating new tables)
+     * @returns Table instance
      * @throws Error if the table does not exist in the database
      */
-    constructor(name: string, db: DatabaseType) {
-        this.name = name;
-        this.db = db;
-
-        if (!this.TableColumnInformation.length) {
-            throw new Error(
-                `Table "${name}" does not exist in the database.\nYou might want to use the CreateTable function.`
-            );
+    public static async create(name: string, adapter: IDatabaseAdapter, skipValidation = false): Promise<Table> {
+        const table = new Table(name, adapter);
+        
+        if (!skipValidation) {
+            const columns = await table.TableColumnInformation();
+            if (!columns.length) {
+                throw new Error(
+                    `Table "${name}" does not exist in the database.\nYou might want to use the CreateTable function.`
+                );
+            }
         }
+        
+        return table;
     }
 
     /**
@@ -69,14 +86,12 @@ export default class Table {
      * 
      * @example
      * ```typescript
-     * const columns = table.TableColumnInformation;
+     * const columns = await table.TableColumnInformation();
      * // [{ cid: 0, name: 'id', type: 'INTEGER', notnull: 0, dflt_value: null, pk: 1 }, ...]
      * ```
      */
-    public get TableColumnInformation(): TableColumnInfo[] {
-        return this.db
-            .prepare(`PRAGMA table_info(${this.name});`)
-            .all() as TableColumnInfo[];
+    public async TableColumnInformation(): Promise<TableColumnInfo[]> {
+        return this.adapter.tableColumnInformation(this.name);
     }
 
     /**
@@ -86,12 +101,13 @@ export default class Table {
      * 
      * @example
      * ```typescript
-     * const columns = table.ReadableTableColumnInformation;
+     * const columns = await table.ReadableTableColumnInformation();
      * // [{ name: 'id', type: 'INTEGER', nullable: false, isPrimaryKey: true, defaultValue: null }, ...]
      * ```
      */
-    public get ReadableTableColumnInformation(): ReadableTableColumnInfo[] {
-        return this.TableColumnInformation.map((col) => ({
+    public async ReadableTableColumnInformation(): Promise<ReadableTableColumnInfo[]> {
+        const columns = await this.TableColumnInformation();
+        return columns.map((col) => ({
             name: col.name,
             type: col.type,
             nullable: col.notnull === 0,
@@ -100,10 +116,10 @@ export default class Table {
         }));
     }
 
-    public Drop(): void {
-        const queryStr = `DROP TABLE IF EXISTS ${this.name};`;
-        const query = new Query(this, queryStr, this.db);
-        query.Run();
+    public async Drop(): Promise<void> {
+        const queryStr = `DROP TABLE IF EXISTS "${this.name}";`;
+        const query = new Query(this, queryStr, this.adapter);
+        await query.Run();
     }
 
     /**
@@ -130,9 +146,9 @@ export default class Table {
      *   offset: 20
      * });
      */
-    public Records<Type extends { id: number | string }>(
+    public async Records<Type>(
         options?: DefaultQueryOptions & QueryOptions
-    ): Record<Type>[] {
+    ): Promise<Record<Type>[]> {
         const queryStr = QueryStatementBuilder.BuildSelect(this, {
             select: options?.select,
             where: options?.where,
@@ -141,12 +157,12 @@ export default class Table {
             offset: options?.offset,
         });
 
-        const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.adapter);
 
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
-        const results: Record<Type>[] = query.All();
+        const results: Record<Type>[] = await query.All();
         
         // Wrap each result in a Record object
         return results;
@@ -173,10 +189,10 @@ export default class Table {
      * user?.update({ status: 'inactive' });
      * ```
      */
-    public Record<Type extends { id: number | string }>(
+    public async Record<Type>(
         options?: DefaultQueryOptions & QueryOptions
-    ): Record<Type> | undefined {
-        const results = this.Records({
+    ): Promise<Record<Type> | undefined> {
+        const results = await this.Records({
             select: options?.select,
             where: options?.where,
             orderBy: options?.orderBy,
@@ -197,11 +213,10 @@ export default class Table {
      * console.log(`Total users: ${totalUsers}`);
      * ```
      */
-    public get RecordsCount(): number {
-        const count = this.db
-            .prepare(`SELECT COUNT(*) as count FROM ${this.name};`)
-            .get() as { count: number };
-        return count.count || 0;
+    public async RecordsCount(): Promise<number> {
+        const stmt = await this.adapter.prepare(`SELECT COUNT(*) as count FROM "${this.name}";`);
+        const count = await stmt.get({}) as { count: string };
+        return parseInt(count.count) || 0;
     }
 
     /**
@@ -226,7 +241,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public Insert<Type extends { id: number | string }>(values: QueryParameters): Record<Type> | undefined{
+    public async Insert<Type>(values: QueryParameters): Promise<Record<Type> | undefined>{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {
@@ -234,12 +249,20 @@ export default class Table {
         }
 
         const queryStr = QueryStatementBuilder.BuildInsert(this, values);
-        const query = new Query(this, queryStr, this.db);
+        const query = new Query(this, queryStr, this.adapter);
         query.Parameters = values;
         
-        const result = query.Run<RunResult>();
+        const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
+        
+        // For PostgreSQL compatibility: use 'id' from values if lastInsertRowid is undefined
+        const recordId = result?.lastInsertRowid ?? values.id;
+        
+        if (recordId === undefined) {
+            return undefined;
+        }
+        
         return this.Record({
-            where: { id: result.lastInsertRowid }
+            where: { id: recordId }
         });
     }
 

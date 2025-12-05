@@ -3,10 +3,10 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 
 export default {
-  input: 'src/index.ts',
+  input: 'packages/core/src/index.ts',
   output: [
     {
-      file: 'dist/index.esm.js',
+      file: 'dist/packages/core/src/index.esm.js',
       format: 'esm',
     }
   ],

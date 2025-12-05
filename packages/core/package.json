@@ -1,0 +1,21 @@
+{
+  "name": "@kirbkis-database-handler/core",
+  "version": "1.1.0",
+  "author": "iamkirbki",
+  "description": "Core database abstractions and interfaces",
+  "license": "ISC",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

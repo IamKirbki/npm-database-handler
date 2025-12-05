@@ -1,7 +1,8 @@
-import { Database as DatabaseType } from "better-sqlite3";
 import { inspect } from "util";
-import Table from "./Table";
-import Query from "./Query";
+import Table from "@core/Table";
+import Query from "@core/Query";
+import { QueryParameters } from "./types/query";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 
 /**
  * Record class represents a single database row with methods for updates and deletion
@@ -24,8 +25,8 @@ import Query from "./Query";
  * console.log(JSON.stringify(user)); // {"id": 1, "name": "John Doe", ...}
  * ```
  */
-export default class Record<ColumnValuesType extends { id: number | string }> {
-    private readonly _db: DatabaseType;
+export default class Record<ColumnValuesType> {
+    private readonly adapter: IDatabaseAdapter;
     private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _table: Table;
 
@@ -36,9 +37,9 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * @param db - Database connection instance
      * @param tableName - Name of the table this record belongs to
      */
-    constructor(values: ColumnValuesType, db: DatabaseType, table: Table) {
+    constructor(values: ColumnValuesType, adapter: IDatabaseAdapter, table: Table) {
         this._values = values;
-        this._db = db;
+        this.adapter = adapter;
         this._table = table;
     }
 
@@ -72,24 +73,34 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * // Database is updated and user.values reflects the changes
      * ```
      */
-    public Update(newValues: object): void {
+    public async Update(newValues: object): Promise<void> {
         const setClauses = Object.keys(newValues)
             .map(key => `${key} = @${key}`)
             .join(", ");
 
-        const query = `UPDATE ${this._table.Name} SET ${setClauses} WHERE id = @id;`;
-        const _query = new Query(this._table, query, this._db);
-        _query.Parameters = { ...newValues, id: this._values.id };
-        _query.Run();
+        // Use all current values as WHERE clause to identify the record
+        const originalValues = this._values as object;
+        const whereClauses = Object.keys(originalValues)
+            .map(key => `${key} = @where_${key}`)
+            .join(" AND ");
+
+        const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
+        const _query = new Query(this._table, query, this.adapter);
+        
+        const params: QueryParameters = { ...newValues };
+        Object.entries(originalValues).forEach(([key, value]) => {
+            params[`where_${key}`] = value;
+        });
+        
+        _query.Parameters = params;
+        await _query.Run();
 
         this._values = { ...this._values, ...newValues };
     }
 
     /**
      * Delete this record from the database
-     * 
-     * @template TEntity - Record type that must include an 'id' property (number or string)
-     * @throws Error if the record doesn't have an 'id' field
+     * Uses all current field values as WHERE clause conditions
      * 
      * @example
      * ```typescript
@@ -98,11 +109,14 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * // Record is permanently deleted from the database
      * ```
      */
-    // TODO Where clause with primary key other than 'id'
-    public Delete(): void {
-        const _query = new Query(this._table, `DELETE FROM ${this._table.Name} WHERE id = @id;`, this._db);
-        _query.Parameters = { id: (this._values as ColumnValuesType).id };
-        _query.Run();
+    public async Delete(): Promise<void> {
+        const whereClauses = Object.keys(this._values as object)
+            .map(key => `${key} = @${key}`)
+            .join(" AND ");
+            
+        const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this.adapter);
+        _query.Parameters = { ...this._values as object };
+        await _query.Run();
     }
 
     /**
@@ -118,7 +132,7 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * // Output: {"id":1,"name":"John","email":"john@example.com"}
      * ```
      */
-    public toJSON(): object {
+    public toJSON(): ColumnValuesType {
         return this._values;
     }
 
@@ -157,7 +171,7 @@ export default class Record<ColumnValuesType extends { id: number | string }> {
      * // Instead of: Record { _db: ..., _values: {...}, _tableName: '...' }
      * ```
      */
-    [inspect.custom](): object {
+    [inspect.custom](): ColumnValuesType {
         return this._values;
     }
 }

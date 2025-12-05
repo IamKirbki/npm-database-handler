@@ -1,7 +1,7 @@
-import { Database as DatabaseType } from "better-sqlite3";
-import { QueryParameters } from "types/query";
-import Table from "../Table";
-import Record from "../Record";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
+import { QueryParameters } from "../types/query";
+import Table from "@core/Table";
+import Record from "@core/Record";
 
 /**
  * **Model** - Abstract base class for database models providing a fluent ORM-like interface.
@@ -139,7 +139,7 @@ import Record from "../Record";
  * @see Table - Underlying table management class
  * @see Record - Individual record manipulation class
  */
-export default abstract class Model<T extends { id: string }> {
+export default abstract class Model<T extends object> {
     /**
      * Internal Table instance managing database operations.
      * 
@@ -170,21 +170,16 @@ export default abstract class Model<T extends { id: string }> {
     private QueryParams: QueryParameters = {};
 
     /**
-     * Lazy-loaded Record instance for the current query.
+     * Protected constructor - use static create() factory instead
      * 
-     * This getter provides access to the Record instance matching the current
-     * QueryParams. It's computed on-demand and used internally by get(), update(),
-     * and delete() methods. Returns undefined if no matching record exists.
-     * 
-     * @private
-     * @returns The matching Record instance or undefined
+     * @param table - Table instance for database operations
      */
-    private get RecordGet(): Record<T> | undefined {
-        return this.Table.Record<T>({ where: this.QueryParams });
+    protected constructor(table: Table) {
+        this.Table = table;
     }
 
     /**
-     * Initialize a new Model instance.
+     * Create a new Model instance (async factory method).
      * 
      * Creates a new model connected to the specified database. The table name is
      * automatically derived from the class name (via this.constructor.name), so a
@@ -193,25 +188,45 @@ export default abstract class Model<T extends { id: string }> {
      * **Important**: Ensure the table exists in the database before creating a model
      * instance. The Model class does not create tables automatically.
      * 
-     * @param db - Better-sqlite3 Database instance to use for all operations
+     * @param adapter - Database adapter instance to use for all operations
+     * @returns Promise resolving to the model instance
      * 
      * @example
      * ```typescript
-     * import Database from 'better-sqlite3';
+     * import { createDatabase } from '@handler/better-sqlite3';
      * import User from './models/User';
      * 
-     * const db = new Database('./app.db');
-     * db.exec(`CREATE TABLE IF NOT EXISTS User (
+     * const db = createDatabase('./app.db');
+     * await db.exec(`CREATE TABLE IF NOT EXISTS User (
      *   id TEXT PRIMARY KEY,
      *   name TEXT NOT NULL,
      *   email TEXT UNIQUE
      * )`);
      * 
-     * const userModel = new User(db);
+     * const userModel = await User.create(db);
      * ```
      */
-    constructor(db: DatabaseType) {
-        this.Table = new Table(this.constructor.name, db);
+    public static async create<M extends Model<object>>(
+        // eslint-disable-next-line no-unused-vars
+        this: new (table: Table) => M,
+        adapter: IDatabaseAdapter
+    ): Promise<M> {
+        const table = await Table.create(this.name, adapter);
+        return new this(table);
+    }
+
+    /**
+     * Get the Record instance for the current query parameters.
+     * 
+     * This method provides access to the Record instance matching the current
+     * QueryParams. It's used internally by get(), update(), and delete() methods.
+     * Returns undefined if no matching record exists.
+     * 
+     * @private
+     * @returns Promise resolving to the matching Record instance or undefined
+     */
+    private async RecordGet(): Promise<Record<T> | undefined> {
+        return await this.Table.Record<T>({ where: this.QueryParams });
     }
 
     /**
@@ -224,12 +239,12 @@ export default abstract class Model<T extends { id: string }> {
      * 
      * **Best Practice**: Always call where() before get() to ensure predictable results.
      * 
-     * @returns The matching record's data, or undefined if not found
+     * @returns Promise resolving to the matching record's data, or undefined if not found
      * 
      * @example
      * ```typescript
      * // Find user by ID
-     * const user = userModel.where({ id: '123' }).get();
+     * const user = await userModel.where({ id: '123' }).get();
      * if (user) {
      *   console.log(user.name);
      * } else {
@@ -237,14 +252,15 @@ export default abstract class Model<T extends { id: string }> {
      * }
      * 
      * // Find user by email
-     * const user = userModel.where({ email: 'john@example.com' }).get();
+     * const user = await userModel.where({ email: 'john@example.com' }).get();
      * 
      * // Check existence
-     * const exists = userModel.where({ id: '456' }).get() !== undefined;
+     * const exists = await userModel.where({ id: '456' }).get() !== undefined;
      * ```
      */
-    public get(): T | undefined {
-        return this.RecordGet?.values;
+    public async get(): Promise<T | undefined> {
+        const record = await this.RecordGet();
+        return record?.values;
     }
 
     /**
@@ -257,12 +273,12 @@ export default abstract class Model<T extends { id: string }> {
      * **Performance Note**: For large tables, consider implementing pagination or
      * filtering in a custom method to avoid loading excessive data into memory.
      * 
-     * @returns Array of all records in the table
+     * @returns Promise resolving to array of all records in the table
      * 
      * @example
      * ```typescript
      * // Get all users
-     * const allUsers = userModel.all();
+     * const allUsers = await userModel.all();
      * console.log(`Total users: ${allUsers.length}`);
      * 
      * // Iterate over all records
@@ -271,14 +287,15 @@ export default abstract class Model<T extends { id: string }> {
      * });
      * 
      * // Filter in memory
-     * const activeUsers = userModel.all().filter(u => u.status === 'active');
+     * const activeUsers = (await userModel.all()).filter(u => u.status === 'active');
      * 
      * // Map to simpler structure
-     * const userNames = userModel.all().map(u => u.name);
+     * const userNames = (await userModel.all()).map(u => u.name);
      * ```
      */
-    public all(): T[] {
-        return this.Table.Records<T>().map(record => record.values);
+    public async all(): Promise<T[]> {
+        const records = await this.Table.Records<T>();
+        return records.map(record => record.values);
     }
 
     /**
@@ -352,12 +369,12 @@ export default abstract class Model<T extends { id: string }> {
      * inserts a new record. Duplicate IDs or constraint violations will throw errors.
      * 
      * @param data - Complete record data to insert. Must satisfy type T constraints.
-     * @returns Record instance wrapping the created data, or undefined on failure
+     * @returns Promise resolving to Record instance wrapping the created data, or undefined on failure
      * @throws Database errors on constraint violations (duplicate IDs, etc.)
      * 
      * @example Basic Insert
      * ```typescript
-     * const newUser = userModel.create({
+     * const newUser = await userModel.create({
      *   id: '123',
      *   name: 'John Doe',
      *   email: 'john@example.com',
@@ -372,7 +389,7 @@ export default abstract class Model<T extends { id: string }> {
      * @example Handling Duplicates
      * ```typescript
      * try {
-     *   const user = userModel.create({
+     *   const user = await userModel.create({
      *     id: 'existing-id',
      *     name: 'Test',
      *     email: 'test@example.com'
@@ -391,12 +408,12 @@ export default abstract class Model<T extends { id: string }> {
      *   { id: '3', name: 'User 3', email: 'user3@example.com' }
      * ];
      * 
-     * const createdUsers = usersData.map(data => userModel.create(data));
+     * const createdUsers = await Promise.all(usersData.map(data => userModel.create(data)));
      * console.log(`Created ${createdUsers.filter(u => u).length} users`);
      * ```
      */
-    public create(data: T): Record<T> | undefined {
-        return this.Table.Insert(data);
+    public async create(data: T): Promise<Record<T> | undefined> {
+        return await this.Table.Insert(data as unknown as QueryParameters);
     }
 
     /**
@@ -454,8 +471,11 @@ export default abstract class Model<T extends { id: string }> {
      * }
      * ```
      */
-    public update(data: T): void {
-        this.RecordGet?.Update(data);
+    public async update(data: T): Promise<void> {
+        const record = await this.RecordGet();
+        if (record) {
+            await record.Update(data);
+        }
     }
 
     /**
@@ -471,26 +491,26 @@ export default abstract class Model<T extends { id: string }> {
      * **Warning**: This is a permanent deletion. Consider implementing soft deletes
      * (status flags) in your models if you need to recover deleted records.
      * 
-     * @returns void - No return value. The record is removed immediately.
+     * @returns Promise that resolves when deletion is complete
      * 
      * @example Basic Deletion
      * ```typescript
      * // Delete user by ID
-     * userModel.where({ id: '123' }).delete();
+     * await userModel.where({ id: '123' }).delete();
      * 
      * // Verify deletion
-     * const deleted = userModel.where({ id: '123' }).get();
+     * const deleted = await userModel.where({ id: '123' }).get();
      * console.log('Deleted:', deleted === undefined); // true
      * ```
      * 
      * @example Safe Deletion with Confirmation
      * ```typescript
      * // Check before deleting
-     * const user = userModel.where({ id: '123' }).get();
+     * const user = await userModel.where({ id: '123' }).get();
      * 
      * if (user) {
      *   console.log(`Deleting user: ${user.name}`);
-     *   userModel.where({ id: '123' }).delete();
+     *   await userModel.where({ id: '123' }).delete();
      *   console.log('User deleted successfully');
      * } else {
      *   console.log('User not found');
@@ -500,11 +520,11 @@ export default abstract class Model<T extends { id: string }> {
      * @example Batch Deletion
      * ```typescript
      * // Delete all inactive users
-     * const inactiveUsers = userModel.all().filter(u => u.status === 'inactive');
+     * const inactiveUsers = (await userModel.all()).filter(u => u.status === 'inactive');
      * 
-     * inactiveUsers.forEach(user => {
-     *   userModel.where({ id: user.id }).delete();
-     * });
+     * for (const user of inactiveUsers) {
+     *   await userModel.where({ id: user.id }).delete();
+     * }
      * 
      * console.log(`Deleted ${inactiveUsers.length} inactive users`);
      * ```
@@ -513,10 +533,10 @@ export default abstract class Model<T extends { id: string }> {
      * ```typescript
      * // Instead of permanent deletion, mark as deleted
      * export default class User extends Model<UserData> {
-     *   public softDelete(id: string): void {
-     *     const user = this.where({ id }).get();
+     *   public async softDelete(id: string): Promise<void> {
+     *     const user = await this.where({ id }).get();
      *     if (user) {
-     *       this.where({ id }).update({
+     *       await this.where({ id }).update({
      *         ...user,
      *         status: 'deleted',
      *         deletedAt: new Date().toISOString()
@@ -526,7 +546,10 @@ export default abstract class Model<T extends { id: string }> {
      * }
      * ```
      */
-    public delete(): void {
-        this.RecordGet?.Delete();
+    public async delete(): Promise<void> {
+        const record = await this.RecordGet();
+        if (record) {
+            await record.Delete();
+        }
     }
 }

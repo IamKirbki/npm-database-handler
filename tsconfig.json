@@ -18,9 +18,22 @@
     "noUnusedParameters": true,
     "preserveConstEnums": true,
     "experimentalDecorators": true,
-    "importHelpers": false
+    "importHelpers": false,
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["packages/core/src/*"],
+      "@better-sqlite3/*": ["packages/better-sqlite3/src/*"],
+      "@pg/*": ["packages/pg/src/*"],
+      "vitest": ["node_modules/vitest"]
+    }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  
+  "include": [
+    "packages/**/src/**/*.ts", 
+    "packages/**/src/*.ts", 
+    "types/*.d.ts", 
+    "types/query.ts", 
+    "types/table.ts", 
+    "types/index.ts", 
+  ],
+  "exclude": ["node_modules", "dist", "__tests__/**"],
 }
