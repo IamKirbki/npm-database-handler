@@ -5,7 +5,6 @@
     "strict": true,
     "outDir": "dist",
     "declaration": true,
-    "declarationDir": "dist/types",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,

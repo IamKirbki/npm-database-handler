@@ -1,8 +1,6 @@
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
-import IStatementAdapter from "@core/interfaces/IStatementAdapter";
+import { IDatabaseAdapter, IStatementAdapter, TableColumnInfo } from "@iamkirbki/database-handler-core";
 import Database from "better-sqlite3";
 import BetterSqlite3Statement from "./BetterSqlite3Statement";
-import { TableColumnInfo } from "@core/types/index";
 
 export default class BetterSqlite3Adapter implements IDatabaseAdapter {
     private db: Database.Database | null = null;

@@ -1,4 +1,4 @@
-import Database from "@core/Database";
+import { Database } from "@iamkirbki/database-handler-core";
 import BetterSqlite3Adapter from "./BetterSqlite3Adapter";
 
 export class BetterSqlite3Database extends Database {

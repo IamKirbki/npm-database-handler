@@ -1,4 +1,4 @@
-import IStatementAdapter from "@core/interfaces/IStatementAdapter";
+import { IStatementAdapter } from "@iamkirbki/database-handler-core";
 import { PoolClient } from "pg";
 
 export default class PostgresStatement implements IStatementAdapter {

@@ -1,8 +1,8 @@
 {
-  "name": "@kirbkis-database-handler/pg",
-  "version": "1.1.0",
+  "name": "@iamkirbki/database-handler-pg",
+  "version": "2.0.0",
   "author": "iamkirbki",
-  "description": "Postgres adapter implementation",
+  "description": "PostgreSQL adapter for @kirbkis-database-handler/core",
   "license": "ISC",
   "type": "module",
   "main": "dist/index.js",
@@ -11,11 +11,24 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "database",
+    "postgres",
+    "postgresql",
+    "pg",
+    "orm",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamKirbki/bettersqlite3-handler.git",
+    "directory": "packages/pg"
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "@kirbkis-database-handler/core": "^1.1.0",
+    "@iamkirbki/database-handler-core": "^2.0.0",
     "pg": "^8.16.3"
   },
   "devDependencies": {
