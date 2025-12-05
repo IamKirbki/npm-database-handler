@@ -41,13 +41,11 @@ export default [
   },
   {
     files: ['**/*.js', '**/*.mjs'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '**/dist/**', 'packages/*/dist/**'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
-  },
-  {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js'],
   },
 ];
 
