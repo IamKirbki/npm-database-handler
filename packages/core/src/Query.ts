@@ -1,7 +1,7 @@
-import Table from "@core/Table";
-import { QueryParameters } from "./types/index";
-import Record from "@core/Record";
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
+import Table from "./Table.js";
+import { QueryParameters } from "./types/index.js";
+import Record from "./Record.js";
+import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 
 /**
  * Query class for executing custom SQL queries

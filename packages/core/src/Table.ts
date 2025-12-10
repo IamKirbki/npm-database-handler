@@ -1,4 +1,4 @@
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
+import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import {
     DefaultQueryOptions,
     QueryOptions,
@@ -6,10 +6,10 @@ import {
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
-} from "./types/index";
-import Query from "@core/Query";
-import Record from "@core/Record";
-import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder";
+} from "./types/index.js";
+import Query from "./Query.js";
+import Record from "./Record.js";
+import QueryStatementBuilder from "./helpers/QueryStatementBuilder.js";
 
 /**
  * Table class for interacting with a specific database table

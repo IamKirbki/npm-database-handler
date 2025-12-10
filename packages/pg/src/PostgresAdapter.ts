@@ -1,6 +1,6 @@
 import { IDatabaseAdapter, IStatementAdapter, TableColumnInfo } from "@iamkirbki/database-handler-core";
 import { Pool, PoolConfig } from "pg";
-import PostgresStatement from "./PostgresStatement";
+import PostgresStatement from "./PostgresStatement.js";
 
 export default class PostgresAdapter implements IDatabaseAdapter {
     private pool: Pool | null = null;

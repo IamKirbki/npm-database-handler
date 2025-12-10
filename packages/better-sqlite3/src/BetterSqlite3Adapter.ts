@@ -1,6 +1,6 @@
 import { IDatabaseAdapter, IStatementAdapter, TableColumnInfo } from "@iamkirbki/database-handler-core";
 import Database from "better-sqlite3";
-import BetterSqlite3Statement from "./BetterSqlite3Statement";
+import BetterSqlite3Statement from "./BetterSqlite3Statement.js";
 
 export default class BetterSqlite3Adapter implements IDatabaseAdapter {
     private db: Database.Database | null = null;

@@ -1,7 +1,7 @@
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
-import { QueryParameters } from "../types/query";
-import Table from "@core/Table";
-import Record from "@core/Record";
+import IDatabaseAdapter from "../interfaces/IDatabaseAdapter.js";
+import { QueryParameters } from "../types/query.js";
+import Table from "../Table.js";
+import Record from "../Record.js";
 
 /**
  * **Model** - Abstract base class for database models providing a fluent ORM-like interface.
