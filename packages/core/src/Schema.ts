@@ -12,4 +12,6 @@
  */
 
 // Placeholder for Schema implementation
-export {};
+export class Schema {
+    
+}
