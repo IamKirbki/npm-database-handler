@@ -28,7 +28,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^2.0.0",
+    "@iamkirbki/database-handler-core": "^3.0.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {

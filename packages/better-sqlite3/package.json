@@ -27,7 +27,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^2.0.0",
+    "@iamkirbki/database-handler-core": "^3.0.1",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {

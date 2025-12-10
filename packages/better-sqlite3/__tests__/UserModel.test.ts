@@ -24,7 +24,7 @@ describe("User Model CRUD Tests", () => {
         });
         adapter = new BetterSqlite3Adapter();
         adapter.connect(testDbPath);
-        user = await User.create(adapter);
+        user = await User.connect(adapter);
     });
 
     afterEach(() => {
