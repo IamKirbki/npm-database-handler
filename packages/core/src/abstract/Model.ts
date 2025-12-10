@@ -203,10 +203,10 @@ export default abstract class Model<T extends object> {
      *   email TEXT UNIQUE
      * )`);
      * 
-     * const userModel = await User.create(db);
+     * const userModel = await User.connect(db);
      * ```
      */
-    public static async create<M extends Model<object>>(
+    public static async connect<M extends Model<object>>(
         // eslint-disable-next-line no-unused-vars
         this: new (table: Table) => M,
         adapter: IDatabaseAdapter

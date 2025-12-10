@@ -28,7 +28,7 @@ beforeEach(async () => {
         id: "VARCHAR(255) PRIMARY KEY",
         name: "VARCHAR(255)"
     });
-    user = await User.create(adapter);
+    user = await User.connect(adapter);
 });
 
 afterEach(async () => {

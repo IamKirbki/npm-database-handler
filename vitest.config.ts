@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/pg/__tests__/**/*.test.ts'],
+    include: ['packages/**/__tests__/**/*.test.ts'],
     fileParallelism: false,
     coverage: {
       provider: 'v8',
