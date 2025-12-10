@@ -1,4 +1,4 @@
-import Model from "./Model";
+import Model from "./Model.js";
 
 export default class User extends Model<{ id: string; name: string; }> {
     public someMethod(): void {

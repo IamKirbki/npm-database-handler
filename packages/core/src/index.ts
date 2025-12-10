@@ -45,13 +45,13 @@
  * @packageDocumentation
  */
 
-import Database from "./Database";
-import Model from "./abstract/Model";
-import IDatabaseAdapter from "./interfaces/IDatabaseAdapter";
-import IStatementAdapter from "./interfaces/IStatementAdapter";
-import Table from "./Table";
-import Query from "./Query";
-import Record from "./Record";
+import Database from "./Database.js";
+import Model from "./abstract/Model.js";
+import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
+import IStatementAdapter from "./interfaces/IStatementAdapter.js";
+import Table from "./Table.js";
+import Query from "./Query.js";
+import Record from "./Record.js";
 
 export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record };
-export * from "./types/index";
+export * from "./types/index.js";

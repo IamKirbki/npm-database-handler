@@ -1,5 +1,5 @@
 import { Database } from "@iamkirbki/database-handler-core";
-import BetterSqlite3Adapter from "./BetterSqlite3Adapter";
+import BetterSqlite3Adapter from "./BetterSqlite3Adapter.js";
 
 export class BetterSqlite3Database extends Database {
   constructor(dbPath: string) {

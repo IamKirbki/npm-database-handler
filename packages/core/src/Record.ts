@@ -1,8 +1,8 @@
 import { inspect } from "util";
-import Table from "@core/Table";
-import Query from "@core/Query";
-import { QueryParameters } from "./types/query";
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
+import Table from "./Table.js";
+import Query from "./Query.js";
+import { QueryParameters } from "./types/query.js";
+import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 
 /**
  * Record class represents a single database row with methods for updates and deletion

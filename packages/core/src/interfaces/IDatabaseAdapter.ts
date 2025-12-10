@@ -1,5 +1,5 @@
-import { TableColumnInfo } from '@core/types/table';
-import IStatementAdapter from './IStatementAdapter';
+import { TableColumnInfo } from '../types/table.js';
+import IStatementAdapter from './IStatementAdapter.js';
 
 export default interface IDatabaseAdapter {
     connect(params: unknown): Promise<void>;

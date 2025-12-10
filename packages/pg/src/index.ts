@@ -1,5 +1,5 @@
 import { Database } from "@iamkirbki/database-handler-core";
-import PostgresAdapter from "./PostgresAdapter";
+import PostgresAdapter from "./PostgresAdapter.js";
 import { PoolConfig } from "pg";
 
 export class PostgresDatabase extends Database {

@@ -1,4 +1,4 @@
-import { DefaultQueryOptions, QueryOptions, QueryParameters, Join } from "../types/index";
+import { DefaultQueryOptions, QueryOptions, QueryParameters, Join } from "../types/index.js";
 import Table from "Table";
 
 /**

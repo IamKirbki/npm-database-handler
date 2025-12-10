@@ -1,7 +1,7 @@
-import Table from "./Table";
-import Query from "./Query";
-// import Validator from "@core/helpers/Validator";
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
+import Table from "./Table.js";
+import Query from "./Query.js";
+// import Validator from "./helpers/Validator.js";
+import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 
 /**
  * Main Database class for interacting with SQLite databases

@@ -1,5 +1,6 @@
 import { QueryParameters } from "index";
-import Table from "@core/Table";
+// table.ts
+import Table from "../Table.js";
 
 export type TableColumnInfo = {
     cid: number;
