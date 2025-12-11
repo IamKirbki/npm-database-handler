@@ -1,4 +1,4 @@
-import { SchemaTableBuilder } from "@core/abstract/Schema";
+import { SchemaTableBuilder } from "@iamkirbki/database-handler-core";
 
 export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
     build(): string {
