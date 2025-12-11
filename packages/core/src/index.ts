@@ -46,12 +46,18 @@
  */
 
 import Database from "./Database.js";
-import Model from "./abstract/Model.js";
+import Table from "./Table.js";
+import Record from "./Record.js";
+import Query from "./Query.js";
+
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import IStatementAdapter from "./interfaces/IStatementAdapter.js";
-import Table from "./Table.js";
-import Query from "./Query.js";
-import Record from "./Record.js";
 
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record };
+import Model from "./abstract/Model.js";
+import Controller from "./abstract/Controller.js";
+
+export * from "./abstract/Migration.js";
+export * from "./abstract/Schema.js";
+
+export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller };
 export * from "./types/index.js";

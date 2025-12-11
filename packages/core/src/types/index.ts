@@ -8,5 +8,10 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
         [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
     }[Keys]
 
+export type ModelWithTimestamps = {
+    created_at?: string;
+    updated_at?: string;
+}
+
 export * from './query.js';
 export * from './table.js';

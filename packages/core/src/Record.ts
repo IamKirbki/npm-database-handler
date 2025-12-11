@@ -3,6 +3,7 @@ import Table from "./Table.js";
 import Query from "./Query.js";
 import { QueryParameters } from "./types/query.js";
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
+import { ModelWithTimestamps } from "./types/index.js";
 
 /**
  * Record class represents a single database row with methods for updates and deletion
@@ -78,20 +79,23 @@ export default class Record<ColumnValuesType> {
             .map(key => `${key} = @${key}`)
             .join(", ");
 
-        // Use all current values as WHERE clause to identify the record
         const originalValues = this._values as object;
+        if ((originalValues as object & ModelWithTimestamps).updated_at !== undefined) {
+            (newValues as object & ModelWithTimestamps).updated_at = new Date().toISOString();
+        }
+
         const whereClauses = Object.keys(originalValues)
             .map(key => `${key} = @where_${key}`)
             .join(" AND ");
 
         const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
         const _query = new Query(this._table, query, this.adapter);
-        
+
         const params: QueryParameters = { ...newValues };
         Object.entries(originalValues).forEach(([key, value]) => {
             params[`where_${key}`] = value;
         });
-        
+
         _query.Parameters = params;
         await _query.Run();
 
@@ -113,7 +117,7 @@ export default class Record<ColumnValuesType> {
         const whereClauses = Object.keys(this._values as object)
             .map(key => `${key} = @${key}`)
             .join(" AND ");
-            
+
         const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this.adapter);
         _query.Parameters = { ...this._values as object };
         await _query.Run();

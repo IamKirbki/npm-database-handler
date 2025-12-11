@@ -21,7 +21,7 @@ import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
  * ```
  */
 export default class Database {
-  private adapter: IDatabaseAdapter;
+  public adapter: IDatabaseAdapter;
 
   /**
    * Creates a new Database instance
