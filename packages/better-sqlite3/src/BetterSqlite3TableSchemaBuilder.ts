@@ -33,6 +33,13 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         });
     }
     
+    uuid(name?: string): this {
+        return this.addColumn({
+            name,
+            datatype: 'UUID',
+        });
+    }
+    
     string(name?: string, length?: number): this {
         return this.addColumn({
             name,
