@@ -7,7 +7,7 @@ export default abstract class Model<T extends object> {
     private Table: Table;
     private QueryParams: QueryParameters = {};
 
-    protected constructor(table: Table) {
+    public constructor(table: Table) {
         this.Table = table;
     }
 

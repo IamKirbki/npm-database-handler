@@ -1,6 +1,6 @@
 {
   "name": "@iamkirbki/database-handler-pg",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "author": "iamkirbki",
   "description": "PostgreSQL adapter for @kirbkis-database-handler/core",
   "license": "ISC",

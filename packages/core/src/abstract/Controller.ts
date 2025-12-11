@@ -1,7 +1,7 @@
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter";
 import Model from "./Model";
 
-export abstract class Controller<M extends Model<object>> {
+export default abstract class Controller<M extends Model<object>> {
     constructor(
         protected adapter: IDatabaseAdapter, 
         protected Model: new (adapter: IDatabaseAdapter, data?: object) => M 
