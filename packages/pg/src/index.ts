@@ -34,4 +34,7 @@ export class PostgresDatabase extends Database {
     }
 }
 
+export { PostgresSchemaBuilder } from "./PostgresSchemaBuilder.js";
+export { PostgresTableSchemaBuilder } from "./PostgresTableSchemaBuilder.js";
+
 export { PostgresAdapter };

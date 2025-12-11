@@ -21,7 +21,6 @@ export abstract class SchemaTableBuilder {
     protected foreignKeys: string[] = [];
 
     protected addColumn(data: ColumnDefinition): this {
-        console.log(data.name?'Adding column':'Adding constraint to last column', data);
         if(data.name) {
             this.columns.push({
                 ...data
