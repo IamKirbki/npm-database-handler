@@ -19,6 +19,13 @@ export type ReadableTableColumnInfo = {
     isPrimaryKey: boolean;
 };
 
+export type ColumnDefinition = {
+    name?: string;
+    datatype?: string;
+    constraints?: string[];
+    autoincrement?: boolean;
+};
+
 export type Join = {
     fromTable: Table;
     joinType: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';

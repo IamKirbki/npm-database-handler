@@ -8,4 +8,8 @@ export class BetterSqlite3Database extends Database {
     super(adapter);
   }
 }
+
+export { BetterSqlite3SchemaBuilder } from "./BetterSqlite3SchemaBuilder.js";
+export { BetterSqlite3TableSchemaBuilder } from "./BetterSqlite3TableSchemaBuilder.js";
+
 export { BetterSqlite3Adapter };
