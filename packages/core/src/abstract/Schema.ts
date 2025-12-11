@@ -43,7 +43,7 @@ export abstract class SchemaTableBuilder {
 
     abstract increments(name: string): this;
     abstract primaryKey(name: string): this;
-    abstract foreign(name: string, referenceTable: string, referenceColumn: string): this;
+    abstract foreignKey(name: string, referenceTable: string, referenceColumn: string): this;
     abstract uuid(name: string): this;
     abstract string(name: string, length?: number): this;
     abstract integer(name: string): this;
