@@ -32,6 +32,18 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
             constraints: ['PRIMARY KEY'],
         });
     }
+
+    foreign(name?: string, referenceTable?: string, referenceColumn?: string): this {
+        if(name && referenceTable && referenceColumn) {
+            const constraint = `FOREIGN KEY(${name}) REFERENCES ${referenceTable}(${referenceColumn})`;
+            return this.addColumn({
+                name,
+                constraints: [constraint],
+            });
+        }
+
+        return this;
+    }
     
     uuid(name?: string): this {
         return this.addColumn({

@@ -33,6 +33,17 @@ export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
         });
     }
 
+    foreign(name?: string, referenceTable?: string, referenceColumn?: string): this {
+        if(name && referenceTable && referenceColumn) {
+            const constraint = `REFERENCES ${referenceTable}(${referenceColumn})`;
+            return this.addColumn({
+                constraints: [constraint],
+            });
+        }
+        
+        return this;
+    }
+
     uuid(name?: string): this {
         return this.addColumn({
             name,

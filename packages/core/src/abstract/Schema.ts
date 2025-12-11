@@ -18,7 +18,6 @@ export abstract class AbstractSchemaBuilder {
 
 export abstract class SchemaTableBuilder {
     protected columns: ColumnDefinition[] = [];
-    protected foreignKeys: string[] = [];
 
     protected addColumn(data: ColumnDefinition): this {
         if(data.name) {
@@ -44,6 +43,8 @@ export abstract class SchemaTableBuilder {
 
     abstract increments(name: string): this;
     abstract primaryKey(name: string): this;
+    abstract foreign(name: string, referenceTable: string, referenceColumn: string): this;
+    abstract uuid(name: string): this;
     abstract string(name: string, length?: number): this;
     abstract integer(name: string): this;
     abstract boolean(name: string): this;
