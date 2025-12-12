@@ -66,7 +66,7 @@ export default class QueryStatementBuilder {
 
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
-
+        
         return queryParts.join(" ");
     }
 
@@ -225,7 +225,7 @@ export default class QueryStatementBuilder {
      * ```
      */
     public static BuildWhere(where?: QueryParameters): string {
-        if (!where) return "";
+        if (!where || Object.keys(where).length === 0) return "";
 
         const queryParts: string[] = [];
         const whereClauses = Object.keys(where).map(col => `${col} = @${col}`);
