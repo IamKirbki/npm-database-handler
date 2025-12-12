@@ -15,7 +15,7 @@ export default class PostgresStatement implements IStatementAdapter {
      * and convert the parameters object to an array
      */
     private transformQuery(parameters?: object): { query: string; values: unknown[] } {
-        if (!parameters) {
+        if (!parameters || Object.keys(parameters).length === 0) {
             return { query: this.query, values: [] };
         }
 

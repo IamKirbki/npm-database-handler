@@ -158,7 +158,7 @@ export default class Table {
         });
 
         const query = new Query(this, queryStr, this.adapter);
-
+        
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
