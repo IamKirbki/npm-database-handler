@@ -30,7 +30,7 @@ export default abstract class Model<T extends object> {
     }
 
     public async all(): Promise<T[]> {
-        const records = await this.Table.Records<T>();
+        const records = await this.Table.Records<T>({ where: this.QueryParams });
         return records.map(record => record.values);
     }
 
