@@ -1,7 +1,7 @@
 import { inspect } from "util";
 import Table from "./Table.js";
 import Query from "./Query.js";
-import { QueryParameters } from "./types/query.js";
+import { QueryCondition } from "./types/query.js";
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import { ModelWithTimestamps } from "./types/index.js";
 
@@ -91,7 +91,7 @@ export default class Record<ColumnValuesType> {
         const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
         const _query = new Query(this._table, query, this.adapter);
 
-        const params: QueryParameters = { ...newValues };
+        const params: QueryCondition = { ...newValues };
         Object.entries(originalValues).forEach(([key, value]) => {
             params[`where_${key}`] = value;
         });
