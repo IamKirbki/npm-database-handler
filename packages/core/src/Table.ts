@@ -1,12 +1,12 @@
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import {
     QueryOptions,
-    QueryCondition,
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
     DefaultQueryOptions,
     QueryValues,
+    QueryWhereParameters,
 } from "./types/index.js";
 import Query from "./Query.js";
 import Record from "./Record.js";
@@ -242,7 +242,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public async Insert<Type>(values: QueryCondition): Promise<Record<Type> | undefined>{
+    public async Insert<Type>(values: QueryWhereParameters): Promise<Record<Type> | undefined>{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {

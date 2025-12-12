@@ -1,5 +1,5 @@
 import IDatabaseAdapter from "../interfaces/IDatabaseAdapter.js";
-import { QueryCondition } from "../types/query.js";
+import { QueryCondition, QueryWhereParameters } from "../types/query.js";
 import Table from "../Table.js";
 import Record from "../Record.js";
 
@@ -40,7 +40,7 @@ export default abstract class Model<T extends object> {
     }
 
     public async create(data: T): Promise<Record<T> | undefined> {
-        return await this.Table.Insert(data as unknown as QueryCondition);
+        return await this.Table.Insert(data as QueryWhereParameters);
     }
 
     public async update(data: T): Promise<void> {

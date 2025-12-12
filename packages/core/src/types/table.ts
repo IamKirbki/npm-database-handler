@@ -1,4 +1,4 @@
-import { QueryCondition } from "index";
+import { QueryWhereParameters } from "index";
 import Table from "../Table.js";
 
 export type TableColumnInfo = {
@@ -28,7 +28,7 @@ export type ColumnDefinition = {
 export type Join = {
     fromTable: Table;
     joinType: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
-    on: QueryCondition | QueryCondition[];
+    on: QueryWhereParameters | QueryWhereParameters[];
 }
 
 // export type Join = RequireAtLeastOne<SingleJoin, 'table' | 'join'>;

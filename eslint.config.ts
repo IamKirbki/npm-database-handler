@@ -15,7 +15,7 @@ export default [
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.d.ts'],
-    ignores: ['**/__tests__/**', '**/*.disabled', '**/interfaces/**', '**/*.config.ts', 'packages/**/abstract/**.ts'],
+    ignores: ['**/__tests__/**', '**/*.disabled', '**/interfaces/**', '**/*.config.ts', 'packages/**/abstract/**.ts', 'scripts/**/*.js'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {

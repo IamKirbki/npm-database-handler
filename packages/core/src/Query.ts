@@ -1,5 +1,5 @@
 import Table from "./Table.js";
-import { QueryCondition } from "./types/index.js";
+import { QueryCondition, QueryWhereParameters } from "./types/index.js";
 import Record from "./Record.js";
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 
@@ -36,7 +36,15 @@ export default class Query {
   public readonly Table: Table;
   private readonly adapter: IDatabaseAdapter;
   private query: string = "";
-  public Parameters: QueryCondition = {};
+  private _parameters: QueryCondition = {};
+
+  public get Parameters(): QueryCondition {
+    return this._parameters;
+  }
+
+  public set Parameters(value: QueryCondition) {
+    this._parameters = this.convertParamsToObject(value);
+  }
 
   /**
    * Creates a Query instance (usually called via db.Query() method)
@@ -119,30 +127,31 @@ export default class Query {
    * ```
    */
   public async All<Type>(): Promise<Record<Type>[]> {
-    const normalizedParams = this.normalizeParameters(this.Parameters);
-
     const stmt = await this.adapter.prepare(this.query);
-    const results = await stmt.all(normalizedParams) as Type[];
-
-    // This is a fix for a bug where id's passed as numbers don't match string ids in the db
+    const results = await stmt.all(this.Parameters) as Type[];
     return results.map(res => new Record<Type>(res, this.adapter, this.Table));
   }
 
-  private normalizeParameters(params: QueryCondition): QueryCondition {
-  if (Array.isArray(params)) {
-    return params.map(param => 
-      (param.column === 'id' && typeof param.value === 'number')
-        ? { ...param, value: param.value.toString() }
-        : param
-    );
+  private convertParamsToObject(params: QueryCondition): QueryWhereParameters {
+    const paramObject: QueryWhereParameters = {};
+    if (Array.isArray(params)) {
+      params.forEach(param => {
+        paramObject[param.column] = param.value;
+      });
+    } else {
+      Object.assign(paramObject, params);
+    }
+    
+    return this.convertIdToString(paramObject);
   }
-  
-  if (params.id && typeof params.id === 'number') {
-    return { ...params, id: params.id.toString() };
+
+  private convertIdToString(params: QueryWhereParameters): QueryWhereParameters {
+    if (params.id && typeof params.id === 'number') {
+      return { ...params, id: params.id.toString() };
+    }
+
+    return params;
   }
-  
-  return params;
-}
 
   /**
    * Execute a SELECT query and return the first matching row as a Record object
