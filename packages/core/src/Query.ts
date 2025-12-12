@@ -1,5 +1,5 @@
 import Table from "./Table.js";
-import { QueryParameters } from "./types/index.js";
+import { QueryCondition, QueryWhereParameters } from "./types/index.js";
 import Record from "./Record.js";
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 
@@ -36,7 +36,15 @@ export default class Query {
   public readonly Table: Table;
   private readonly adapter: IDatabaseAdapter;
   private query: string = "";
-  public Parameters: QueryParameters = {};
+  private _parameters: QueryCondition = {};
+
+  public get Parameters(): QueryCondition {
+    return this._parameters;
+  }
+
+  public set Parameters(value: QueryCondition) {
+    this._parameters = this.convertParamsToObject(value);
+  }
 
   /**
    * Creates a Query instance (usually called via db.Query() method)
@@ -120,15 +128,29 @@ export default class Query {
    */
   public async All<Type>(): Promise<Record<Type>[]> {
     const stmt = await this.adapter.prepare(this.query);
-    let results = await stmt.all(this.Parameters) as Type[];
+    const results = await stmt.all(this.Parameters) as Type[];
+    return results.map(res => new Record<Type>(res, this.adapter, this.Table));
+  }
 
-    // This is a fix for a bug where id's passed as numbers don't match string ids in the db
-    if (results.length === 0 && this.Parameters.id) {
-      this.Parameters.id = this.Parameters.id.toString();
-      results = await stmt.all(this.Parameters) as Type[];
+  private convertParamsToObject(params: QueryCondition): QueryWhereParameters {
+    const paramObject: QueryWhereParameters = {};
+    if (Array.isArray(params)) {
+      params.forEach(param => {
+        paramObject[param.column] = param.value;
+      });
+    } else {
+      Object.assign(paramObject, params);
+    }
+    
+    return this.convertIdToString(paramObject);
+  }
+
+  private convertIdToString(params: QueryWhereParameters): QueryWhereParameters {
+    if (params.id && typeof params.id === 'number') {
+      return { ...params, id: params.id.toString() };
     }
 
-    return results.map(res => new Record<Type>(res, this.adapter, this.Table));
+    return params;
   }
 
   /**
@@ -162,9 +184,9 @@ export default class Query {
     return results ? new Record<Type>(results, this.adapter, this.Table) : undefined;
   }
 
-  public async Transaction(paramList: QueryParameters[]): Promise<void> {
+  public async Transaction(paramList: QueryCondition[]): Promise<void> {
     const stmt = await this.adapter.prepare(this.query);
-    const transactionFn = await this.adapter.transaction((paramsArray: QueryParameters[]) => {
+    const transactionFn = await this.adapter.transaction((paramsArray: QueryCondition[]) => {
       for (const params of paramsArray) {
         // Use runSync for better-sqlite3 transactions (must be synchronous)
         // For other adapters, this method should be implemented appropriately

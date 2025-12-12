@@ -1,11 +1,12 @@
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import {
-    DefaultQueryOptions,
     QueryOptions,
-    QueryParameters,
     ReadableTableColumnInfo,
     // Join,
     TableColumnInfo,
+    DefaultQueryOptions,
+    QueryValues,
+    QueryWhereParameters,
 } from "./types/index.js";
 import Query from "./Query.js";
 import Record from "./Record.js";
@@ -241,7 +242,7 @@ export default class Table {
      * ]);
      * ```
      */
-    public async Insert<Type>(values: QueryParameters): Promise<Record<Type> | undefined>{
+    public async Insert<Type>(values: QueryWhereParameters): Promise<Record<Type> | undefined>{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {
@@ -254,8 +255,14 @@ export default class Table {
         
         const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
         
+        let recordId: QueryValues;
+
         // For PostgreSQL compatibility: use 'id' from values if lastInsertRowid is undefined
-        const recordId = result?.lastInsertRowid ?? values.id;
+        if(Array.isArray(values)){
+            recordId = result?.lastInsertRowid ?? values.map(v => v.column === 'id' ? v.value : undefined);
+        } else{
+            recordId = result?.lastInsertRowid ?? values.id;
+        }
         
         if (recordId === undefined) {
             return undefined;

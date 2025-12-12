@@ -1,4 +1,4 @@
-import { DefaultQueryOptions, QueryOptions, QueryParameters, Join } from "../types/index.js";
+import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "../types/index.js";
 import Table from "Table";
 
 /**
@@ -66,7 +66,7 @@ export default class QueryStatementBuilder {
 
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
-        
+
         return queryParts.join(" ");
     }
 
@@ -89,7 +89,7 @@ export default class QueryStatementBuilder {
      * // Note: The actual values will be bound separately using the Parameters object
      * ```
      */
-    public static BuildInsert(table: Table, record: QueryParameters): string {
+    public static BuildInsert(table: Table, record: QueryWhereParameters): string {
         const queryParts: string[] = [];
         const columns = Object.keys(record);
         const placeholders = columns.map(col => `@${col}`);
@@ -127,7 +127,7 @@ export default class QueryStatementBuilder {
      * // "UPDATE users SET status = @status WHERE status = @status AND last_login = @last_login"
      * ```
      */
-    public static BuildUpdate(table: Table, record: QueryParameters, where: QueryParameters): string {
+    public static BuildUpdate(table: Table, record: QueryCondition, where: QueryCondition): string {
         const queryParts: string[] = [];
         const setClauses = Object.keys(record).map(col => `${col} = @${col}`);
 
@@ -158,7 +158,7 @@ export default class QueryStatementBuilder {
      * // "DELETE FROM users WHERE status = @status AND last_login = @last_login"
      * ```
      */
-    public static BuildDelete(table: Table, where: QueryParameters): string {
+    public static BuildDelete(table: Table, where: QueryCondition): string {
         const queryParts: string[] = [];
 
         queryParts.push(`DELETE FROM "${table.Name}"`);
@@ -188,7 +188,7 @@ export default class QueryStatementBuilder {
      * // "SELECT COUNT(*) as count FROM users WHERE status = @status AND age = @age"
      * ```
      */
-    public static BuildCount(table: Table, where?: QueryParameters): string {
+    public static BuildCount(table: Table, where?: QueryCondition): string {
         const queryParts: string[] = [];
         queryParts.push(`SELECT COUNT(*) as count FROM "${table.Name}"`);
         queryParts.push(this.BuildWhere(where));
@@ -224,16 +224,34 @@ export default class QueryStatementBuilder {
      * // ""
      * ```
      */
-    public static BuildWhere(where?: QueryParameters): string {
-        if (!where || Object.keys(where).length === 0) return "";
+    public static BuildWhere(where?: QueryCondition): string {
+        if (!where || (Array.isArray(where) && where.length === 0) || Object.keys(where).length === 0) return "";
+        const isSimpleObject = !Array.isArray(where) && typeof where === 'object' && where !== null;
 
         const queryParts: string[] = [];
-        const whereClauses = Object.keys(where).map(col => `${col} = @${col}`);
-
         queryParts.push("WHERE");
-        queryParts.push(whereClauses.join(" AND "));
+
+        if (isSimpleObject) {
+            queryParts.push(this.BuildWhereSimple(where as QueryWhereParameters));
+        } else {
+            queryParts.push(this.BuildWhereWithOperators(where as QueryParameters[]));
+        }
 
         return queryParts.join(" ");
+    }
+
+    private static BuildWhereWithOperators(where: QueryParameters[]): string {
+        const queryParts: string[] = where.map(condition => {
+            const operator = condition.operator || "=";
+            return `${condition.column} ${operator} @${condition.column.trim()}`;
+        });
+
+        return queryParts.join(" AND ");
+    }
+
+    private static BuildWhereSimple(where: QueryWhereParameters): string {
+        const queryParts: string[] = Object.keys(where).map(col => `${col} = @${col}`);
+        return queryParts.join(" AND ");
     }
 
     /**
@@ -348,7 +366,6 @@ export default class QueryStatementBuilder {
             currentTable = join.fromTable;
         }
 
-
         return queryParts.join(" ");
     }
 
@@ -361,7 +378,7 @@ export default class QueryStatementBuilder {
      * 
      * @param table - The source table (left side of the join)
      * @param joinTable - The table being joined (right side of the join)
-     * @param on - QueryParameters object where key is the foreign key in joinTable and value is the primary key in table
+     * @param on - QueryCondition object where key is the foreign key in joinTable and value is the primary key in table
      * @returns ON clause string for JOIN operations
      * 
      * @example
@@ -387,7 +404,7 @@ export default class QueryStatementBuilder {
     public static BuildJoinOnPart(
         table: Table,
         joinTable: Table,
-        on: QueryParameters | QueryParameters[],
+        on: QueryWhereParameters | QueryWhereParameters[],
     ): string {
         const queryParts: string[] = [];
         const onArray = Array.isArray(on) ? on : [on];
