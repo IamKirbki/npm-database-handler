@@ -55,9 +55,11 @@ import IStatementAdapter from "./interfaces/IStatementAdapter.js";
 
 import Model from "./abstract/Model.js";
 import Controller from "./abstract/Controller.js";
-
-export * from "./abstract/Migration.js";
+import Migration from "./abstract/Migration.js";
 export * from "./abstract/Schema.js";
 
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller };
+import Relation from "./relations/Relation.js";
+import HasOneOrHasMany from "./relations/HasOneOrHasMany.js";
+
+export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller, Migration, Relation, HasOneOrHasMany };
 export * from "./types/index.js";

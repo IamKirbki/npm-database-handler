@@ -19,13 +19,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/IamKirbki/bettersqlite3-handler.git",
+    "url": "https://github.com/IamKirbki/npm-database-handler.git",
     "directory": "packages/core"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && tsc-alias"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "tsc-alias": "^1.8.16"
   }
 }

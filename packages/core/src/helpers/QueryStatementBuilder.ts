@@ -1,38 +1,7 @@
-import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "../types/index.js";
+import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "@core/types/index.js";
 import Table from "Table";
 
-/**
- * QueryStatementBuilder - Utility class for building SQL query strings
- * 
- * Provides static methods to construct SQL statements in a consistent, safe manner.
- * All methods use named parameters (@fieldName syntax) for better-sqlite3 compatibility.
- * 
- * Features:
- * - Consistent query building pattern using array concatenation
- * - Support for SELECT, INSERT, UPDATE, DELETE, and COUNT operations
- * - JOIN support with nested join capabilities
- * - WHERE clause building with AND conditions
- * - Query options (ORDER BY, LIMIT, OFFSET)
- * 
- * @example
- * ```typescript
- * // Build a SELECT query
- * const query = QueryStatementBuilder.BuildSelect(usersTable, {
- *   select: 'id, name, email',
- *   where: { status: 'active' },
- *   orderBy: 'created_at DESC',
- *   limit: 10
- * });
- * // Result: "SELECT id, name, email FROM users WHERE status = @status ORDER BY created_at DESC LIMIT 10"
- * 
- * // Build an INSERT query
- * const insertQuery = QueryStatementBuilder.BuildInsert(usersTable, {
- *   name: 'John',
- *   email: 'john@example.com'
- * });
- * // Result: "INSERT INTO users (name, email) VALUES (@name, @email)"
- * ```
- */
+/** Utility class for building SQL query strings */
 export default class QueryStatementBuilder {
     /**
      * Build a SELECT SQL statement with optional filtering, ordering, and pagination
