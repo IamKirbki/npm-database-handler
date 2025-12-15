@@ -7,10 +7,4 @@ export default abstract class Controller<M extends Model<columnType>> {
         protected adapter: IDatabaseAdapter, 
         protected Model: new (adapter: IDatabaseAdapter, data?: columnType) => M 
     ){}
-
-    abstract index(): Promise<M[]>;
-    abstract show(id: string): Promise<M | undefined>;
-    abstract create(data: columnType): Promise<M>;
-    abstract update(id: string, data: columnType): Promise<void>;
-    abstract delete(id: string): Promise<void>;
 }

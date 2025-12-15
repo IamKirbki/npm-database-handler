@@ -45,10 +45,10 @@
  * @packageDocumentation
  */
 
-import Database from "./Database.js";
-import Table from "./Table.js";
-import Record from "./Record.js";
-import Query from "./Query.js";
+import Database from "./base/Database.js";
+import Table from "./base/Table.js";
+import Record from "./base/Record.js";
+import Query from "./base/Query.js";
 
 import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import IStatementAdapter from "./interfaces/IStatementAdapter.js";
@@ -58,8 +58,5 @@ import Controller from "./abstract/Controller.js";
 import Migration from "./abstract/Migration.js";
 export * from "./abstract/Schema.js";
 
-import Relation from "./relations/Relation.js";
-import HasOneOrHasMany from "./relations/HasOneOrHasMany.js";
-
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller, Migration, Relation, HasOneOrHasMany };
+export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller, Migration };
 export * from "./types/index.js";

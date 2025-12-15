@@ -1,7 +1,7 @@
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
 import { QueryCondition, QueryWhereParameters } from "@core/types/query.js";
-import Table from "@core/Table.js";
-import Record from "@core/Record.js";
+import Table from "@core/base/Table.js";
+import Record from "@core/base/Record.js";
 import { columnType } from "@core/types/index.js";
 
 /** Abstract Model class for ORM-style database interactions */

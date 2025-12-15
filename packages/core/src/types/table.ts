@@ -1,5 +1,5 @@
 import { QueryValues, QueryWhereParameters } from "index";
-import Table from "../Table.js";
+import Table from "../base/Table.js";
 
 export type TableColumnInfo = {
     cid: number;

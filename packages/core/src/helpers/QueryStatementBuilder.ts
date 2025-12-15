@@ -1,5 +1,5 @@
 import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "@core/types/index.js";
-import Table from "Table";
+import Table from "@core/base/Table";
 
 /** Utility class for building SQL query strings */
 export default class QueryStatementBuilder {
