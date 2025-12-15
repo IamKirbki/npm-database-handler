@@ -54,9 +54,11 @@ import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
 import IStatementAdapter from "./interfaces/IStatementAdapter.js";
 
 import Model from "./abstract/Model.js";
-import Controller from "./abstract/Controller.js";
 import Migration from "./abstract/Migration.js";
+
+import IController from "./interfaces/IController.js";
 export * from "./abstract/Schema.js";
 
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller, Migration };
+export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, IController, Migration };
+
 export * from "./types/index.js";
