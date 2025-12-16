@@ -12,27 +12,7 @@ export default class Database {
 
   /** Get a Table instance for an existing table */
   public async Table(name: string): Promise<Table> {
-    return await Table.create(name, this.adapter);
-  }
-
-  /** Create a new table with specified columns */
-  public async CreateTable(name: string, columns: object): Promise<Table> {
-
-    const names = Object.keys(columns || {}).map((colName) => {
-      return colName;
-    });
-
-    const colsDef = names.map(colName => {
-      const colType = (columns as Record<string, string>)[colName];
-      return `"${colName}" ${colType}`;
-    }).join(", ");
-
-    const stmt = await this.adapter.prepare(
-      `CREATE TABLE IF NOT EXISTS "${name}" (${colsDef});`
-    );
-
-    await stmt.run();
-    return await Table.create(name, this.adapter, true);
+    return new Table(name);
   }
 
   /** Create a Query object for executing custom SQL */

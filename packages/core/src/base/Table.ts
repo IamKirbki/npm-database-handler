@@ -7,37 +7,21 @@ import {
     // Join,
     TableColumnInfo,
     QueryValues,
-    QueryWhereParameters,
+    columnType,
 } from "@core/types/index.js";
-import Query from "./Query.js";
-import Record from "./Record.js";
-import QueryStatementBuilder from "./helpers/QueryStatementBuilder.js";
+import Query from "@core/base/Query.js";
+import Record from "@core/base/Record.js";
+import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder.js";
+import Container from "@core/Container.js";
 
 /** Table class for interacting with a database table */
 export default class Table {
     private readonly name: string;
-    private readonly adapter: IDatabaseAdapter;
+    private readonly adapter: IDatabaseAdapter = Container.getInstance().getAdapter();
 
     /** Private constructor - use Table.create() */
-    private constructor(name: string, adapter: IDatabaseAdapter) {
+    constructor(name: string) {
         this.name = name;
-        this.adapter = adapter;
-    }
-
-    /** Create a Table instance (async factory method) */
-    public static async create(name: string, adapter: IDatabaseAdapter, skipValidation = false): Promise<Table> {
-        const table = new Table(name, adapter);
-        
-        if (!skipValidation) {
-            const columns = await table.TableColumnInformation();
-            if (!columns.length) {
-                throw new Error(
-                    `Table "${name}" does not exist in the database.\nYou might want to use the CreateTable function.`
-                );
-            }
-        }
-        
-        return table;
     }
 
     /** Get the table name */
@@ -113,7 +97,7 @@ export default class Table {
     }
 
     /** Insert a record into the table */
-    public async Insert<Type>(values: QueryWhereParameters): Promise<Record<Type> | undefined>{
+    public async Insert<Type>(values: columnType): Promise<Record<Type> | undefined>{
         const columns = Object.keys(values);
 
         if (columns.length === 0) {
