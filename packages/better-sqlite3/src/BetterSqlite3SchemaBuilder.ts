@@ -1,12 +1,10 @@
-import { AbstractSchemaBuilder } from "@core/abstract/Schema.js";
 import { BetterSqlite3TableSchemaBuilder } from "./BetterSqlite3TableSchemaBuilder.js";
 import BetterSqlite3Adapter from "./BetterSqlite3Adapter.js";
+import AbstractSchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
-export class BetterSqlite3SchemaBuilder extends AbstractSchemaBuilder {
+export class BetterSqlite3SchemaBuilder implements AbstractSchemaBuilder {
     // eslint-disable-next-line no-unused-vars
-    constructor(private adapter: BetterSqlite3Adapter){
-        super();
-    }
+    constructor(private _adapter: BetterSqlite3Adapter){}
 
     // eslint-disable-next-line no-unused-vars
     async createTable(name: string, callback: (table: BetterSqlite3TableSchemaBuilder) => void) {
@@ -16,13 +14,13 @@ export class BetterSqlite3SchemaBuilder extends AbstractSchemaBuilder {
         const cols = tableBuilder.build();
         const query = `CREATE TABLE ${name} ${cols}`;
         
-        const statement = await this.adapter.prepare(query);
+        const statement = await this._adapter.prepare(query);
         statement.run();
     }
 
     async dropTable(name: string) {
         const query = `DROP TABLE IF EXISTS ${name}`;
-        const statement = await this.adapter.prepare(query);
+        const statement = await this._adapter.prepare(query);
         statement.run();
     }
 
@@ -38,7 +36,7 @@ export class BetterSqlite3SchemaBuilder extends AbstractSchemaBuilder {
         
     //     const cols = tableBuilder.build();
     //     const query = `ALTER TABLE ${oldName} ${cols}`;
-    //     const statement = await this.adapter.prepare(query);
+    //     const statement = await this._adapter.prepare(query);
     //     statement.run();
     // }
 }

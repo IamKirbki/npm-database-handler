@@ -1,38 +1,7 @@
-import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "../types/index.js";
-import Table from "Table";
+import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "@core/types/index.js";
+import Table from "@core/base/Table";
 
-/**
- * QueryStatementBuilder - Utility class for building SQL query strings
- * 
- * Provides static methods to construct SQL statements in a consistent, safe manner.
- * All methods use named parameters (@fieldName syntax) for better-sqlite3 compatibility.
- * 
- * Features:
- * - Consistent query building pattern using array concatenation
- * - Support for SELECT, INSERT, UPDATE, DELETE, and COUNT operations
- * - JOIN support with nested join capabilities
- * - WHERE clause building with AND conditions
- * - Query options (ORDER BY, LIMIT, OFFSET)
- * 
- * @example
- * ```typescript
- * // Build a SELECT query
- * const query = QueryStatementBuilder.BuildSelect(usersTable, {
- *   select: 'id, name, email',
- *   where: { status: 'active' },
- *   orderBy: 'created_at DESC',
- *   limit: 10
- * });
- * // Result: "SELECT id, name, email FROM users WHERE status = @status ORDER BY created_at DESC LIMIT 10"
- * 
- * // Build an INSERT query
- * const insertQuery = QueryStatementBuilder.BuildInsert(usersTable, {
- *   name: 'John',
- *   email: 'john@example.com'
- * });
- * // Result: "INSERT INTO users (name, email) VALUES (@name, @email)"
- * ```
- */
+/** Utility class for building SQL query strings */
 export default class QueryStatementBuilder {
     /**
      * Build a SELECT SQL statement with optional filtering, ordering, and pagination
@@ -232,15 +201,15 @@ export default class QueryStatementBuilder {
         queryParts.push("WHERE");
 
         if (isSimpleObject) {
-            queryParts.push(this.BuildWhereSimple(where as QueryWhereParameters));
+            queryParts.push(this.buildWhereSimple(where as QueryWhereParameters));
         } else {
-            queryParts.push(this.BuildWhereWithOperators(where as QueryParameters[]));
+            queryParts.push(this.buildWhereWithOperators(where as QueryParameters[]));
         }
 
         return queryParts.join(" ");
     }
 
-    private static BuildWhereWithOperators(where: QueryParameters[]): string {
+    private static buildWhereWithOperators(where: QueryParameters[]): string {
         const queryParts: string[] = where.map(condition => {
             const operator = condition.operator || "=";
             return `${condition.column} ${operator} @${condition.column.trim()}`;
@@ -249,7 +218,7 @@ export default class QueryStatementBuilder {
         return queryParts.join(" AND ");
     }
 
-    private static BuildWhereSimple(where: QueryWhereParameters): string {
+    private static buildWhereSimple(where: QueryWhereParameters): string {
         const queryParts: string[] = Object.keys(where).map(col => `${col} = @${col}`);
         return queryParts.join(" AND ");
     }
@@ -302,7 +271,7 @@ export default class QueryStatementBuilder {
         fromTable: Table,
         joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions
-    ) {
+    ): string {
         const queryParts: string[] = [];
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
         queryParts.push(`FROM "${fromTable.Name}"`);
@@ -361,7 +330,7 @@ export default class QueryStatementBuilder {
 
         let currentTable = fromTable;
         for (const join of joinsArray) {
-            queryParts.push(`${join.joinType} JOIN ${join.fromTable.Name}`);
+            queryParts.push(`${join.joinType} JOIN "${join.fromTable.Name}"`);
             queryParts.push(this.BuildJoinOnPart(currentTable, join.fromTable, join.on));
             currentTable = join.fromTable;
         }

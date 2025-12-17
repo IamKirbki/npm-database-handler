@@ -1,22 +1,6 @@
 import { ColumnDefinition } from "@core/types/index";
 
-export abstract class AbstractSchemaBuilder {
-    abstract createTable(
-        name: string,
-        callback: (table: SchemaTableBuilder) => void
-    ): Promise<void>;
-
-    abstract dropTable(
-        name: string
-    ): Promise<void>;
-
-    abstract alterTable(
-        oldName: string,
-        callback: (table: SchemaTableBuilder) => void
-    ): Promise<void>;
-}
-
-export abstract class SchemaTableBuilder {
+export default abstract class SchemaTableBuilder {
     protected columns: ColumnDefinition[] = [];
 
     protected addColumn(data: ColumnDefinition): this {

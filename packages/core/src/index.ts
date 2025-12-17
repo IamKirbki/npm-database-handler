@@ -45,19 +45,41 @@
  * @packageDocumentation
  */
 
-import Database from "./Database.js";
-import Table from "./Table.js";
-import Record from "./Record.js";
-import Query from "./Query.js";
-
-import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
-import IStatementAdapter from "./interfaces/IStatementAdapter.js";
+import Database from "./base/Database.js";
+import Table from "./base/Table.js";
+import Record from "./base/Record.js";
+import Query from "./base/Query.js";
 
 import Model from "./abstract/Model.js";
-import Controller from "./abstract/Controller.js";
+import SchemaTableBuilder from "./abstract/SchemaTableBuilder.js";
+import AbstractSchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
-export * from "./abstract/Migration.js";
-export * from "./abstract/Schema.js";
+import Repository from "./runtime/Repository.js";
+import Container from "./runtime/Container.js";
 
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, Controller };
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
+import IStatementAdapter from "@core/interfaces/IStatementAdapter.js";
+import IController from "@core/interfaces/IController.js";
+import IMigration from "@core/interfaces/IMigration.js";
+import ISchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
+
+export {
+    Database,
+    Model,
+    Table,
+    Query,
+    Record,
+    Repository,
+    Container,
+
+    SchemaTableBuilder,
+    AbstractSchemaBuilder,
+
+    IDatabaseAdapter,
+    IStatementAdapter,
+    IController,
+    IMigration,
+    ISchemaBuilder,
+};
+
 export * from "./types/index.js";

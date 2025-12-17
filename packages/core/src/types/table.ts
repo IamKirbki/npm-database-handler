@@ -1,5 +1,5 @@
-import { QueryWhereParameters } from "index";
-import Table from "../Table.js";
+import { QueryValues, QueryWhereParameters } from "index";
+import Table from "../base/Table.js";
 
 export type TableColumnInfo = {
     cid: number;
@@ -9,6 +9,8 @@ export type TableColumnInfo = {
     dflt_value: unknown;
     pk: number;
 };
+
+export type columnType = { [key: string]: QueryValues };
 
 export type ReadableTableColumnInfo = {
     name: string;
@@ -29,6 +31,7 @@ export type Join = {
     fromTable: Table;
     joinType: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
     on: QueryWhereParameters | QueryWhereParameters[];
+    where?: QueryWhereParameters | QueryWhereParameters[];
 }
 
 // export type Join = RequireAtLeastOne<SingleJoin, 'table' | 'join'>;

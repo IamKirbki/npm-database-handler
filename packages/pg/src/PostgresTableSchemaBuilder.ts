@@ -34,13 +34,13 @@ export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
     }
 
     foreignKey(name?: string, referenceTable?: string, referenceColumn?: string): this {
-        if(name && referenceTable && referenceColumn) {
+        if (name && referenceTable && referenceColumn) {
             const constraint = `REFERENCES ${referenceTable}(${referenceColumn})`;
             return this.addColumn({
                 constraints: [constraint],
             });
         }
-        
+
         return this;
     }
 

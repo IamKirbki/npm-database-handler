@@ -1,59 +1,236 @@
-import IDatabaseAdapter from "../interfaces/IDatabaseAdapter.js";
-import { QueryCondition, QueryWhereParameters } from "../types/query.js";
-import Table from "../Table.js";
-import Record from "../Record.js";
+import Repository from "@core/runtime/Repository.js";
+import { columnType, QueryCondition, QueryValues, ModelConfig, relation } from "@core/types/index.js";
 
-export default abstract class Model<T extends object> {
-    private Table: Table;
-    private QueryParams: QueryCondition = {};
+/** Abstract Model class for ORM-style database interactions */
+export default abstract class Model<ModelType extends columnType> {
+    private _repository?: Repository<ModelType, Model<ModelType>>;
 
-    public constructor(table: Table) {
-        this.Table = table;
+    protected get repository(): Repository<ModelType, Model<ModelType>> {
+        if (!this._repository) {
+            this._repository = Repository.getInstance<ModelType>(
+                this.constructor as new () => Model<ModelType>,
+                this.Configuration.table
+            );
+        }
+        return this._repository;
     }
 
-    public static async connect<M extends Model<object>>(
-        // eslint-disable-next-line no-unused-vars
-        this: new (table: Table) => M,
-        adapter: IDatabaseAdapter
-    ): Promise<M> {
-        const table = await Table.create(this.name, adapter);
-        return new this(table);
+    protected configuration: ModelConfig = {
+        table: '',  // Must be set by subclass
+        primaryKey: 'id',
+        incrementing: true,
+        keyType: 'number',
+        timestamps: true,
+        createdAtColumn: 'created_at',
+        updatedAtColumn: 'updated_at',
+        guarded: ['*'],
+    };
+
+    public get Configuration(): ModelConfig {
+        return this.configuration;
     }
 
-    private async RecordGet(): Promise<Record<T> | undefined> {
-        return await this.Table.Record<T>({ where: this.QueryParams });
+    protected originalAttributes: Partial<ModelType> = {};
+    protected attributes: Partial<ModelType> = {};
+    protected exists: boolean = false;
+    protected dirty: boolean = false;
+    protected queryScopes?: QueryCondition;
+
+    public get primaryKeyColumn(): string {
+        return this.configuration.primaryKey;
     }
 
-    public async get(): Promise<T | undefined> {
-        const record = await this.RecordGet();
-        return record?.values;
+    public get primaryKey(): QueryValues | undefined {
+        return this.attributes[this.configuration.primaryKey];
     }
 
-    public async all(): Promise<T[]> {
-        const records = await this.Table.Records<T>({ where: this.QueryParams });
-        return records.map(record => record.values);
+    public get values(): Partial<ModelType> | ModelType {
+        return this.attributes;
     }
 
-    public where(QueryCondition: QueryCondition): this {
-        this.QueryParams = QueryCondition;
+    public static where<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        conditions: QueryCondition
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.where(conditions);
+    }
+
+    public where(conditions: QueryCondition): this {
+        this.queryScopes = conditions;
         return this;
     }
 
-    public async create(data: T): Promise<Record<T> | undefined> {
-        return await this.Table.Insert(data as QueryWhereParameters);
+    public static whereId<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        id: QueryValues
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.whereId(id);
     }
 
-    public async update(data: T): Promise<void> {
-        const record = await this.RecordGet();
-        if (record) {
-            await record.Update(data);
-        }
+    public whereId(id: QueryValues): this {
+        this.queryScopes = { id: id };
+        return this;
     }
 
-    public async delete(): Promise<void> {
-        const record = await this.RecordGet();
-        if (record) {
-            await record.Delete();
+    public static find<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        primaryKeyValue: QueryValues
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.find(primaryKeyValue);
+    }
+
+    public find(primaryKeyValue: QueryValues): this {
+        this.queryScopes = { [this.primaryKeyColumn]: primaryKeyValue };
+        return this;
+    }
+
+    public static findOrFail<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        primaryKeyValue: QueryValues
+    ): Partial<columnType> {
+        const instance = new this();
+        return instance.findOrFail(primaryKeyValue);
+    }
+
+    public findOrFail(primaryKeyValue?: QueryValues): Partial<ModelType> | ModelType {
+        if (primaryKeyValue) {
+            this.queryScopes = { [this.primaryKeyColumn]: primaryKeyValue };
         }
+
+        const query = this.queryScopes || {};
+
+        this.repository?.get(query, this).then((record) => {
+            if (!record) {
+                throw new Error(
+                    `Record with primary key ${primaryKeyValue} not found.`
+                );
+            }
+
+            this.set(record as ModelType);
+        });
+
+        return this.attributes;
+    }
+
+    public async get(): Promise<Partial<ModelType> | ModelType> {
+        this.attributes = await this.repository?.get(this.queryScopes || {}, this) as Partial<ModelType>;
+        return this.attributes;
+    }
+
+    public static set<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        attributes: Partial<columnType>
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.set(attributes);
+    }
+
+    public set(attributes: Partial<ModelType>): this {
+        if (attributes[this.primaryKeyColumn] !== undefined && !this.exists) {
+            this.repository.syncModel(this)
+        }
+        this.attributes = { ...this.attributes, ...attributes };
+        this.dirty = true;
+        return this;
+    }
+
+    public save(): this {
+        this.repository.save(this.attributes, this.originalAttributes);
+        this.originalAttributes = { ...this.originalAttributes, ...this.attributes };
+        this.exists = true;
+        this.dirty = false;
+        return this;
+    }
+
+    public update(attributes: Partial<ModelType>): this {
+        if (!this.exists) {
+            throw new Error("Cannot update a model that does not exist in the database.");
+        }
+
+        this.repository?.update(attributes);
+        return this;
+    }
+
+    public all(): Promise<Partial<ModelType>[]> {
+        return this.repository.all(this) as Promise<Partial<ModelType>[]>;
+    }
+
+    protected joinedEntities: string[] = [];
+    protected relations: relation[] = [];
+
+    public get JoinedEntities(): string[] {
+        return this.joinedEntities;
+    }
+
+    public get Relations(): relation[] {
+        return this.relations;
+    }
+
+    public hasMany<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${this.Configuration.table}_${this.Configuration.primaryKey}`,
+        localKey: string = this.Configuration.primaryKey
+    ): this {
+        this.relations.push({
+            type: 'hasMany',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public hasOne<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${model.Configuration.primaryKey}`,
+        localKey: string = `${model.Configuration.table}_${model.Configuration.primaryKey}`
+    ): this {
+        this.relations.push({
+            type: 'hasOne',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public belongsTo<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${model.Configuration.table}_${model.Configuration.primaryKey}`,
+        localKey: string = model.Configuration.primaryKey
+    ): this {
+        this.relations.push({
+            type: 'belongsTo',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public static with<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        tableName: string
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.with(tableName);
+    }
+
+    public with(relationName: string): this {
+        this.joinedEntities.push(relationName);
+
+        const method = Reflect.get(this, relationName);
+        if (typeof method === 'function') {
+            method.call(this);
+        } else {
+            throw new Error(
+                `Relation method '${relationName}' does not exist on ${this.constructor.name}`
+            );
+        }
+
+        return this;
     }
 }
