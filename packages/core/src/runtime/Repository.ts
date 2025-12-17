@@ -26,7 +26,7 @@ export default class Repository<Type extends columnType, ModelType extends Model
         return this._instances.get(className) as Repository<ModelType, Model<ModelType>>;
     }
 
-    public updateModel(model: ModelType): void {
+    public syncModel(model: ModelType): void {
         const modelPk = model.primaryKey?.toString() || model.constructor.name;
         this.models.set(modelPk, model);
     }

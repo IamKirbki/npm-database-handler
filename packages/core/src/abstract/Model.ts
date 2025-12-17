@@ -34,7 +34,7 @@ export default abstract class Model<ModelType extends columnType> {
         return this.attributes[this.configuration.primaryKey]; 
     }
 
-    public get values(): Partial<ModelType> {
+    public get values(): Partial<ModelType> | ModelType {
         return this.attributes;
     }
 
@@ -61,7 +61,7 @@ export default abstract class Model<ModelType extends columnType> {
 
     public set(attributes: Partial<ModelType>): this {
         if(attributes[this.configuration.primaryKey] !== undefined && !this.exists) {
-            this._repository.updateModel(this)
+            this._repository.syncModel(this)
         }
         this.attributes = { ...this.attributes, ...attributes };
         this.dirty = true;

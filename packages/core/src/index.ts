@@ -50,18 +50,36 @@ import Table from "./base/Table.js";
 import Record from "./base/Record.js";
 import Query from "./base/Query.js";
 
-import IDatabaseAdapter from "./interfaces/IDatabaseAdapter.js";
-import IStatementAdapter from "./interfaces/IStatementAdapter.js";
-
 import Model from "./abstract/Model.js";
-import Migration from "./interfaces/Migration.js";
+import SchemaTableBuilder from "./abstract/SchemaTableBuilder.js";
+import AbstractSchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
 import Repository from "./runtime/Repository.js";
 import Container from "./runtime/Container.js";
 
-import IController from "./interfaces/IController.js";
-export * from "./abstract/SchemaTableBuilder.js";
+import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
+import IStatementAdapter from "@core/interfaces/IStatementAdapter.js";
+import IController from "@core/interfaces/IController.js";
+import IMigration from "@core/interfaces/IMigration.js";
+import ISchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
-export { Database, Model, IDatabaseAdapter, IStatementAdapter, Table, Query, Record, IController, Migration, Repository, Container };
+export {
+    Database,
+    Model,
+    Table,
+    Query,
+    Record,
+    Repository,
+    Container,
+
+    SchemaTableBuilder,
+    AbstractSchemaBuilder,
+
+    IDatabaseAdapter,
+    IStatementAdapter,
+    IController,
+    IMigration,
+    ISchemaBuilder,
+};
 
 export * from "./types/index.js";

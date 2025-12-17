@@ -1,4 +1,4 @@
-import { SchemaTableBuilder } from "@core/abstract/SchemaTableBuilder";
+import SchemaTableBuilder from "@core/abstract/SchemaTableBuilder.js";
 
 export default interface AbstractSchemaBuilder {
     createTable(

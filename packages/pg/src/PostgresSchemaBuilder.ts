@@ -1,6 +1,6 @@
 import { PostgresTableSchemaBuilder } from "./PostgresTableSchemaBuilder.js";
 import PostgresAdapter from "./PostgresAdapter.js";
-import AbstractSchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
+import { AbstractSchemaBuilder } from "@iamkirbki/database-handler-core";
 
 export class PostgresSchemaBuilder implements AbstractSchemaBuilder {
     // eslint-disable-next-line no-unused-vars

@@ -1,6 +1,6 @@
 import { ColumnDefinition } from "@core/types/index";
 
-export abstract class SchemaTableBuilder {
+export default abstract class SchemaTableBuilder {
     protected columns: ColumnDefinition[] = [];
 
     protected addColumn(data: ColumnDefinition): this {
