@@ -330,7 +330,7 @@ export default class QueryStatementBuilder {
 
         let currentTable = fromTable;
         for (const join of joinsArray) {
-            queryParts.push(`${join.joinType} JOIN ${join.fromTable.Name}`);
+            queryParts.push(`${join.joinType} JOIN "${join.fromTable.Name}"`);
             queryParts.push(this.BuildJoinOnPart(currentTable, join.fromTable, join.on));
             currentTable = join.fromTable;
         }

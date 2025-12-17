@@ -12,7 +12,7 @@ export class PostgresSchemaBuilder implements AbstractSchemaBuilder {
         callback(tableBuilder);
 
         const cols = tableBuilder.build();
-        const query = `CREATE TABLE ${name} ${cols}`;
+        const query = `CREATE TABLE IF NOT EXISTS ${name} ${cols}`;
         
         const statement = await this._adapter.prepare(query);
         statement.run();

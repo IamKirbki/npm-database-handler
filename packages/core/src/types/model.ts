@@ -1,5 +1,8 @@
 /** Model configuration and types */
 
+import Model from "@core/abstract/Model";
+import { columnType } from "./index";
+
 export type ModelEventType = 
     | 'retrieved'
     | 'creating'
@@ -85,6 +88,13 @@ export interface ModelConfig {
     
     /** Date format for serialization */
     dateFormat?: string;
+}
+
+export type relation = {
+    type: 'hasOne' | 'hasMany' | 'belongsTo';
+    model: unknown & Model<columnType>;
+    foreignKey: string;
+    localKey?: string;
 }
 
 export interface SoftDeletable {

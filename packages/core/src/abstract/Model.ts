@@ -1,14 +1,22 @@
 import Repository from "@core/runtime/Repository.js";
-import { columnType, QueryCondition, QueryValues, ModelConfig } from "@core/types/index.js";
+import { columnType, QueryCondition, QueryValues, ModelConfig, relation } from "@core/types/index.js";
 
 /** Abstract Model class for ORM-style database interactions */
 export default abstract class Model<ModelType extends columnType> {
-    private _repository: Repository<ModelType, Model<ModelType>> = Repository.getInstance<ModelType>(
-        this.constructor as new () => Model<ModelType>
-    );
+    private _repository?: Repository<ModelType, Model<ModelType>>;
 
-    protected defaultConfiguration: ModelConfig = {
-        table: this.constructor.name.toLowerCase(),
+    protected get repository(): Repository<ModelType, Model<ModelType>> {
+        if (!this._repository) {
+            this._repository = Repository.getInstance<ModelType>(
+                this.constructor as new () => Model<ModelType>,
+                this.Configuration.table
+            );
+        }
+        return this._repository;
+    }
+
+    protected configuration: ModelConfig = {
+        table: '',  // Must be set by subclass
         primaryKey: 'id',
         incrementing: true,
         keyType: 'number',
@@ -18,9 +26,7 @@ export default abstract class Model<ModelType extends columnType> {
         guarded: ['*'],
     };
 
-    protected configuration: ModelConfig = { ...this.defaultConfiguration };
-
-    public get configurationConfig(): ModelConfig {
+    public get Configuration(): ModelConfig {
         return this.configuration;
     }
 
@@ -30,8 +36,12 @@ export default abstract class Model<ModelType extends columnType> {
     protected dirty: boolean = false;
     protected queryScopes?: QueryCondition;
 
+    public get primaryKeyColumn(): string {
+        return this.configuration.primaryKey;
+    }
+
     public get primaryKey(): QueryValues | undefined {
-        return this.attributes[this.configuration.primaryKey]; 
+        return this.attributes[this.configuration.primaryKey];
     }
 
     public get values(): Partial<ModelType> | ModelType {
@@ -39,20 +49,79 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public static where<ParamterModelType extends Model<columnType>>(
-        this: new () => ParamterModelType, 
+        this: new () => ParamterModelType,
         conditions: QueryCondition
     ): ParamterModelType {
         const instance = new this();
         return instance.where(conditions);
     }
-    
+
     public where(conditions: QueryCondition): this {
         this.queryScopes = conditions;
         return this;
     }
 
+    public static whereId<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        id: QueryValues
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.whereId(id);
+    }
+
+    public whereId(id: QueryValues): this {
+        this.queryScopes = { id: id };
+        return this;
+    }
+
+    public static find<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        primaryKeyValue: QueryValues
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.find(primaryKeyValue);
+    }
+
+    public find(primaryKeyValue: QueryValues): this {
+        this.queryScopes = { [this.primaryKeyColumn]: primaryKeyValue };
+        return this;
+    }
+
+    public static findOrFail<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        primaryKeyValue: QueryValues
+    ): Partial<columnType> {
+        const instance = new this();
+        return instance.findOrFail(primaryKeyValue);
+    }
+
+    public findOrFail(primaryKeyValue?: QueryValues): Partial<ModelType> | ModelType {
+        if (primaryKeyValue) {
+            this.queryScopes = { [this.primaryKeyColumn]: primaryKeyValue };
+        }
+
+        const query = this.queryScopes || {};
+
+        this.repository?.get(query, this).then((record) => {
+            if (!record) {
+                throw new Error(
+                    `Record with primary key ${primaryKeyValue} not found.`
+                );
+            }
+
+            this.set(record as ModelType);
+        });
+
+        return this.attributes;
+    }
+
+    public async get(): Promise<Partial<ModelType> | ModelType> {
+        this.attributes = await this.repository?.get(this.queryScopes || {}, this) as Partial<ModelType>;
+        return this.attributes;
+    }
+
     public static set<ParamterModelType extends Model<columnType>>(
-        this: new () => ParamterModelType, 
+        this: new () => ParamterModelType,
         attributes: Partial<columnType>
     ): ParamterModelType {
         const instance = new this();
@@ -60,8 +129,8 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public set(attributes: Partial<ModelType>): this {
-        if(attributes[this.configuration.primaryKey] !== undefined && !this.exists) {
-            this._repository.syncModel(this)
+        if (attributes[this.primaryKeyColumn] !== undefined && !this.exists) {
+            this.repository.syncModel(this)
         }
         this.attributes = { ...this.attributes, ...attributes };
         this.dirty = true;
@@ -69,10 +138,99 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public save(): this {
-        this._repository.save(this.attributes, this.originalAttributes);
+        this.repository.save(this.attributes, this.originalAttributes);
         this.originalAttributes = { ...this.originalAttributes, ...this.attributes };
         this.exists = true;
         this.dirty = false;
+        return this;
+    }
+
+    public update(attributes: Partial<ModelType>): this {
+        if (!this.exists) {
+            throw new Error("Cannot update a model that does not exist in the database.");
+        }
+
+        this.repository?.update(attributes);
+        return this;
+    }
+
+    public all(): Promise<Partial<ModelType>[]> {
+        return this.repository.all(this) as Promise<Partial<ModelType>[]>;
+    }
+
+    protected joinedEntities: string[] = [];
+    protected relations: relation[] = [];
+
+    public get JoinedEntities(): string[] {
+        return this.joinedEntities;
+    }
+
+    public get Relations(): relation[] {
+        return this.relations;
+    }
+
+    public hasMany<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${this.Configuration.table}_${this.Configuration.primaryKey}`,
+        localKey: string = this.Configuration.primaryKey
+    ): this {
+        this.relations.push({
+            type: 'hasMany',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public hasOne<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${model.Configuration.primaryKey}`,
+        localKey: string = `${model.Configuration.table}_${model.Configuration.primaryKey}`
+    ): this {
+        this.relations.push({
+            type: 'hasOne',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public belongsTo<modelType extends Model<columnType>>(
+        model: modelType,
+        foreignKey: string = `${model.Configuration.table}_${model.Configuration.primaryKey}`,
+        localKey: string = model.Configuration.primaryKey
+    ): this {
+        this.relations.push({
+            type: 'belongsTo',
+            model: model,
+            foreignKey: foreignKey,
+            localKey: localKey,
+        });
+        return this;
+    }
+
+    public static with<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        tableName: string
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.with(tableName);
+    }
+
+    public with(relationName: string): this {
+        this.joinedEntities.push(relationName);
+
+        const method = Reflect.get(this, relationName);
+        if (typeof method === 'function') {
+            method.call(this);
+        } else {
+            throw new Error(
+                `Relation method '${relationName}' does not exist on ${this.constructor.name}`
+            );
+        }
+
         return this;
     }
 }
