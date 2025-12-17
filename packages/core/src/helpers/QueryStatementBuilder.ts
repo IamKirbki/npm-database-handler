@@ -201,15 +201,15 @@ export default class QueryStatementBuilder {
         queryParts.push("WHERE");
 
         if (isSimpleObject) {
-            queryParts.push(this.BuildWhereSimple(where as QueryWhereParameters));
+            queryParts.push(this.buildWhereSimple(where as QueryWhereParameters));
         } else {
-            queryParts.push(this.BuildWhereWithOperators(where as QueryParameters[]));
+            queryParts.push(this.buildWhereWithOperators(where as QueryParameters[]));
         }
 
         return queryParts.join(" ");
     }
 
-    private static BuildWhereWithOperators(where: QueryParameters[]): string {
+    private static buildWhereWithOperators(where: QueryParameters[]): string {
         const queryParts: string[] = where.map(condition => {
             const operator = condition.operator || "=";
             return `${condition.column} ${operator} @${condition.column.trim()}`;
@@ -218,7 +218,7 @@ export default class QueryStatementBuilder {
         return queryParts.join(" AND ");
     }
 
-    private static BuildWhereSimple(where: QueryWhereParameters): string {
+    private static buildWhereSimple(where: QueryWhereParameters): string {
         const queryParts: string[] = Object.keys(where).map(col => `${col} = @${col}`);
         return queryParts.join(" AND ");
     }
@@ -271,7 +271,7 @@ export default class QueryStatementBuilder {
         fromTable: Table,
         joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions
-    ) {
+    ): string {
         const queryParts: string[] = [];
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
         queryParts.push(`FROM "${fromTable.Name}"`);

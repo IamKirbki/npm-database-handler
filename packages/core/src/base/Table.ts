@@ -12,26 +12,26 @@ import {
 import Query from "@core/base/Query.js";
 import Record from "@core/base/Record.js";
 import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder.js";
-import Container from "@core/Container.js";
+import Container from "@core/runtime/Container.js";
 
 /** Table class for interacting with a database table */
 export default class Table {
-    private readonly name: string;
-    private readonly adapter: IDatabaseAdapter = Container.getInstance().getAdapter();
+    private readonly _name: string;
+    private readonly _adapter: IDatabaseAdapter = Container.getInstance().getAdapter();
 
     /** Private constructor - use Table.create() */
     constructor(name: string) {
-        this.name = name;
+        this._name = name;
     }
 
     /** Get the table name */
     public get Name(): string {
-        return this.name;
+        return this._name;
     }
 
     /** Get raw column information */
     public async TableColumnInformation(): Promise<TableColumnInfo[]> {
-        return this.adapter.tableColumnInformation(this.name);
+        return this._adapter.tableColumnInformation(this._name);
     }
 
     /** Get readable, formatted column information */
@@ -47,8 +47,8 @@ export default class Table {
     }
 
     public async Drop(): Promise<void> {
-        const queryStr = `DROP TABLE IF EXISTS "${this.name}";`;
-        const query = new Query(this, queryStr, this.adapter);
+        const queryStr = `DROP TABLE IF EXISTS "${this._name}";`;
+        const query = new Query(this, queryStr, this._adapter);
         await query.Run();
     }
 
@@ -64,7 +64,7 @@ export default class Table {
             offset: options?.offset,
         });
 
-        const query = new Query(this, queryStr, this.adapter);
+        const query = new Query(this, queryStr, this._adapter);
         
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
@@ -91,7 +91,7 @@ export default class Table {
 
     /** Get the total count of records */
     public async RecordsCount(): Promise<number> {
-        const stmt = await this.adapter.prepare(`SELECT COUNT(*) as count FROM "${this.name}";`);
+        const stmt = await this._adapter.prepare(`SELECT COUNT(*) as count FROM "${this._name}";`);
         const count = await stmt.get({}) as { count: string };
         return parseInt(count.count) || 0;
     }
@@ -105,7 +105,7 @@ export default class Table {
         }
 
         const queryStr = QueryStatementBuilder.BuildInsert(this, values);
-        const query = new Query(this, queryStr, this.adapter);
+        const query = new Query(this, queryStr, this._adapter);
         query.Parameters = values;
         
         const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
@@ -134,7 +134,7 @@ export default class Table {
         options?: DefaultQueryOptions & QueryOptions,
     ): Promise<Record<Type>[]> {
         const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
-        const query = new Query(this, queryString, this.adapter);
+        const query = new Query(this, queryString, this._adapter);
 
         // Set parameters if WHERE clause is present
         if (options?.where) {

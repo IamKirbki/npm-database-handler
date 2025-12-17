@@ -1,19 +1,18 @@
 import { inspect } from "util";
 import Table from "./Table.js";
 import Query from "./Query.js";
-import { QueryCondition } from "@core/types/query.js";
 import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
-import { ModelWithTimestamps } from "@core/types/index.js";
+import { ModelWithTimestamps, QueryCondition } from "@core/types/index.js";
 
 /** Record class represents a single database row */
 export default class Record<ColumnValuesType> {
-    private readonly adapter: IDatabaseAdapter;
+    private readonly _adapter: IDatabaseAdapter;
     private _values: ColumnValuesType = {} as ColumnValuesType;
     private readonly _table: Table;
 
     constructor(values: ColumnValuesType, adapter: IDatabaseAdapter, table: Table) {
         this._values = values;
-        this.adapter = adapter;
+        this._adapter = adapter;
         this._table = table;
     }
 
@@ -38,7 +37,7 @@ export default class Record<ColumnValuesType> {
             .join(" AND ");
 
         const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
-        const _query = new Query(this._table, query, this.adapter);
+        const _query = new Query(this._table, query, this._adapter);
 
         const params: QueryCondition = { ...newValues };
         Object.entries(originalValues).forEach(([key, value]) => {
@@ -57,7 +56,7 @@ export default class Record<ColumnValuesType> {
             .map(key => `${key} = @${key}`)
             .join(" AND ");
 
-        const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this.adapter);
+        const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this._adapter);
         _query.Parameters = { ...this._values as object };
         await _query.Run();
     }

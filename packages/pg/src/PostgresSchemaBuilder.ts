@@ -1,12 +1,10 @@
 import { PostgresTableSchemaBuilder } from "./PostgresTableSchemaBuilder.js";
 import PostgresAdapter from "./PostgresAdapter.js";
-import { AbstractSchemaBuilder } from "@iamkirbki/database-handler-core";
+import AbstractSchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
-export class PostgresSchemaBuilder extends AbstractSchemaBuilder {
+export class PostgresSchemaBuilder implements AbstractSchemaBuilder {
     // eslint-disable-next-line no-unused-vars
-    constructor(private adapter: PostgresAdapter){
-        super();
-    }
+    constructor(private _adapter: PostgresAdapter){}
 
     // eslint-disable-next-line no-unused-vars
     async createTable(name: string, callback: (table: PostgresTableSchemaBuilder) => void) {
@@ -16,13 +14,13 @@ export class PostgresSchemaBuilder extends AbstractSchemaBuilder {
         const cols = tableBuilder.build();
         const query = `CREATE TABLE ${name} ${cols}`;
         
-        const statement = await this.adapter.prepare(query);
+        const statement = await this._adapter.prepare(query);
         statement.run();
     }
 
     async dropTable(name: string) {
         const query = `DROP TABLE IF EXISTS ${name}`;
-        const statement = await this.adapter.prepare(query);
+        const statement = await this._adapter.prepare(query);
         statement.run();
     }
 
@@ -38,7 +36,7 @@ export class PostgresSchemaBuilder extends AbstractSchemaBuilder {
         
     //     const cols = tableBuilder.build();
     //     const query = `ALTER TABLE ${oldName} ${cols}`;
-    //     const statement = await this.adapter.prepare(query);
+    //     const statement = await this._adapter.prepare(query);
     //     statement.run();
     // }
 }

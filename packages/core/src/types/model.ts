@@ -90,3 +90,8 @@ export interface ModelConfig {
 export interface SoftDeletable {
     deleted_at?: string | Date | null;
 }
+
+export type ModelWithTimestamps = {
+    created_at?: string;
+    updated_at?: string;
+}

@@ -1,14 +1,13 @@
-import Repository from "@core/runtime/Repository";
-import { columnType, QueryCondition } from "@core/types/index.js";
-import { ModelConfig } from "@core/types/model";
+import Repository from "@core/runtime/Repository.js";
+import { columnType, QueryCondition, QueryValues, ModelConfig } from "@core/types/index.js";
 
 /** Abstract Model class for ORM-style database interactions */
 export default abstract class Model<ModelType extends columnType> {
-    private repository: Repository<ModelType, Model<ModelType>> = Repository.getInstance<ModelType>(
+    private _repository: Repository<ModelType, Model<ModelType>> = Repository.getInstance<ModelType>(
         this.constructor as new () => Model<ModelType>
     );
 
-    protected configuration: ModelConfig = {
+    protected defaultConfiguration: ModelConfig = {
         table: this.constructor.name.toLowerCase(),
         primaryKey: 'id',
         incrementing: true,
@@ -18,6 +17,8 @@ export default abstract class Model<ModelType extends columnType> {
         updatedAtColumn: 'updated_at',
         guarded: ['*'],
     };
+
+    protected configuration: ModelConfig = { ...this.defaultConfiguration };
 
     public get configurationConfig(): ModelConfig {
         return this.configuration;
@@ -29,11 +30,15 @@ export default abstract class Model<ModelType extends columnType> {
     protected dirty: boolean = false;
     protected queryScopes?: QueryCondition;
 
-    public get primaryKey(): string | number | undefined {
-        return this.attributes[this.configuration.primaryKey];
+    public get primaryKey(): QueryValues | undefined {
+        return this.attributes[this.configuration.primaryKey]; 
     }
 
-    public static where<ParamterModelType extends Model<any>>(
+    public get values(): Partial<ModelType> {
+        return this.attributes;
+    }
+
+    public static where<ParamterModelType extends Model<columnType>>(
         this: new () => ParamterModelType, 
         conditions: QueryCondition
     ): ParamterModelType {
@@ -48,24 +53,23 @@ export default abstract class Model<ModelType extends columnType> {
 
     public static set<ParamterModelType extends Model<columnType>>(
         this: new () => ParamterModelType, 
-        key: keyof columnType, 
-        value: columnType[keyof columnType]
+        attributes: Partial<columnType>
     ): ParamterModelType {
         const instance = new this();
-        return instance.set(key, value);;
+        return instance.set(attributes);
     }
 
-    public set(key: keyof ModelType, value: ModelType[keyof ModelType]): this {
-        if(key === this.configuration.primaryKey && !this.exists) {
-            this.repository.updateModel(this)
+    public set(attributes: Partial<ModelType>): this {
+        if(attributes[this.configuration.primaryKey] !== undefined && !this.exists) {
+            this._repository.updateModel(this)
         }
-        this.attributes[key] = value;
+        this.attributes = { ...this.attributes, ...attributes };
         this.dirty = true;
         return this;
     }
 
     public save(): this {
-        this.repository.save(this.attributes, this.originalAttributes);
+        this._repository.save(this.attributes, this.originalAttributes);
         this.originalAttributes = { ...this.originalAttributes, ...this.attributes };
         this.exists = true;
         this.dirty = false;

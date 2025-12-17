@@ -1,9 +1,9 @@
-import type Model from "@core/abstract/Model";
-import Table from "@core/base/Table";
-import { columnType } from "@core/types";
+import type Model from "@core/abstract/Model.js";
+import Table from "@core/base/Table.js";
+import { columnType } from "@core/types/index";
 
 export default class Repository<Type extends columnType, ModelType extends Model<Type>> {
-    private static instances: Map<string, Repository<columnType, Model<columnType>>> = new Map();
+    private static _instances: Map<string, Repository<columnType, Model<columnType>>> = new Map();
     private models: Map<string, ModelType> = new Map();
     private Table: Table
     
@@ -17,13 +17,13 @@ export default class Repository<Type extends columnType, ModelType extends Model
         ModelClass: new () => Model<ModelType>
     ): Repository<ModelType, Model<ModelType>> {
         const className = ModelClass.name;
-        if (!this.instances.has(className)) {
+        if (!this._instances.has(className)) {
             const instance = new Repository<ModelType, Model<ModelType>>(new ModelClass());
-            this.instances.set(className, instance);
+            this._instances.set(className, instance);
             return instance;
         } 
 
-        return this.instances.get(className) as Repository<ModelType, Model<ModelType>>;
+        return this._instances.get(className) as Repository<ModelType, Model<ModelType>>;
     }
 
     public updateModel(model: ModelType): void {
@@ -37,6 +37,6 @@ export default class Repository<Type extends columnType, ModelType extends Model
 
     public async save(attributes: Partial<Type>, oldAttributes: Partial<Type>): Promise<void> {
         const dataToSave: Partial<Type> = { ...oldAttributes, ...attributes };
-        await this.Table.Insert(dataToSave);
+        await this.Table.Insert(dataToSave as Type);
     }
 } 

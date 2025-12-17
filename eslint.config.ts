@@ -21,9 +21,8 @@ export default [
       '**/interfaces/**', 
       '**/*.config.ts', 
       'scripts/**/*.js',
-      'packages/core/src/abstract/Schema.ts', 
-      'packages/core/src/abstract/Migration.ts', 
-      'packages/core/src/abstract/Controller.ts', 
+      'packages/**/types/**',
+      'packages/core/src/abstract/SchemaTableBuilder.ts',
     ],
     languageOptions: {
       parser: tsparser,
