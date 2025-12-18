@@ -1,6 +1,6 @@
 {
   "name": "@iamkirbki/database-handler-better-sqlite3",
-  "version": "4.0.2",
+  "version": "4.0.1",
   "author": "iamkirbki",
   "description": "Better-sqlite3 adapter for @kirbkis-database-handler/core",
   "license": "ISC",
@@ -27,7 +27,7 @@
     "build": "tsc --build && tsc-alias"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^4.0.2",
+    "@iamkirbki/database-handler-core": "^4.0.1",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {
