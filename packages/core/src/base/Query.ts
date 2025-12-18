@@ -1,13 +1,11 @@
-import Table from "./Table.js";
-import { QueryCondition, QueryWhereParameters } from "@core/types/index.js";
-import Record from "./Record.js";
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
+import { columnType, QueryCondition, QueryWhereParameters, TableColumnInfo } from "@core/types/index.js";
+import { Container, Record, IDatabaseAdapter } from "@core/index.js";
 
 /** Query class for executing custom SQL queries */
 export default class Query {
-  public readonly Table: Table;
-  
-  private readonly _adapter: IDatabaseAdapter;
+  public readonly TableName: string;
+
+  private static readonly _adapter: IDatabaseAdapter = Container.getInstance().getAdapter();
   private _query: string = "";
   private _parameters: QueryCondition = {};
 
@@ -19,45 +17,42 @@ export default class Query {
     this._parameters = Query.ConvertParamsToObject(value);
   }
 
-  constructor(Table: Table, Query: string, adapter: IDatabaseAdapter) {
-    this.Table = Table;
+  constructor(TableName: string, Query: string) {
+    this.TableName = TableName;
     this._query = Query;
-    this._adapter = adapter;
   }
 
-  /**
-   * Execute a query that modifies data (INSERT, UPDATE, DELETE)
-   * 
-   * @template Type - Expected return type (typically { lastInsertRowid: number, changes: number })
-   * @returns Result object with lastInsertRowid and changes count
-   * 
-   * @example
-   * ```typescript
-   * // INSERT query
-   * const query = db.Query(users, 'INSERT INTO users (name, age) VALUES (@name, @age)');
-   * query.Parameters = { name: 'John', age: 30 };
-   * const result = query.Run<{ lastInsertRowid: number, changes: number }>();
-   * console.log(`Inserted ID: ${result.lastInsertRowid}`);
-   * 
-   * // UPDATE query
-   * const update = db.Query(users, 'UPDATE users SET age = @age WHERE id = @id');
-   * update.Parameters = { age: 31, id: 1 };
-   * const updateResult = update.Run<{ changes: number }>();
-   * console.log(`Updated ${updateResult.changes} rows`);
-   * ```
-   */
+  /** Execute a non-SELECT query (INSERT, UPDATE, DELETE, etc.) */
   public async Run<Type>(): Promise<Type> {
-    const stmt = await this._adapter.prepare(this._query);
+    const stmt = await Query._adapter.prepare(this._query);
     return await stmt.run(this.Parameters) as Type;
   }
 
   /** Execute a SELECT query and return all matching rows */
-  public async All<Type>(): Promise<Record<Type>[]> {
-    const stmt = await this._adapter.prepare(this._query);
+  public async All<Type extends columnType>(): Promise<Record<Type>[]> {
+    const stmt = await Query._adapter.prepare(this._query);
     const results = await stmt.all(this.Parameters) as Type[];
-    return results.map(res => new Record<Type>(res, this._adapter, this.Table));
+    return results.map(res => new Record<Type>(res, this.TableName));
   }
 
+  /** Execute a SELECT query and return the first matching row */
+  public async Get<Type extends columnType>(): Promise<Record<Type> | undefined> {
+    const stmt = await Query._adapter.prepare(this._query);
+    const results = await stmt.get(this.Parameters) as Type | undefined;
+    return results ? new Record<Type>(results, this.TableName) : undefined;
+  }
+
+  public static async tableColumnInformation(tableName: string) : Promise<TableColumnInfo[]> {
+    return this._adapter.tableColumnInformation(tableName);
+  }
+
+  public async Count(): Promise<number> {
+    const stmt = await Query._adapter.prepare(this._query);
+    const result = await stmt.get(this.Parameters) as { count: string };
+    return parseInt(result.count) || 0;
+  }
+
+  /** Convert various parameter formats to a consistent object format */
   public static ConvertParamsToObject(params: QueryCondition): QueryWhereParameters {
     const paramObject: QueryWhereParameters = {};
     if (Array.isArray(params)) {
@@ -67,22 +62,14 @@ export default class Query {
     } else {
       Object.assign(paramObject, params);
     }
-    
-    return this.ConvertIdToString(paramObject);
+
+    return this.ConvertValueToString(paramObject);
   }
 
-  public static ConvertIdToString(params: QueryWhereParameters): QueryWhereParameters {
-    if (params.id && typeof params.id === 'number') {
-      return { ...params, id: params.id.toString() };
-    }
-
-    return params;
-  }
-
-  /** Execute a SELECT query and return the first matching row */
-  public async Get<Type>(): Promise<Record<Type> | undefined> {
-    const stmt = await this._adapter.prepare(this._query);
-    const results = await stmt.get(this.Parameters) as Type | undefined;
-    return results ? new Record<Type>(results, this._adapter, this.Table) : undefined;
+  /** Databases don't like numeric values when inserting with a query */
+  public static ConvertValueToString(params: QueryWhereParameters): QueryWhereParameters {
+    return Object.entries(params).map(([key, value]) => {
+      return { [key]: value !== null && value !== undefined ? value.toString() : value };
+    }).reduce((acc, curr) => ({ ...acc, ...curr }), {});
   }
 }
