@@ -117,20 +117,14 @@ export default abstract class Model<ModelType extends columnType> {
 
     public static async first<ParamterModelType extends Model<columnType>>(
         this: new () => ParamterModelType,
-        query?: QueryCondition | string | number
+        primaryKeyValue?: string | number
     ): Promise<Partial<columnType> | ParamterModelType> {
         const instance = new this();
-        return instance.first(query);
+        return instance.first(primaryKeyValue);
     }
 
-    public async first(query?: QueryCondition | string | number): Promise<Partial<ModelType> | ModelType> {
-        if (typeof query === 'object') {
-            this.queryScopes = query;
-        } else if (typeof query === 'string' || typeof query === 'number') {
-            this.queryScopes = { [this.primaryKeyColumn]: query };
-        }
-
-        this.attributes = await this.repository?.first(this.queryScopes || {}, this) as Partial<ModelType>;
+    public async first(primaryKeyValue?: string | number): Promise<Partial<ModelType>> {
+        this.attributes = await this.repository?.first(primaryKeyValue ? { [this.configuration.primaryKey]: primaryKeyValue } : {}, this) as Partial<ModelType>;
         return this.attributes;
     }
 
