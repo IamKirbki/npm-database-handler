@@ -1,6 +1,6 @@
 import type Model from "@core/abstract/Model.js";
 import Table from "@core/base/Table.js";
-import { columnType, Join, QueryCondition, relation } from "@core/types/index";
+import { columnType, Join, QueryCondition, QueryOptions, relation } from "@core/types/index";
 
 export default class Repository<Type extends columnType, ModelType extends Model<Type>> {
     private static _instances: Map<string, Repository<columnType, Model<columnType>>> = new Map();
@@ -36,20 +36,35 @@ export default class Repository<Type extends columnType, ModelType extends Model
         return this.models.get(name) as ModelType;
     }
 
-    public async save(attributes: Partial<Type>, oldAttributes: Partial<Type>): Promise<void> {
-        const dataToSave: Partial<Type> = { ...oldAttributes, ...attributes };
-        await this.Table.Insert(dataToSave as Type);
+    public async save(attributes: Type): Promise<void> {
+        await this.Table.Insert(attributes);
     }
 
-    public async get(conditions: QueryCondition, Model: Model<Type>): Promise<Type | null> {
+    public async first(conditions: QueryCondition, Model: Model<Type>): Promise<Type | null> {
         let record;
         if (Model.JoinedEntities.length > 0) {
-            record = await this.join(Model, conditions);
+            record = await this.join(Model, conditions, { limit: 1 }).then(results => results[0]);
         } else {
             record = await this.Table.Record({ where: conditions });
         }
 
         return record ? record.values as Type : null;
+    }
+
+    public async get(conditions: QueryCondition, Model: Model<Type>): Promise<Type[]> {
+        if (Model.JoinedEntities.length > 0) {
+            return await this.join(Model, conditions);
+        } else {
+            return await this.Table.Records({ where: conditions }).then(records => records.map(record => record.values as Type));
+        }
+    }
+
+    public async all(Model: Model<Type>): Promise<Type[]> {
+        if (Model.JoinedEntities.length > 0) {
+            return await this.join(Model);
+        } else {
+            return await this.Table.Records().then(records => records.map(record => record.values as Type));
+        }
     }
 
     public async update(attributes: Partial<Type>): Promise<this> {
@@ -67,15 +82,7 @@ export default class Repository<Type extends columnType, ModelType extends Model
         return this;
     }
 
-    public async all(Model: Model<Type>): Promise<Type[]> {
-        if (Model.JoinedEntities.length > 0) {
-            return await this.join(Model);
-        } else {
-            return await this.Table.Records().then(records => records.map(record => record.values as Type));
-        }
-    }
-
-    private async join(Model: Model<Type>, conditions?: QueryCondition): Promise<Type[]> {
+    private async join(Model: Model<Type>, conditions?: QueryCondition, queryOptions?: QueryOptions): Promise<Type[]> {
         const Join: Join[] = Model.JoinedEntities.map(join => {
             const relation: relation | undefined = Model.Relations.find(rel => rel.model.Configuration.table.toLowerCase() === join.toLowerCase());
             if (!relation) {
@@ -93,6 +100,6 @@ export default class Repository<Type extends columnType, ModelType extends Model
             }
         })
       
-        return (await this.Table.Join(Join, { where: conditions })).map(record => record.values as Type);
+        return (await this.Table.Join(Join, { where: conditions, ...queryOptions })).map(record => record.values as Type);
     }
 }

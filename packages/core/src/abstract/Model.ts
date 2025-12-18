@@ -102,7 +102,7 @@ export default abstract class Model<ModelType extends columnType> {
 
         const query = this.queryScopes || {};
 
-        this.repository?.get(query, this).then((record) => {
+        this.repository?.first(query, this).then((record) => {
             if (!record) {
                 throw new Error(
                     `Record with primary key ${primaryKeyValue} not found.`
@@ -115,9 +115,39 @@ export default abstract class Model<ModelType extends columnType> {
         return this.attributes;
     }
 
-    public async get(): Promise<Partial<ModelType> | ModelType> {
-        this.attributes = await this.repository?.get(this.queryScopes || {}, this) as Partial<ModelType>;
+    public static async first<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        query?: QueryCondition | string | number
+    ): Promise<Partial<columnType> | ParamterModelType> {
+        const instance = new this();
+        return instance.first(query);
+    }
+
+    public async first(query?: QueryCondition | string | number): Promise<Partial<ModelType> | ModelType> {
+        if (typeof query === 'object') {
+            this.queryScopes = query;
+        } else if (typeof query === 'string' || typeof query === 'number') {
+            this.queryScopes = { [this.primaryKeyColumn]: query };
+        }
+
+        this.attributes = await this.repository?.first(this.queryScopes || {}, this) as Partial<ModelType>;
         return this.attributes;
+    }
+
+    public async get(): Promise<Partial<ModelType>[]> {
+        return this.repository.get(this.queryScopes || {}, this) as Promise<Partial<ModelType>[]>;
+    }
+
+    public static all<ParamterModelType extends Model<columnType>>(
+        // eslint-disable-next-line no-unused-vars
+        this: new () => ParamterModelType
+    ): Promise<Partial<columnType>[]> {
+        const instance = new this();
+        return instance.all();
+    }
+
+    public all(): Promise<Partial<ModelType>[]> {
+        return this.repository.all(this) as Promise<Partial<ModelType>[]>;
     }
 
     public static set<ParamterModelType extends Model<columnType>>(
@@ -138,8 +168,8 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public save(): this {
-        this.repository.save(this.attributes, this.originalAttributes);
         this.originalAttributes = { ...this.originalAttributes, ...this.attributes };
+        this.repository.save(this.originalAttributes as ModelType);
         this.exists = true;
         this.dirty = false;
         return this;
@@ -152,10 +182,6 @@ export default abstract class Model<ModelType extends columnType> {
 
         this.repository?.update(attributes);
         return this;
-    }
-
-    public all(): Promise<Partial<ModelType>[]> {
-        return this.repository.all(this) as Promise<Partial<ModelType>[]>;
     }
 
     protected joinedEntities: string[] = [];
