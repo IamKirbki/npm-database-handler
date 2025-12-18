@@ -18,11 +18,6 @@ export default class Table {
         this._name = name;
     }
 
-    /** Get the table name */
-    public get Name(): string {
-        return this._name;
-    }
-
     /** Get raw column information */
     public async TableColumnInformation(): Promise<TableColumnInfo[]> {
         return Query.tableColumnInformation(this._name);
@@ -59,7 +54,7 @@ export default class Table {
         });
 
         const query = new Query(this._name, queryStr);
-        
+
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
@@ -89,7 +84,7 @@ export default class Table {
     }
 
     /** Insert a record into the table */
-    public async Insert<Type extends columnType>(values: Type): Promise<Record<Type> | undefined>{
+    public async Insert<Type extends columnType>(values: Type): Promise<Record<Type> | undefined> {
         const record = new Record<Type>(values, this._name);
         await record.Insert();
         return record;
@@ -108,6 +103,35 @@ export default class Table {
             query.Parameters = options.where;
         }
 
-        return await query.All();
+        const joinedTables = Array.isArray(Joins) ? Joins.map(j => j.fromTable) : [Joins.fromTable];
+        const records = await query.All();
+        return await this.splitJoinValues(records, joinedTables) as Record<Type>[];
+    }
+
+    private async splitJoinValues(records: Record<columnType>[], joinedTables: string[]): Promise<Record<columnType>[]> {
+        const thisRecordColumns = (await this.TableColumnInformation()).map(col => col.name);
+        const tableColumnsMap = new Map<string, string[]>();
+        
+        for (const tableName of joinedTables) {
+            const columns = (await Query.tableColumnInformation(tableName)).map(col => col.name);
+            tableColumnsMap.set(tableName, columns);
+        }
+
+        return records.map(record => {
+            if (!record.values) return record;
+
+            const thisRecordEntries = thisRecordColumns
+                .map(colName => [colName, record.values[colName]])
+                .filter(([, value]) => value !== undefined);
+
+            const joinedRecords: { [tableName: string]: columnType } = {};
+            for (const [tableName, tableColumns] of tableColumnsMap) {
+                const joinedRecordEntries = Object.entries(record.values)
+                    .filter(([key]) => tableColumns.includes(key));
+                joinedRecords[tableName] = Object.fromEntries(joinedRecordEntries);
+            }
+
+            return new Record<columnType>({ ...Object.fromEntries(thisRecordEntries), ...joinedRecords }, this._name);
+        });
     }
 }

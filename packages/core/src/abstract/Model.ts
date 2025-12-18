@@ -128,8 +128,8 @@ export default abstract class Model<ModelType extends columnType> {
         return this.attributes;
     }
 
-    public async get(): Promise<Partial<ModelType>[]> {
-        return this.repository.get(this.queryScopes || {}, this) as Promise<Partial<ModelType>[]>;
+    public get(): Promise<ModelType[]> {
+        return this.repository.get(this.queryScopes || {}, this);
     }
 
     public static all<ParamterModelType extends Model<columnType>>(
