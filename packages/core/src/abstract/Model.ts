@@ -1,5 +1,5 @@
 import Repository from "@core/runtime/Repository.js";
-import { columnType, QueryCondition, QueryValues, ModelConfig, relation } from "@core/types/index.js";
+import { columnType, QueryCondition, QueryValues, ModelConfig, relation, QueryOptions } from "@core/types/index.js";
 
 /** Abstract Model class for ORM-style database interactions */
 export default abstract class Model<ModelType extends columnType> {
@@ -35,6 +35,7 @@ export default abstract class Model<ModelType extends columnType> {
     protected exists: boolean = false;
     protected dirty: boolean = false;
     protected queryScopes?: QueryCondition;
+    protected queryOptions: QueryOptions = {};
 
     public get primaryKeyColumn(): string {
         return this.configuration.primaryKey;
@@ -46,6 +47,50 @@ export default abstract class Model<ModelType extends columnType> {
 
     public get values(): Partial<ModelType> | ModelType {
         return this.attributes;
+    }
+
+    public static limit<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        value: number
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.limit(value);
+    }
+
+    public limit(value: number): this {
+        this.queryOptions.limit = value;
+        return this;
+    }
+
+    public static offset<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        value: number
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.offset(value);
+    }
+
+    public offset(value: number): this {
+        if (!this.queryOptions.limit) {
+            throw new Error("Offset cannot be set without a limit.");
+        }
+
+        this.queryOptions.offset = value;
+        return this;
+    }
+
+    public static orderBy<ParamterModelType extends Model<columnType>>(
+        this: new () => ParamterModelType,
+        column: string,
+        direction: 'ASC' | 'DESC' = 'ASC'
+    ): ParamterModelType {
+        const instance = new this();
+        return instance.orderBy(column, direction);
+    }
+
+    public orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): this {
+        this.queryOptions.orderBy = column + " " + direction;
+        return this;
     }
 
     public static where<ParamterModelType extends Model<columnType>>(
@@ -129,7 +174,7 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public async get(): Promise<Partial<ModelType>[]> {
-        return this.repository.get(this.queryScopes || {}, this) as Promise<Partial<ModelType>[]>;
+        return this.repository.get(this.queryScopes || {}, this.queryOptions, this) as Promise<Partial<ModelType>[]>;
     }
 
     public static all<ParamterModelType extends Model<columnType>>(

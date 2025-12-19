@@ -1,5 +1,4 @@
 import { DefaultQueryOptions, QueryOptions, QueryCondition, Join, QueryParameters, QueryWhereParameters } from "@core/types/index.js";
-import Table from "@core/base/Table";
 
 /** Utility class for building SQL query strings */
 export default class QueryStatementBuilder {
@@ -27,12 +26,11 @@ export default class QueryStatementBuilder {
      * // "SELECT id, name, email FROM users WHERE status = @status AND age = @age ORDER BY created_at DESC LIMIT 10 OFFSET 20"
      * ```
      */
-    public static BuildSelect(table: Table, options?: DefaultQueryOptions & QueryOptions): string {
+    public static BuildSelect(tableName: string, options?: DefaultQueryOptions & QueryOptions): string {
         const queryParts: string[] = [];
 
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
-        queryParts.push(`FROM "${table.Name}"`);
-
+        queryParts.push(`FROM "${tableName}"`);
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
 
@@ -58,13 +56,13 @@ export default class QueryStatementBuilder {
      * // Note: The actual values will be bound separately using the Parameters object
      * ```
      */
-    public static BuildInsert(table: Table, record: QueryWhereParameters): string {
+    public static BuildInsert(tableName: string, record: QueryWhereParameters): string {
         const queryParts: string[] = [];
         const columns = Object.keys(record);
         const placeholders = columns.map(col => `@${col}`);
-
-        queryParts.push(`INSERT INTO "${table.Name}"`);
-        queryParts.push(`(${columns.join(", ")})`);
+        
+        queryParts.push(`INSERT INTO "${tableName}"`);
+        queryParts.push(`(${columns.map(c => `"${c}"`).join(", ")})`);
         queryParts.push(`VALUES (${placeholders.join(", ")})`);
 
         return queryParts.join(" ");
@@ -96,11 +94,11 @@ export default class QueryStatementBuilder {
      * // "UPDATE users SET status = @status WHERE status = @status AND last_login = @last_login"
      * ```
      */
-    public static BuildUpdate(table: Table, record: QueryCondition, where: QueryCondition): string {
+    public static BuildUpdate(tableName: string, record: QueryCondition, where: QueryCondition): string {
         const queryParts: string[] = [];
         const setClauses = Object.keys(record).map(col => `${col} = @${col}`);
 
-        queryParts.push(`UPDATE "${table.Name}"`);
+        queryParts.push(`UPDATE "${tableName}"`);
         queryParts.push(`SET ${setClauses.join(", ")}`);
         queryParts.push(this.BuildWhere(where));
 
@@ -127,10 +125,10 @@ export default class QueryStatementBuilder {
      * // "DELETE FROM users WHERE status = @status AND last_login = @last_login"
      * ```
      */
-    public static BuildDelete(table: Table, where: QueryCondition): string {
+    public static BuildDelete(tableName: string, where: QueryCondition): string {
         const queryParts: string[] = [];
 
-        queryParts.push(`DELETE FROM "${table.Name}"`);
+        queryParts.push(`DELETE FROM "${tableName}"`);
         queryParts.push(this.BuildWhere(where));
 
         return queryParts.join(" ");
@@ -157,9 +155,9 @@ export default class QueryStatementBuilder {
      * // "SELECT COUNT(*) as count FROM users WHERE status = @status AND age = @age"
      * ```
      */
-    public static BuildCount(table: Table, where?: QueryCondition): string {
+    public static BuildCount(tableName: string, where?: QueryCondition): string {
         const queryParts: string[] = [];
-        queryParts.push(`SELECT COUNT(*) as count FROM "${table.Name}"`);
+        queryParts.push(`SELECT COUNT(*) as count FROM "${tableName}"`);
         queryParts.push(this.BuildWhere(where));
 
         return queryParts.join(" ");
@@ -268,14 +266,14 @@ export default class QueryStatementBuilder {
      * ```
      */
     public static BuildJoin(
-        fromTable: Table,
+        fromTableName: string,
         joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions
     ): string {
         const queryParts: string[] = [];
         queryParts.push(`SELECT ${options?.select ?? "*"}`);
-        queryParts.push(`FROM "${fromTable.Name}"`);
-        queryParts.push(this.BuildJoinPart(fromTable, joins));
+        queryParts.push(`FROM "${fromTableName}"`);
+        queryParts.push(this.BuildJoinPart(fromTableName, joins));
         queryParts.push(this.BuildWhere(options?.where));
         queryParts.push(this.BuildQueryOptions(options ?? {}));
 
@@ -322,17 +320,17 @@ export default class QueryStatementBuilder {
      * ```
      */
     public static BuildJoinPart(
-        fromTable: Table,
+        fromTableName: string,
         joins: Join | Join[],
     ): string {
         const queryParts: string[] = [];
         const joinsArray = Array.isArray(joins) ? joins : [joins];
 
-        let currentTable = fromTable;
+        let currentTableName = fromTableName;
         for (const join of joinsArray) {
-            queryParts.push(`${join.joinType} JOIN "${join.fromTable.Name}"`);
-            queryParts.push(this.BuildJoinOnPart(currentTable, join.fromTable, join.on));
-            currentTable = join.fromTable;
+            queryParts.push(`${join.joinType} JOIN "${join.fromTable}"`);
+            queryParts.push(this.BuildJoinOnPart(currentTableName, join.fromTable, join.on));
+            currentTableName = join.fromTable;
         }
 
         return queryParts.join(" ");
@@ -371,15 +369,15 @@ export default class QueryStatementBuilder {
      * ```
      */
     public static BuildJoinOnPart(
-        table: Table,
-        joinTable: Table,
+        tableName: string,
+        joinTableName: string,
         on: QueryWhereParameters | QueryWhereParameters[],
     ): string {
         const queryParts: string[] = [];
         const onArray = Array.isArray(on) ? on : [on];
 
         for (const onPart of onArray) {
-            queryParts.push(`ON ${table.Name}.${Object.values(onPart)[0]} = ${joinTable.Name}.${Object.keys(onPart)[0]}`);
+            queryParts.push(`ON ${tableName}.${Object.values(onPart)[0]} = ${joinTableName}.${Object.keys(onPart)[0]}`);
         }
 
         return queryParts.join(" AND ");

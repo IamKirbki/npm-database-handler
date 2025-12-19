@@ -1,19 +1,16 @@
 import { inspect } from "util";
-import Table from "./Table.js";
 import Query from "./Query.js";
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
-import { ModelWithTimestamps, QueryCondition } from "@core/types/index.js";
+import { columnType, ModelWithTimestamps, QueryValues, QueryWhereParameters } from "@core/types/index.js";
+import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder.js";
 
 /** Record class represents a single database row */
-export default class Record<ColumnValuesType> {
-    private readonly _adapter: IDatabaseAdapter;
+export default class Record<ColumnValuesType extends columnType> {
     private _values: ColumnValuesType = {} as ColumnValuesType;
-    private readonly _table: Table;
+    private readonly _tableName: string;
 
-    constructor(values: ColumnValuesType, adapter: IDatabaseAdapter, table: Table) {
+    constructor(values: ColumnValuesType, table: string) {
         this._values = values;
-        this._adapter = adapter;
-        this._table = table;
+        this._tableName = table;
     }
 
     /** Get the raw values object for this record */
@@ -21,30 +18,62 @@ export default class Record<ColumnValuesType> {
         return this._values;
     };
 
-    /** Update this record in the database */
-    public async Update(newValues: object): Promise<void> {
-        const setClauses = Object.keys(newValues)
-            .map(key => `${key} = @${key}`)
-            .join(", ");
+    public async Insert(): Promise<this | undefined> {
+        const columns = Object.keys(this._values);
 
-        const originalValues = this._values as object;
+        if (columns.length === 0) {
+            throw new Error("Cannot insert record with no columns");
+        }
+
+        const queryStr = QueryStatementBuilder.BuildInsert(this._tableName, this._values);
+        const query = new Query(this._tableName, queryStr);
+        query.Parameters = this._values;
+
+        const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
+
+        let recordId: QueryValues;
+
+        // For PostgreSQL compatibility: use 'id' from values if lastInsertRowid is undefined
+        if (Array.isArray(this._values)) {
+            recordId = result?.lastInsertRowid ?? this._values.map(v => v.column === 'id' ? v.value : undefined);
+        } else {
+            recordId = result?.lastInsertRowid ?? this._values.id;
+        }
+
+        if (recordId === undefined) {
+            return undefined;
+        }
+
+        const queryStrSelect = QueryStatementBuilder.BuildSelect(this._tableName, { where: { ...this._values } });
+        const querySelect = new Query(this._tableName, queryStrSelect);
+        querySelect.Parameters = { ...this._values };
+
+        const insertedRecord = await querySelect.All<ColumnValuesType>();
+        if (insertedRecord.length > 0) {
+            this._values = insertedRecord[insertedRecord.length - 1].values;
+        }
+
+        this._values = { ...this._values, id: recordId } as ColumnValuesType;
+        return this;
+    }
+
+    /** Update this record in the database */
+    public async Update(newValues: Partial<ColumnValuesType>): Promise<void> {
+        const originalValues = this._values as Partial<ColumnValuesType>;
         if ((originalValues as object & ModelWithTimestamps).updated_at !== undefined) {
             (newValues as object & ModelWithTimestamps).updated_at = new Date().toISOString();
         }
 
-        const whereClauses = Object.keys(originalValues)
-            .map(key => `${key} = @where_${key}`)
-            .join(" AND ");
+        const queryStr = QueryStatementBuilder.BuildUpdate(this._tableName, newValues as QueryWhereParameters, originalValues as QueryWhereParameters);
+        const _query = new Query(this._tableName, queryStr);
 
-        const query = `UPDATE "${this._table.Name}" SET ${setClauses} WHERE ${whereClauses};`;
-        const _query = new Query(this._table, query, this._adapter);
-
-        const params: QueryCondition = { ...newValues };
+        // Merge newValues and originalValues for parameters (with 'where_' prefix for where clause)
+        const params: Partial<ColumnValuesType> = { ...newValues };
         Object.entries(originalValues).forEach(([key, value]) => {
-            params[`where_${key}`] = value;
+            params[`where_${key}` as keyof ColumnValuesType] = value;
         });
 
-        _query.Parameters = params;
+        _query.Parameters = params as QueryWhereParameters;
         await _query.Run();
 
         this._values = { ...this._values, ...newValues };
@@ -52,11 +81,8 @@ export default class Record<ColumnValuesType> {
 
     /** Delete this record from the database */
     public async Delete(): Promise<void> {
-        const whereClauses = Object.keys(this._values as object)
-            .map(key => `${key} = @${key}`)
-            .join(" AND ");
-
-        const _query = new Query(this._table, `DELETE FROM "${this._table.Name}" WHERE ${whereClauses};`, this._adapter);
+        const queryStr = QueryStatementBuilder.BuildDelete(this._tableName, this._values);
+        const _query = new Query(this._tableName, queryStr);
         _query.Parameters = { ...this._values as object };
         await _query.Run();
     }

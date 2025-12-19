@@ -51,11 +51,11 @@ export default class Repository<Type extends columnType, ModelType extends Model
         return record ? record.values as Type : null;
     }
 
-    public async get(conditions: QueryCondition, Model: Model<Type>): Promise<Type[]> {
+    public async get(conditions: QueryCondition, queryOptions: QueryOptions, Model: Model<Type>): Promise<Type[]> {
         if (Model.JoinedEntities.length > 0) {
-            return await this.join(Model, conditions);
+            return await this.join(Model, conditions, queryOptions);
         } else {
-            return await this.Table.Records({ where: conditions }).then(records => records.map(record => record.values as Type));
+            return await this.Table.Records({ where: conditions, ...queryOptions }).then(records => records.map(record => record.values as Type));
         }
     }
 
@@ -92,7 +92,7 @@ export default class Repository<Type extends columnType, ModelType extends Model
             const JoinType = relation.type === 'hasOne' || relation.type === 'belongsTo' ? 'INNER' : 'LEFT';
 
             return {
-                fromTable: new Table(relation.model.Configuration.table),
+                fromTable: relation.model.Configuration.table,
                 joinType: JoinType,
                 on: [
                     { [relation.foreignKey]: relation.localKey as string }
