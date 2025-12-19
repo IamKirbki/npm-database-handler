@@ -92,7 +92,7 @@ export default class Repository<Type extends columnType, ModelType extends Model
             const JoinType = relation.type === 'hasOne' || relation.type === 'belongsTo' ? 'INNER' : 'LEFT';
 
             return {
-                fromTable: new Table(relation.model.Configuration.table),
+                fromTable: relation.model.Configuration.table,
                 joinType: JoinType,
                 on: [
                     { [relation.foreignKey]: relation.localKey as string }

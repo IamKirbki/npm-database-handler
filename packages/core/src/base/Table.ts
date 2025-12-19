@@ -1,37 +1,26 @@
-import IDatabaseAdapter from "@core/interfaces/IDatabaseAdapter.js";
 import {
     DefaultQueryOptions,
     Join,
     QueryOptions,
     ReadableTableColumnInfo,
-    // Join,
     TableColumnInfo,
-    QueryValues,
     columnType,
 } from "@core/types/index.js";
-import Query from "@core/base/Query.js";
-import Record from "@core/base/Record.js";
 import QueryStatementBuilder from "@core/helpers/QueryStatementBuilder.js";
-import Container from "@core/runtime/Container.js";
+import { Record, Query } from "@core/index.js";
 
 /** Table class for interacting with a database table */
 export default class Table {
     private readonly _name: string;
-    private readonly _adapter: IDatabaseAdapter = Container.getInstance().getAdapter();
 
     /** Private constructor - use Table.create() */
     constructor(name: string) {
         this._name = name;
     }
 
-    /** Get the table name */
-    public get Name(): string {
-        return this._name;
-    }
-
     /** Get raw column information */
     public async TableColumnInformation(): Promise<TableColumnInfo[]> {
-        return this._adapter.tableColumnInformation(this._name);
+        return Query.tableColumnInformation(this._name);
     }
 
     /** Get readable, formatted column information */
@@ -48,15 +37,15 @@ export default class Table {
 
     public async Drop(): Promise<void> {
         const queryStr = `DROP TABLE IF EXISTS "${this._name}";`;
-        const query = new Query(this, queryStr, this._adapter);
+        const query = new Query(this._name, queryStr);
         await query.Run();
     }
 
     /** Fetch records with optional filtering, ordering, and pagination */
-    public async Records<Type>(
+    public async Records<Type extends columnType>(
         options?: DefaultQueryOptions & QueryOptions
     ): Promise<Record<Type>[]> {
-        const queryStr = QueryStatementBuilder.BuildSelect(this, {
+        const queryStr = QueryStatementBuilder.BuildSelect(this._name, {
             select: options?.select,
             where: options?.where,
             orderBy: options?.orderBy,
@@ -64,19 +53,17 @@ export default class Table {
             offset: options?.offset,
         });
 
-        const query = new Query(this, queryStr, this._adapter);
-        
+        const query = new Query(this._name, queryStr);
+
         if (options?.where && Object.keys(options.where).length > 0)
             query.Parameters = options.where;
 
         const results: Record<Type>[] = await query.All();
-        
-        // Wrap each result in a Record object
         return results;
     }
 
     /** Fetch a single record from the table */
-    public async Record<Type>(
+    public async Record<Type extends columnType>(
         options?: DefaultQueryOptions & QueryOptions
     ): Promise<Record<Type> | undefined> {
         const results = await this.Records({
@@ -91,56 +78,60 @@ export default class Table {
 
     /** Get the total count of records */
     public async RecordsCount(): Promise<number> {
-        const stmt = await this._adapter.prepare(`SELECT COUNT(*) as count FROM "${this._name}";`);
-        const count = await stmt.get({}) as { count: string };
-        return parseInt(count.count) || 0;
+        const query = new Query(this._name, `SELECT COUNT(*) as count FROM "${this._name}";`);
+        const count = await query.Count();
+        return count || 0;
     }
 
     /** Insert a record into the table */
-    public async Insert<Type>(values: columnType): Promise<Record<Type> | undefined>{
-        const columns = Object.keys(values);
-
-        if (columns.length === 0) {
-            throw new Error("Cannot insert record with no columns");
-        }
-
-        const queryStr = QueryStatementBuilder.BuildInsert(this, values);
-        const query = new Query(this, queryStr, this._adapter);
-        query.Parameters = values;
-        
-        const result = await query.Run<{ lastInsertRowid: number | bigint; changes: number }>();
-        
-        let recordId: QueryValues;
-
-        // For PostgreSQL compatibility: use 'id' from values if lastInsertRowid is undefined
-        if(Array.isArray(values)){
-            recordId = result?.lastInsertRowid ?? values.map(v => v.column === 'id' ? v.value : undefined);
-        } else{
-            recordId = result?.lastInsertRowid ?? values.id;
-        }
-        
-        if (recordId === undefined) {
-            return undefined;
-        }
-        
-        return this.Record({
-            where: { id: recordId }
-        });
+    public async Insert<Type extends columnType>(values: Type): Promise<Record<Type> | undefined> {
+        const record = new Record<Type>(values, this._name);
+        await record.Insert();
+        return record;
     }
 
     /** Perform JOIN operations with other tables */
-    public async Join<Type>(
+    public async Join<Type extends columnType>(
         Joins: Join | Join[],
         options?: DefaultQueryOptions & QueryOptions,
     ): Promise<Record<Type>[]> {
-        const queryString = QueryStatementBuilder.BuildJoin(this, Joins, options);
-        const query = new Query(this, queryString, this._adapter);
+        const queryString = QueryStatementBuilder.BuildJoin(this._name, Joins, options);
+        const query = new Query(this._name, queryString);
 
         // Set parameters if WHERE clause is present
         if (options?.where) {
             query.Parameters = options.where;
         }
 
-        return await query.All();
+        const joinedTables = Array.isArray(Joins) ? Joins.map(j => j.fromTable) : [Joins.fromTable];
+        const records = await query.All();
+        return await this.splitJoinValues(records, joinedTables) as Record<Type>[];
+    }
+
+    private async splitJoinValues(records: Record<columnType>[], joinedTables: string[]): Promise<Record<columnType>[]> {
+        const thisRecordColumns = (await this.TableColumnInformation()).map(col => col.name);
+        const tableColumnsMap = new Map<string, string[]>();
+        
+        for (const tableName of joinedTables) {
+            const columns = (await Query.tableColumnInformation(tableName)).map(col => col.name);
+            tableColumnsMap.set(tableName, columns);
+        }
+
+        return records.map(record => {
+            if (!record.values) return record;
+
+            const thisRecordEntries = thisRecordColumns
+                .map(colName => [colName, record.values[colName]])
+                .filter(([, value]) => value !== undefined);
+
+            const joinedRecords: { [tableName: string]: columnType } = {};
+            for (const [tableName, tableColumns] of tableColumnsMap) {
+                const joinedRecordEntries = Object.entries(record.values)
+                    .filter(([key]) => tableColumns.includes(key));
+                joinedRecords[tableName] = Object.fromEntries(joinedRecordEntries);
+            }
+
+            return new Record<columnType>({ ...Object.fromEntries(thisRecordEntries), ...joinedRecords }, this._name);
+        });
     }
 }

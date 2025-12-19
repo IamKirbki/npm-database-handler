@@ -45,7 +45,6 @@
  * @packageDocumentation
  */
 
-import Database from "./base/Database.js";
 import Table from "./base/Table.js";
 import Record from "./base/Record.js";
 import Query from "./base/Query.js";
@@ -64,7 +63,6 @@ import IMigration from "@core/interfaces/IMigration.js";
 import ISchemaBuilder from "@core/interfaces/ISchemaBuilder.js";
 
 export {
-    Database,
     Model,
     Table,
     Query,

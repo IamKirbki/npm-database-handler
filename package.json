@@ -1,6 +1,6 @@
 {
   "name": "kirbkis-database-handler-monorepo",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": false,
   "description": "Monorepo for @kirbkis-database-handler packages",
   "author": "iamkirbki",

@@ -1,5 +1,4 @@
 import { QueryValues, QueryWhereParameters } from "index";
-import Table from "../base/Table.js";
 
 export type TableColumnInfo = {
     cid: number;
@@ -28,7 +27,7 @@ export type ColumnDefinition = {
 };
 
 export type Join = {
-    fromTable: Table;
+    fromTable: string;
     joinType: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
     on: QueryWhereParameters | QueryWhereParameters[];
     where?: QueryWhereParameters | QueryWhereParameters[];
