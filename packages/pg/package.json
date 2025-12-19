@@ -1,6 +1,6 @@
 {
   "name": "@iamkirbki/database-handler-pg",
-  "version": "4.0.2",
+  "version": "4.0.4",
   "author": "iamkirbki",
   "description": "PostgreSQL adapter for @kirbkis-database-handler/core",
   "license": "ISC",
@@ -28,7 +28,7 @@
     "build": "tsc --build && tsc-alias"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^4.0.2",
+    "@iamkirbki/database-handler-core": "^4.0.4",
     "pg": "^8.16.3"
   },
   "devDependencies": {
