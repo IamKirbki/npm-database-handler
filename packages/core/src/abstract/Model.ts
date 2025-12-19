@@ -71,7 +71,7 @@ export default abstract class Model<ModelType extends columnType> {
     }
 
     public offset(value: number): this {
-        if(!this.queryOptions.limit) {
+        if (!this.queryOptions.limit) {
             throw new Error("Offset cannot be set without a limit.");
         }
 
