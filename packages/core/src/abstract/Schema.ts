@@ -20,19 +20,25 @@ export abstract class SchemaTableBuilder {
     protected columns: ColumnDefinition[] = [];
 
     protected addColumn(data: ColumnDefinition): this {
-        if(data.name) {
+        if (data.name) {
             this.columns.push({
                 ...data
             });
         } else {
+            const lastColumn = this.columns[this.columns.length - 1];
+
+            if (data.constraints?.includes("NULLABLE")) {
+                lastColumn.constraints = lastColumn.constraints?.filter(constraint => constraint !== "NOT NULL") ?? [];
+            }
+
             this.columns[this.columns.length - 1] = {
-                name: this.columns[this.columns.length - 1].name,
-                datatype: this.columns[this.columns.length - 1].datatype ? this.columns[this.columns.length - 1].datatype : data.datatype,
+                name: lastColumn.name,
+                datatype: lastColumn.datatype ?? data.datatype,
                 constraints: [
-                        ...((this.columns[this.columns.length - 1].constraints) || []),
-                        ...(data.constraints || [])
-                    ],
-                autoincrement: this.columns[this.columns.length - 1].autoincrement ? this.columns[this.columns.length - 1].autoincrement : data.autoincrement || false,
+                    ...(lastColumn.constraints ?? []),
+                    ...(data.constraints ?? [])
+                ],
+                autoincrement: lastColumn.autoincrement ?? data.autoincrement ?? false,
             };
         }
 
@@ -41,13 +47,25 @@ export abstract class SchemaTableBuilder {
 
     abstract build(): string;
 
-    abstract increments(name: string): this;
-    abstract primaryKey(name: string): this;
-    abstract foreignKey(name: string, referenceTable: string, referenceColumn: string): this;
-    
+    abstract increments(): this;
+    abstract primaryKey(): this;
+    abstract nullable(): this;
+    abstract unique(): this;
+    abstract default(value: unknown): this;
+    abstract foreignKey(referenceTable: string, referenceColumn: string): this;
+
     abstract uuid(name: string): this;
-    abstract string(name: string, length?: number): this;
-    abstract integer(name: string): this;
+    abstract json(name: string): this;
     abstract boolean(name: string): this;
+
+    abstract text(name: string): this;
+    abstract string(name: string, length?: number): this;
+    
+    abstract integer(name: string): this;
+    abstract decimal(name: string, precision?: number, scale?: number): this;
+    abstract float(name: string): this;
+
+    abstract time(name: string): this;
+    abstract timestamp(name: string): this;
     abstract timestamps(): this;
 }

@@ -18,58 +18,81 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         
         return `(${columnDefinitions.join(', ')})`;
     }
-
-    increments(name?: string) {
-        return this.addColumn({
-            name,
-            autoincrement: true,
-        })
-    }
-
-    primaryKey(name?: string): this {
-        return this.addColumn({
-            name,
-            constraints: ['PRIMARY KEY'],
-        });
-    }
-
-    foreignKey(name?: string, referenceTable?: string, referenceColumn?: string): this {
-        if(name && referenceTable && referenceColumn) {
-            const constraint = `FOREIGN KEY(${name}) REFERENCES ${referenceTable}(${referenceColumn})`;
-            return this.addColumn({
-                name,
-                constraints: [constraint],
-            });
-        }
-
-        return this;
-    }
     
-    uuid(name?: string): this {
+    // Datatypes
+    uuid(name: string): this {
         return this.addColumn({
             name,
             datatype: 'UUID',
         });
     }
     
-    string(name?: string, length?: number): this {
+    string(name: string, length?: number): this {
         return this.addColumn({
             name,
             datatype: length ? `VARCHAR(${length})` : 'VARCHAR',
         });
     }
+
+    text(name: string): this {
+        return this.addColumn({
+            name,
+            datatype: 'TEXT',
+        });
+    }
     
-    integer(name?: string): this {
+    integer(name: string): this {
         return this.addColumn({
             name,
             datatype: 'INTEGER',
         });
     }
+
+    decimal(name: string, precision?: number, scale?: number): this {
+        let datatype = 'DECIMAL';
+        if (precision !== undefined && scale !== undefined) {
+            datatype = `DECIMAL(${precision},${scale})`;
+        }
+        return this.addColumn({
+            name,
+            datatype,
+        });
+    }
+
+    float(name: string): this {
+        return this.addColumn({
+            name,
+            datatype: 'REAL',
+        });
+    }
     
-    boolean(name?: string): this {
+    boolean(name: string): this {
         return this.addColumn({
             name,
             datatype: 'BOOLEAN',
+        });
+    }
+
+    json(name: string): this {
+        // SQLite does not have a native JSON type, but uses TEXT
+        return this.addColumn({
+            name,
+            datatype: 'TEXT',
+        });
+    }
+
+    timestamp(name: string): this {
+        return this.addColumn({
+            name,
+            datatype: 'DATETIME',
+        });
+    }
+
+    time(name: string): this {
+        // SQLite does not have a TIME type, but uses TEXT
+        return this.addColumn({
+            name,
+            datatype: 'TEXT',
         });
     }
     
@@ -87,5 +110,72 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         });
 
         return this;
+    }
+
+    // Constraints
+    increments() {
+        if (this.columns.length === 0) {
+            throw new Error('increments() requires a previous column. Call a datatype method first.');
+        }
+        return this.addColumn({
+            autoincrement: true,
+        })
+    }
+
+    primaryKey(): this {
+        if (this.columns.length === 0) {
+            throw new Error('primaryKey() requires a previous column. Call a datatype method first.');
+        }
+        return this.addColumn({
+            constraints: ['PRIMARY KEY'],
+        });
+    }
+
+    foreignKey(referenceTable: string, referenceColumn: string): this {
+        if (this.columns.length === 0) {
+            throw new Error('foreignKey() requires a previous column. Call a datatype method first.');
+        }
+        const lastColumn = this.columns[this.columns.length - 1];
+        const constraint = `FOREIGN KEY(${lastColumn.name}) REFERENCES ${referenceTable}(${referenceColumn})`;
+        return this.addColumn({
+            constraints: [constraint],
+        });
+    }
+
+    unique(): this {
+        if (this.columns.length === 0) {
+            throw new Error('unique() requires a previous column. Call a datatype method first.');
+        }
+        return this.addColumn({
+            constraints: ['UNIQUE'],
+        });
+    }
+
+    nullable(): this {
+        if (this.columns.length === 0) {
+            throw new Error('nullable() requires a previous column. Call a datatype method first.');
+        }
+        return this.addColumn({
+            constraints: ['NULLABLE'],
+        });
+    }
+
+    default(value: unknown): this {
+        if (this.columns.length === 0) {
+            throw new Error('default() requires a previous column. Call a datatype method first.');
+        }
+        let defaultValue: string | number | boolean;
+
+        if (typeof value === 'string') {
+            defaultValue = `'${value}'`;
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+            defaultValue = value;
+        } else {
+            defaultValue = String(value);
+        }
+
+        return this.addColumn({
+            constraints: [`DEFAULT ${defaultValue}`],
+        });
     }
 }
