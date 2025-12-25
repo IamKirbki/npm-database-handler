@@ -1,6 +1,6 @@
 {
   "name": "@iamkirbki/database-handler-better-sqlite3",
-  "version": "3.1.4",
+  "version": "4.0.4",
   "author": "iamkirbki",
   "description": "Better-sqlite3 adapter for @kirbkis-database-handler/core",
   "license": "ISC",
@@ -20,18 +20,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/IamKirbki/bettersqlite3-handler.git",
+    "url": "https://github.com/IamKirbki/npm-database-handler.git",
     "directory": "packages/better-sqlite3"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc --build && tsc-alias"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^3.1.4",
+    "@iamkirbki/database-handler-core": "^4.0.4",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "tsc-alias": "^1.8.16"
   }
 }

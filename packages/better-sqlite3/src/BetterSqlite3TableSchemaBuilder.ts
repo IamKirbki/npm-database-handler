@@ -1,4 +1,4 @@
-import { SchemaTableBuilder } from "@core/abstract/Schema";
+import { SchemaTableBuilder } from "@iamkirbki/database-handler-core";
 
 export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
     build(): string {

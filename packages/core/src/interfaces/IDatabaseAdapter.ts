@@ -1,4 +1,4 @@
-import { TableColumnInfo } from '../types/table.js';
+import { TableColumnInfo } from '@core/types/table.js';
 import IStatementAdapter from './IStatementAdapter.js';
 
 export default interface IDatabaseAdapter {

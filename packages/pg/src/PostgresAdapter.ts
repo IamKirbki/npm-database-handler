@@ -3,26 +3,26 @@ import { Pool, PoolConfig } from "pg";
 import PostgresStatement from "./PostgresStatement.js";
 
 export default class PostgresAdapter implements IDatabaseAdapter {
-    private pool: Pool | null = null;
+    private _pool: Pool | null = null;
 
     async connect(config: PoolConfig): Promise<void> {
-        this.pool = new Pool(config);
+        this._pool = new Pool(config);
     }
 
     async prepare(query: string): Promise<IStatementAdapter> {
-        const client = this.pool ? await this.pool.connect() : undefined;
+        const client = this._pool ? await this._pool.connect() : undefined;
         return new PostgresStatement(query, client);
     }
 
     async exec(query: string): Promise<void> {
-        const client = this.pool ? await this.pool.connect() : undefined;
+        const client = this._pool ? await this._pool.connect() : undefined;
         const statement = new PostgresStatement(query, client);
         await statement.run();
     }
     
     // eslint-disable-next-line no-unused-vars
     async transaction(fn: (items: unknown[]) => void): Promise<Function> {
-        const client = this.pool ? await this.pool.connect() : undefined;
+        const client = this._pool ? await this._pool.connect() : undefined;
         if (!client) {
             throw new Error("Database client is not available for transaction.");
         }
@@ -51,7 +51,7 @@ export default class PostgresAdapter implements IDatabaseAdapter {
     }
 
     async tableColumnInformation(tableName: string): Promise<TableColumnInfo[]> {
-        const client = this.pool ? await this.pool.connect() : undefined;
+        const client = this._pool ? await this._pool.connect() : undefined;
         if (!client) {
             throw new Error("Database client is not available.");
         }
@@ -76,9 +76,9 @@ export default class PostgresAdapter implements IDatabaseAdapter {
     }
 
     async close(): Promise<void> {
-        if (this.pool) {
-            await this.pool.end();
-            this.pool = null;
+        if (this._pool) {
+            await this._pool.end();
+            this._pool = null;
         }
     }
 

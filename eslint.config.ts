@@ -15,7 +15,15 @@ export default [
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.d.ts'],
-    ignores: ['**/__tests__/**', '**/*.disabled', '**/interfaces/**', '**/*.config.ts', 'packages/**/abstract/**.ts', 'scripts/**/*.js'],
+    ignores: [
+      '**/__tests__/**', 
+      '**/*.disabled', 
+      '**/interfaces/**', 
+      '**/*.config.ts', 
+      'scripts/**/*.js',
+      'packages/**/types/**',
+      'packages/core/src/abstract/SchemaTableBuilder.ts',
+    ],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
