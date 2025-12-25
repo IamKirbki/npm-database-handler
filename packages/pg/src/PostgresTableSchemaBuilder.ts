@@ -98,13 +98,13 @@ export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
         this.addColumn({
             name: 'created_at',
             datatype: 'TIMESTAMP',
-            constraints: ['NOT NULL', 'DEFAULT CURRENT_TIMESTAMP']
+            constraints: ['DEFAULT CURRENT_TIMESTAMP']
         });
 
         this.addColumn({
             name: 'updated_at',
             datatype: 'TIMESTAMP',
-            constraints: ['NOT NULL', 'DEFAULT CURRENT_TIMESTAMP']
+            constraints: ['DEFAULT CURRENT_TIMESTAMP']
         });
 
         return this;

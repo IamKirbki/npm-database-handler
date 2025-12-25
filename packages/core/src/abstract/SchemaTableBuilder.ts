@@ -6,7 +6,8 @@ export default abstract class SchemaTableBuilder {
     protected addColumn(data: ColumnDefinition): this {
         if (data.name) {
             this.columns.push({
-                ...data
+                ...data,
+                constraints: ['NOT NULL', ...(data.constraints ?? [])],
             });
         } else {
             const lastColumn = this.columns[this.columns.length - 1];
@@ -44,7 +45,7 @@ export default abstract class SchemaTableBuilder {
 
     abstract text(name: string): this;
     abstract string(name: string, length?: number): this;
-    
+
     abstract integer(name: string): this;
     abstract decimal(name: string, precision?: number, scale?: number): this;
     abstract float(name: string): this;

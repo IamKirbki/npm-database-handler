@@ -100,13 +100,13 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         this.addColumn({
             name: 'created_at',
             datatype: 'DATETIME',
-            constraints: ['NOT NULL', 'DEFAULT CURRENT_TIMESTAMP'],
+            constraints: ['DEFAULT CURRENT_TIMESTAMP'],
         });
 
         this.addColumn({
             name: 'updated_at',
             datatype: 'DATETIME',
-            constraints: ['NOT NULL', 'DEFAULT CURRENT_TIMESTAMP'],
+            constraints: ['DEFAULT CURRENT_TIMESTAMP'],
         });
 
         return this;
