@@ -40,6 +40,7 @@ export default abstract class SchemaTableBuilder {
     abstract foreignKey(referenceTable: string, referenceColumn: string): this;
 
     abstract uuid(name: string): this;
+    abstract enum(name: string, values: string[]): this;
     abstract json(name: string): this;
     abstract boolean(name: string): this;
 
@@ -53,4 +54,7 @@ export default abstract class SchemaTableBuilder {
     abstract time(name: string): this;
     abstract timestamp(name: string): this;
     abstract timestamps(): this;
+
+    abstract softDeletes(): this;
+    abstract morphs(name: string): this;
 }

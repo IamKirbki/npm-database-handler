@@ -79,6 +79,17 @@ export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
             datatype: 'JSONB',
         });
     }
+    
+    enum(name: string, values: string[]): this {
+        // Postgres supports ENUM types, but they must be created before use.
+        // For table column definition, use a CHECK constraint for inline enums.
+        const quotedValues = values.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
+        return this.addColumn({
+            name,
+            datatype: 'TEXT',
+            constraints: [`CHECK (${name} IN (${quotedValues}))`],
+        });
+    }
 
     timestamp(name: string): this {
         return this.addColumn({
@@ -174,5 +185,19 @@ export class PostgresTableSchemaBuilder extends SchemaTableBuilder {
         return this.addColumn({
             constraints: [`DEFAULT ${defaultValue}`],
         });
+    }
+
+    softDeletes(): this {
+        this.addColumn({
+            name: 'deleted_at',
+            datatype: 'TIMESTAMP',
+        });
+
+        return this.nullable();
+    }
+
+    morphs(name: string): this {
+        this.integer(`${name}_id`);
+        return this.string(`${name}_type`);
     }
 }

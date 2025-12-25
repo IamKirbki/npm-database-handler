@@ -81,6 +81,16 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         });
     }
 
+    enum(name: string, values: string[]): this {
+        // SQLite does not have a native ENUM type, but we can use a CHECK constraint
+        const quotedValues = values.map(v => `'${v.replace(/'/g, "''")}'`).join(', ');
+        return this.addColumn({
+            name,
+            datatype: 'TEXT',
+            constraints: [`CHECK (${name} IN (${quotedValues}))`],
+        });
+    }
+
     timestamp(name: string): this {
         return this.addColumn({
             name,
@@ -177,5 +187,19 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         return this.addColumn({
             constraints: [`DEFAULT ${defaultValue}`],
         });
+    }
+
+    softDeletes(): this {
+        this.addColumn({
+            name: 'deleted_at',
+            datatype: 'DATETIME',
+        });
+
+        return this.nullable();
+    }
+
+    morphs(name: string): this {
+        this.integer(`${name}_id`);
+        return this.string(`${name}_type`);
     }
 }
