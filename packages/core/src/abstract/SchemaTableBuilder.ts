@@ -36,7 +36,7 @@ export default abstract class SchemaTableBuilder {
     abstract primaryKey(): this;
     abstract nullable(): this;
     abstract unique(): this;
-    abstract default(value: unknown): this;
+    abstract defaultTo(value: unknown): this;
     abstract foreignKey(referenceTable: string, referenceColumn: string): this;
 
     abstract uuid(name: string): this;

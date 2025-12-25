@@ -160,9 +160,9 @@ export class BetterSqlite3TableSchemaBuilder extends SchemaTableBuilder {
         });
     }
 
-    default(value: unknown): this {
+    defaultTo(value: unknown): this {
         if (this.columns.length === 0) {
-            throw new Error('default() requires a previous column. Call a datatype method first.');
+            throw new Error('defaultTo() requires a previous column. Call a datatype method first.');
         }
         let defaultValue: string | number | boolean;
 
