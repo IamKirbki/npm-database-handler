@@ -21,15 +21,18 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
 
       - name: Install bettersqlite3 dependencies
-        run: npm ci --legacy-peer-deps
-        working-directory: ./packages/bettersqlite3
+        run: |
+          cd packages/bettersqlite3
+          npm ci --legacy-peer-deps
       
       - name: Build bettersqlite3 package
-        run: npm run build
-        working-directory: ./packages/bettersqlite3
+        run: |
+          cd packages/bettersqlite3
+          npm run build
       
       - name: Publish bettersqlite3 package
-        run: npm publish --access public
-        working-directory: ./packages/bettersqlite3
+        run: |
+          cd packages/bettersqlite3
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
