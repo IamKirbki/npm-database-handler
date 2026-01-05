@@ -67,32 +67,3 @@ import { Container } from '@iamkirbki/database-handler-core';
 const container: Container = Container.getInstance();
 container.registerAdapter('postgres', adapter, true);
 ```
-
-## Documentation
-
-Detailed documentation for each package can be found in their respective directories:
-
-- [Core Documentation](packages/core/README.md)
-- [Better-sqlite3 Documentation](packages/better-sqlite3/README.md)
-- [PostgreSQL Documentation](packages/pg/README.md)
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build all packages
-npm run build
-
-# Lint code
-npm run lint
-```
-
-## License
-
-ISC
-
-## Author
-
-iamkirbki
