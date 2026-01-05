@@ -13,6 +13,8 @@ jobs:
     if: startsWith(github.event.release.tag_name, 'bettersqlite3-v') || startsWith(github.event.release.tag_name, '@iamkirbki/database-handler-better-sqlite3@')
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -24,9 +26,9 @@ jobs:
         run: npm ci --legacy-peer-deps
       
       - name: Build bettersqlite3 package
-        run: npm run build --workspace=packages/bettersqlite3
+        run: cd packages/bettersqlite3 && npm run build
       
       - name: Publish bettersqlite3 package
-        run: npm publish --workspace=packages/bettersqlite3 --access public
+        run: cd packages/bettersqlite3 && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
