@@ -8,7 +8,7 @@
   "type": "module",
   "workspaces": [
     "packages/core",
-    "packages/better-sqlite3",
+    "packages/bettersqlite3",
     "packages/pg"
   ],
   "scripts": {
@@ -24,7 +24,7 @@
     "version": "node scripts/version-bump.js"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^3.2.0",
+    "@iamkirbki/database-handler-core": "^4.0.5",
     "jiti": "^2.6.1"
   },
   "devDependencies": {
