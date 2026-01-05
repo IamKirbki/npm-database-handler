@@ -1,0 +1,9 @@
+[submodule "packages/core"]
+	path = packages/core
+	url = git@github.com:IamKirbki/npm-database-handler-core.git
+[submodule "packages/pg"]
+	path = packages/pg
+	url = git@github.com:IamKirbki/npm-database-handler-pg.git
+[submodule "packages/bettersqlite3"]
+	path = packages/bettersqlite3
+	url = git@github.com:IamKirbki/npm-database-handler-bettersqlite3
