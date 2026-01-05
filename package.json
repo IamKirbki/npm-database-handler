@@ -6,11 +6,6 @@
   "author": "iamkirbki",
   "license": "ISC",
   "type": "module",
-  "workspaces": [
-    "packages/core",
-    "packages/bettersqlite3",
-    "packages/pg"
-  ],
   "scripts": {
     "build": "npm run clean && npm run build --workspaces --if-present",
     "build:clean": "npm run clean && npm run build --workspaces --if-present",
