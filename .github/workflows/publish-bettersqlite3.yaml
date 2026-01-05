@@ -11,9 +11,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'bettersqlite3-v') || startsWith(github.event.release.tag_name, '@iamkirbki/database-handler-better-sqlite3@')
-    defaults:
-        run:
-            working-directory: ./packages/bettersqlite3
     steps:
       - uses: actions/checkout@v3
       
@@ -23,13 +20,13 @@ jobs:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org/"
 
-      - name: Install bettersqlite3 dependencies
+      - name: Install dependencies
         run: npm ci --legacy-peer-deps
       
       - name: Build bettersqlite3 package
-        run: npm run build
+        run: npm run build --workspace=packages/bettersqlite3
       
       - name: Publish bettersqlite3 package
-        run: npm publish --access public
+        run: npm publish --workspace=packages/bettersqlite3 --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
