@@ -24,13 +24,9 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build core package
-        run: |
-          cd packages/core
-          npm run build
+        run: cd packages/core && npm run build
 
       - name: Publish core package
-        run: |
-          cd packages/core
-          npm publish --access public
+        run: cd packages/core && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
