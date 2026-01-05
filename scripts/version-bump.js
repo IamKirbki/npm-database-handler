@@ -30,7 +30,7 @@ const rootDir = resolve(__dirname, '..');
 // Package paths relative to root
 const packagePaths = [
   'packages/core/package.json',
-  'packages/better-sqlite3/package.json',
+  'packages/bettersqlite3/package.json',
   'packages/pg/package.json'
 ];
 

@@ -9,7 +9,7 @@ This monorepo contains a collection of database handler packages that provide a 
 ## Packages
 
 - **[@kirbkis/database-handler-core](packages/core)** - Core abstractions and interfaces
-- **[@kirbkis/database-handler-better-sqlite3](packages/better-sqlite3)** - Better-sqlite3 adapter
+- **[@kirbkis/database-handler-better-sqlite3](packages/bettersqlite3)** - Better-sqlite3 adapter
 - **[@kirbkis/database-handler-pg](packages/pg)** - PostgreSQL adapter
 
 ## Features
