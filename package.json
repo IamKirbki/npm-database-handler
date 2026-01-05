@@ -19,7 +19,7 @@
     "version": "node scripts/version-bump.js"
   },
   "dependencies": {
-    "@iamkirbki/database-handler-core": "^4.0.5",
+    "@iamkirbki/database-handler-core": "^4.0.4",
     "jiti": "^2.6.1"
   },
   "devDependencies": {
