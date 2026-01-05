@@ -1,0 +1,38 @@
+name: Publish BetterSQLite3 Package
+
+on:
+  release:
+    types: [published]
+
+env:
+  PACKAGE_NAME: 'bettersqlite3'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, 'bettersqlite3-v') || startsWith(github.event.release.tag_name, '@iamkirbki/database-handler-better-sqlite3@')
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org/"
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      
+      - name: Build core package (dependency)
+        run: npm run build
+        working-directory: ./packages/core
+      
+      - name: Build bettersqlite3 package
+        run: npm run build
+        working-directory: ./packages/bettersqlite3
+      
+      - name: Publish bettersqlite3 package
+        run: npm publish --access public
+        working-directory: ./packages/bettersqlite3
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
