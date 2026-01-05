@@ -20,16 +20,8 @@ jobs:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org/"
       
-      - name: Install core dependencies
-        run: npm install
-        working-directory: ./packages/core
-      
-      - name: Build core package (dependency)
-        run: npm run build
-        working-directory: ./packages/core
-      
       - name: Install pg dependencies
-        run: npm install
+        run: npm ci --legacy-peer-deps
         working-directory: ./packages/pg
       
       - name: Build pg package
