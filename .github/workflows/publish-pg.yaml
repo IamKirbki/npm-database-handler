@@ -21,15 +21,18 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
       
       - name: Install pg dependencies
-        run: npm ci --legacy-peer-deps
-        working-directory: ./packages/pg
+        run: |
+          cd packages/pg
+          npm ci --legacy-peer-deps
       
       - name: Build pg package
-        run: npm run build
-        working-directory: ./packages/pg
+        run: |
+          cd packages/pg
+          npm run build
       
       - name: Publish pg package
-        run: npm publish --access public
-        working-directory: ./packages/pg
+        run: |
+          cd packages/pg
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
