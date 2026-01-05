@@ -11,6 +11,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'pg-v') || startsWith(github.event.release.tag_name, '@iamkirbki/database-handler-pg@')
+    defaults:
+        run:
+            working-directory: ./packages/pg
     steps:
       - uses: actions/checkout@v3
       
@@ -21,18 +24,12 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
       
       - name: Install pg dependencies
-        run: |
-          cd packages/pg
-          npm ci --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       
       - name: Build pg package
-        run: |
-          cd packages/pg
-          npm run build
+        run: npm run build
       
       - name: Publish pg package
-        run: |
-          cd packages/pg
-          npm publish --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

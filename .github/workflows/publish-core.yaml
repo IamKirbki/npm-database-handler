@@ -11,6 +11,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'core-v') || startsWith(github.event.release.tag_name, '@iamkirbki/database-handler-core@')
+    defaults:
+        run:
+            working-directory: ./packages/core
     steps:
       - uses: actions/checkout@v3
       
@@ -21,18 +24,12 @@ jobs:
           registry-url: "https://registry.npmjs.org/"
       
       - name: Install dependencies
-        run: |
-          cd packages/core
-          npm ci --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       
       - name: Build core package
-        run: |
-          cd packages/core
-          npm run build
+        run: npm run build
       
       - name: Publish core package
-        run: |
-          cd packages/core
-          npm publish --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
