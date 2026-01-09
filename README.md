@@ -20,7 +20,7 @@ A TypeScript-first, type-safe database handler library with support for multiple
 | Package | Description | Version |
 |---------|-------------|---------|
 | [@kirbkis/database-handler-core](packages/core) | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core) |
-| [@kirbkis/database-handler-bettersqlite3](packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-bettersqlite3) |
+| [@kirbkis/database-handler-better-sqlite3](packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-better-sqlite3) |
 | [@kirbkis/database-handler-pg](packages/pg) | PostgreSQL adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg) |
 
 ## Installation
