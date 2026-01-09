@@ -19,9 +19,9 @@ A TypeScript-first, type-safe database handler library with support for multiple
 
 | Package | Description | Version |
 |---------|-------------|---------|
-| [@kirbkis/database-handler-core](packages/core) | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core) |
-| [@kirbkis/database-handler-better-sqlite3](packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-better-sqlite3) |
-| [@kirbkis/database-handler-pg](packages/pg) | PostgreSQL adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg) |
+| [@kirbkis/database-handler-core](https://github.com/iamkirbki/database-handler/tree/main/packages/core) | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core) |
+| [@kirbkis/database-handler-better-sqlite3](https://github.com/iamkirbki/database-handler/tree/main/packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-better-sqlite3) |
+| [@kirbkis/database-handler-pg](https://github.com/iamkirbki/database-handler/tree/main/packages/pg) | PostgreSQL adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg) |
 
 ## Installation
 
@@ -166,11 +166,11 @@ Comprehensive documentation is available for each component:
 
 ### Core Classes
 
-- **[Query](packages/core/src/base/Wiki/Query.md)** - Execute raw SQL queries with parameter binding
-- **[Table](packages/core/src/base/Wiki/Table.md)** - High-level table interface for CRUD operations
-- **[Record](packages/core/src/base/Wiki/Record.md)** - Represents a single database row with methods
-- **[QueryStatementBuilder](packages/core/src/helpers/Wiki/QueryStatementBuilder.md)** - Build SQL queries programmatically
-- **[SchemaTableBuilder](packages/core/src/abstract/Wiki/SchemaTableBuilder.md)** - Fluent API for table schema definition
+- **[Query](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Query.md)** - Execute raw SQL queries with parameter binding
+- **[Table](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Table.md)** - High-level table interface for CRUD operations
+- **[Record](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Record.md)** - Represents a single database row with methods
+- **[QueryStatementBuilder](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/helpers/Wiki/QueryStatementBuilder.md)** - Build SQL queries programmatically
+- **[SchemaTableBuilder](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/abstract/Wiki/SchemaTableBuilder.md)** - Fluent API for table schema definition
 
 ### Key Concepts
 
@@ -347,5 +347,5 @@ ISC License - see [LICENSE](LICENSE) file for details.
 
 - [GitHub Repository](https://github.com/iamkirbki/database-handler)
 - [npm Package](https://www.npmjs.com/package/@iamkirbki/database-handler-core)
-- [Documentation](packages/core/src)
+- [Documentation](https://github.com/iamkirbki/database-handler/tree/main/packages/core/src)
 - [Issues](https://github.com/iamkirbki/database-handler/issues)
