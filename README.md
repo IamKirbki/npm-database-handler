@@ -2,23 +2,26 @@
 
 A TypeScript-first, type-safe database handler library with support for multiple database adapters.
 
-## Overview
+## Features
 
-This monorepo contains a collection of database handler packages that provide a unified, type-safe interface for working with different database systems. Built with TypeScript and designed for modern applications.
+- 🔒 **Type-Safe** - Full TypeScript support with type inference
+- 🎯 **Multi-Database** - PostgreSQL and SQLite adapters included
+- 🧩 **Modular** - Use only the packages you need
+- 🔄 **Unified API** - Consistent interface across databases
+- 📝 **Query Builder** - Type-safe SQL query construction
+- 🗄️ **Schema Builder** - Fluent table schema definitions
+- 🔗 **Relationships** - JOIN support with automatic result splitting
+- ⏱️ **Timestamps** - Automatic created_at/updated_at handling
+- 🗑️ **Soft Deletes** - Built-in soft delete support
+- 🎭 **Multiple Adapters** - Connect to multiple databases simultaneously
 
 ## Packages
 
-- **[@kirbkis/database-handler-core](packages/core)** - Core abstractions and interfaces
-- **[@kirbkis/database-handler-better-sqlite3](packages/bettersqlite3)** - Better-sqlite3 adapter
-- **[@kirbkis/database-handler-pg](packages/pg)** - PostgreSQL adapter
-
-## Features
-
-- 🔒 **Type-safe** - Full TypeScript support with type inference
-- 🎯 **Unified API** - Consistent interface across different databases
-- 📦 **Modular** - Use only the packages you need
-- 🚀 **Modern** - Built with ES modules and latest JavaScript features
-- 🧪 **Tested** - Comprehensive test coverage
+| Package | Description | Version |
+|---------|-------------|---------|
+| [@kirbkis/database-handler-core](packages/core) | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core) |
+| [@kirbkis/database-handler-bettersqlite3](packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-bettersqlite3) |
+| [@kirbkis/database-handler-pg](packages/pg) | PostgreSQL adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg) |
 
 ## Installation
 
@@ -26,44 +29,323 @@ This monorepo contains a collection of database handler packages that provide a 
 # Install core package
 npm install @iamkirbki/database-handler-core
 
-# Install database-specific adapter
-npm install @kirbkis/database-handler-better-sqlite3
-# or
-npm install @kirbkis/database-handler-pg
+# Install database adapter (choose one or both)
+npm install @iamkirbki/database-handler-bettersqlite3
+npm install @iamkirbki/database-handler-pg
 ```
 
 ## Quick Start
 
-Initialize PostgreSQL adapter:
+### 1. Connect to Database
+
+**PostgreSQL:**
 ```typescript
 import { PostgresAdapter } from '@iamkirbki/database-handler-pg';
-import type { PoolConfig } from 'pg';
+import { Container } from '@iamkirbki/database-handler-core';
 
-const poolConfig: PoolConfig = {
-    host: YOUR_POSTGRES_HOST,
-    port: YOUR_POSTGRES_PORT,
-    database: YOUR_POSTGRES_DB,
-    user: YOUR_POSTGRES_USER,
-    password: YOUR_POSTGRES_PASSWORD,
-    max: MAX_CONNECTIONS,
-    idleTimeoutMillis: IDLE_TIMEOUT_MILLIS,
-    connectionTimeoutMillis: CONNECTION_TIMEOUT_MILLIS,
+const db = new PostgresAdapter();
+await db.connect({
+    host: 'localhost',
+    port: 5432,
+    database: 'myapp',
+    user: 'postgres',
+    password: 'secret'
+});
+
+Container.RegisterAdapter(db); // Register as default adapter
+```
+
+**SQLite:**
+```typescript
+import { BetterSqlite3Adapter } from '@iamkirbki/database-handler-bettersqlite3';
+import { Container } from '@iamkirbki/database-handler-core';
+
+const db = new BetterSqlite3Adapter('./database.db');
+Container.RegisterAdapter(db);
+```
+
+### 2. Create Tables
+
+```typescript
+await db.createTable('users', (table) => {
+    table.integer('id').primaryKey().increments();
+    table.string('name', 100);
+    table.string('email', 100).unique();
+    table.boolean('is_active').defaultTo(true);
+    table.timestamps();
+    table.softDeletes();
+});
+```
+
+### 3. Query Data
+
+```typescript
+import { Table } from '@iamkirbki/database-handler-core';
+
+const usersTable = new Table('users');
+
+// Fetch multiple records
+const activeUsers = await usersTable.Records<User>({
+    where: { is_active: true },
+    orderBy: 'created_at DESC',
+    limit: 10
+});
+
+// Fetch single record
+const user = await usersTable.Record<User>({
+    where: { email: 'alice@example.com' }
+});
+
+// Insert data
+await usersTable.Insert({
+    name: 'Bob',
+    email: 'bob@example.com'
+});
+
+// Count records
+const totalUsers = await usersTable.RecordsCount();
+```
+
+### 4. Work with Records
+
+```typescript
+import { Record } from '@iamkirbki/database-handler-core';
+
+// Create and insert
+const newUser = new Record<User>('users', {
+    name: 'Alice',
+    email: 'alice@example.com'
+});
+await newUser.Insert();
+
+// Update
+const user = await usersTable.Record<User>({ where: { id: 1 } });
+if (user) {
+    user.values.name = 'Alice Smith';
+    await user.Update();
 }
 
-const adapter = new PostgresAdapter();
-adapter.connect(poolConfig);
+// Delete
+await user.Delete(); // Hard delete
+await user.Delete(true); // Soft delete
 ```
 
-Alternatively, initialize Better-sqlite3 adapter:
+### 5. Raw SQL Queries
+
 ```typescript
-import { BetterSqlite3Adapter } from '@iamkirbki/database-handler-better-sqlite3';
-const adapter = new BetterSqlite3Adapter();
-adapter.connect('path/to/database.db');
+import { Query } from '@iamkirbki/database-handler-core';
+
+const query = new Query({
+    tableName: 'users',
+    query: 'SELECT * FROM users WHERE age > @age',
+    parameters: { age: 18 }
+});
+
+const users = await query.All<User>();
 ```
 
-The container can then be used to register and manage adapters:
+### 6. JOIN Operations
+
 ```typescript
-import { Container } from '@iamkirbki/database-handler-core';
-const container: Container = Container.getInstance();
-container.registerAdapter('postgres', adapter, true);
+const results = await usersTable.Join<User, Post>({
+    joinTable: 'posts',
+    joinType: 'INNER',
+    on: 'users.id = posts.user_id',
+    where: { 'posts.status': 'published' }
+});
+
+// Access joined data
+results.forEach(([user, post]) => {
+    console.log(`${user.values.name} wrote: ${post.values.title}`);
+});
 ```
+
+## Documentation
+
+Comprehensive documentation is available for each component:
+
+### Core Classes
+
+- **[Query](packages/core/src/base/Wiki/Query.md)** - Execute raw SQL queries with parameter binding
+- **[Table](packages/core/src/base/Wiki/Table.md)** - High-level table interface for CRUD operations
+- **[Record](packages/core/src/base/Wiki/Record.md)** - Represents a single database row with methods
+- **[QueryStatementBuilder](packages/core/src/helpers/Wiki/QueryStatementBuilder.md)** - Build SQL queries programmatically
+- **[SchemaTableBuilder](packages/core/src/abstract/Wiki/SchemaTableBuilder.md)** - Fluent API for table schema definition
+
+### Key Concepts
+
+#### Parameter Binding
+
+Always use `@paramName` syntax for parameters (both PostgreSQL and SQLite):
+
+```typescript
+// ✅ Correct
+query: 'SELECT * FROM users WHERE age > @age'
+parameters: { age: 25 }
+
+// ❌ Wrong - will not work
+query: 'SELECT * FROM users WHERE age > :age'  // Incorrect
+query: 'SELECT * FROM users WHERE age > ?'     // Incorrect
+```
+
+#### Type Safety
+
+All methods support TypeScript generics for type-safe results:
+
+```typescript
+type User = {
+    id: number;
+    name: string;
+    email: string;
+    created_at: Date;
+};
+
+const users = await usersTable.Records<User>();
+// users is typed as Record<User>[]
+```
+
+#### Multiple Adapters
+
+Connect to multiple databases and specify which to use:
+
+```typescript
+// Register multiple adapters
+Container.RegisterAdapter(mainDb, 'main', true); // Default
+Container.RegisterAdapter(analyticsDb, 'analytics');
+
+// Use default adapter
+const users = await new Table('users').Records<User>();
+
+// Use named adapter
+const events = await new Table('events', 'analytics').Records<Event>();
+```
+
+## Examples
+
+### Complete CRUD Application
+
+```typescript
+import { Container, Table, Record } from '@iamkirbki/database-handler-core';
+import { PostgresAdapter } from '@iamkirbki/database-handler-pg';
+
+// Setup
+const db = new PostgresAdapter();
+await db.connect(config);
+Container.RegisterAdapter(db);
+
+// Create table
+await db.createTable('posts', (table) => {
+    table.integer('id').primaryKey().increments();
+    table.string('title', 200);
+    table.text('content');
+    table.enum('status', ['draft', 'published']).defaultTo('draft');
+    table.integer('user_id').foreignKey('users', 'id');
+    table.timestamps();
+});
+
+const postsTable = new Table('posts');
+
+// Create
+const newPost = new Record<Post>('posts', {
+    title: 'Hello World',
+    content: 'My first post',
+    user_id: 1
+});
+await newPost.Insert();
+
+// Read
+const posts = await postsTable.Records<Post>({
+    where: { status: 'published' },
+    orderBy: 'created_at DESC'
+});
+
+// Update
+const post = await postsTable.Record<Post>({ where: { id: 1 } });
+if (post) {
+    post.values.title = 'Updated Title';
+    await post.Update();
+}
+
+// Delete
+await post.Delete();
+```
+
+### Pagination
+
+```typescript
+const pageSize = 20;
+const pageNumber = 2;
+
+const posts = await postsTable.Records<Post>({
+    limit: pageSize,
+    offset: (pageNumber - 1) * pageSize,
+    orderBy: 'created_at DESC'
+});
+
+const totalPosts = await postsTable.RecordsCount();
+const totalPages = Math.ceil(totalPosts / pageSize);
+```
+
+### Search & Filter
+
+```typescript
+const results = await usersTable.Records<User>({
+    where: [
+        { column: 'name', operator: 'LIKE', value: '%John%' },
+        { column: 'age', operator: '>', value: 18 },
+        { column: 'status', operator: '=', value: 'active' }
+    ],
+    orderBy: 'name ASC'
+});
+```
+
+## API Reference
+
+### Table Methods
+
+| Method | Description |
+|--------|-------------|
+| `Records()` | Fetch multiple records with filtering/pagination |
+| `Record()` | Fetch a single record |
+| `RecordsCount()` | Count records matching criteria |
+| `Insert()` | Insert single or multiple records |
+| `Join()` | Perform JOIN operations |
+| `Drop()` | Drop the table |
+
+### Record Methods
+
+| Method | Description |
+|--------|-------------|
+| `Insert()` | Insert record into database |
+| `Update()` | Update record in database |
+| `Delete()` | Delete record (hard or soft) |
+| `toJSON()` | Convert to plain object |
+| `toString()` | Convert to JSON string |
+
+### Query Methods
+
+| Method | Description |
+|--------|-------------|
+| `Run()` | Execute INSERT/UPDATE/DELETE |
+| `All()` | Execute SELECT, return all rows |
+| `Get()` | Execute SELECT, return first row |
+| `Count()` | Execute COUNT query |
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+
+## License
+
+ISC License - see [LICENSE](LICENSE) file for details.
+
+## Author
+
+**iamkirbki**
+
+## Links
+
+- [GitHub Repository](https://github.com/iamkirbki/database-handler)
+- [npm Package](https://www.npmjs.com/package/@iamkirbki/database-handler-core)
+- [Documentation](packages/core/src)
+- [Issues](https://github.com/iamkirbki/database-handler/issues)
