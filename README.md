@@ -73,7 +73,12 @@ Container.getInstance().registerAdapter('default', db, true);
 ### 2. Create Tables
 
 ```typescript
-await db.createTable('users', (table) => {
+import { PostgresSchemaBuilder } from '@iamkirbki/database-handler-pg';
+// or
+import { BetterSqlite3SchemaBuilder } from '@iamkirbki/database-handler-bettersqlite3';
+
+const schema = new PostgresSchemaBuilder(db); // or new BetterSqlite3SchemaBuilder(db)
+await schema.createTable('users', (table) => {
     table.integer('id').primaryKey().increments();
     table.string('name', 100);
     table.string('email', 100).unique();
@@ -127,8 +132,8 @@ await newUser.Insert();
 // Update
 const user = await usersTable.Record<User>({ where: { id: 1 } });
 if (user) {
-    user.values.name = 'Alice Smith';
-    await user.Update({ name: user.values.name }, { id: user.values.id });
+    // Note: user.values is read-only, use Update() to persist changes
+    await user.Update({ name: 'Alice Smith' }, { id: user.values.id });
 }
 
 // Delete
@@ -152,10 +157,11 @@ const users = await query.All<User>();
 ### 6. JOIN Operations
 
 ```typescript
-const results = await usersTable.Join<User>({
+const results = await usersTable.Join<User>([{
     fromTable: 'posts',
     joinType: 'INNER',
-    on: 'users.id = posts.user_id',
+    on: { user_id: 'id' }
+}], {
     where: { 'posts.status': 'published' }
 });
 
@@ -231,7 +237,7 @@ const events = await new Table('events', 'analytics').Records<Event>();
 
 ```typescript
 import { Container, Table, Record } from '@iamkirbki/database-handler-core';
-import { PostgresAdapter } from '@iamkirbki/database-handler-pg';
+import { PostgresAdapter, PostgresSchemaBuilder } from '@iamkirbki/database-handler-pg';
 
 // Setup
 const db = new PostgresAdapter();
@@ -239,7 +245,8 @@ await db.connect(config);
 Container.getInstance().registerAdapter('default', db, true);
 
 // Create table
-await db.createTable('posts', (table) => {
+const schema = new PostgresSchemaBuilder(db);
+await schema.createTable('posts', (table) => {
     table.integer('id').primaryKey().increments();
     table.string('title', 200);
     table.text('content');
@@ -267,9 +274,9 @@ const posts = await postsTable.Records<Post>({
 // Update
 const post = await postsTable.Record<Post>({ where: { id: 1 } });
 if (post) {
-    post.values.title = 'Updated Title';
+    // Note: post.values is read-only, use Update() to persist changes
     await post.Update(
-        { title: post.values.title },
+        { title: 'Updated Title' },
         { id: post.values.id }
     );
 }
@@ -340,10 +347,6 @@ const results = await usersTable.Records<User>({
 | `All()` | Execute SELECT, return all rows |
 | `Get()` | Execute SELECT, return first row |
 | `Count()` | Execute COUNT query |
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
 
 ## License
 
