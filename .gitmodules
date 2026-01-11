@@ -7,3 +7,6 @@
 [submodule "packages/bettersqlite3"]
 	path = packages/bettersqlite3
 	url = git@github.com:IamKirbki/npm-database-handler-bettersqlite3
+[submodule "wiki"]
+	path = wiki
+	url = git@github.com:IamKirbki/npm-database-handler.wiki.git

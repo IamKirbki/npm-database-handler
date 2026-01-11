@@ -36,6 +36,8 @@ npm install @iamkirbki/database-handler-pg
 
 ## Quick Start
 
+> **Important:** This package requires a database adapter to function. You must install and configure at least one adapter (PostgreSQL or SQLite) before using the core functionality.
+
 ### 1. Connect to Database
 
 **PostgreSQL:**
@@ -52,7 +54,8 @@ await db.connect({
     password: 'secret'
 });
 
-Container.RegisterAdapter(db); // Register as default adapter
+// Register as default adapter (required if not specifying adapter names elsewhere)
+Container.getInstance().registerAdapter('default', db, true);
 ```
 
 **SQLite:**
@@ -61,8 +64,11 @@ import { BetterSqlite3Adapter } from '@iamkirbki/database-handler-bettersqlite3'
 import { Container } from '@iamkirbki/database-handler-core';
 
 const db = new BetterSqlite3Adapter('./database.db');
-Container.RegisterAdapter(db);
+// Register as default adapter (required if not specifying adapter names elsewhere)
+Container.getInstance().registerAdapter('default', db, true);
 ```
+
+> **Note:** When you don't specify an adapter name in your queries or models, the library will use the default adapter. To set a default adapter, pass `true` as the third parameter: `Container.getInstance().registerAdapter('default', adapter, true)`.
 
 ### 2. Create Tables
 
@@ -122,12 +128,11 @@ await newUser.Insert();
 const user = await usersTable.Record<User>({ where: { id: 1 } });
 if (user) {
     user.values.name = 'Alice Smith';
-    await user.Update();
+    await user.Update({ name: user.values.name }, { id: user.values.id });
 }
 
 // Delete
-await user.Delete(); // Hard delete
-await user.Delete(true); // Soft delete
+await user?.Delete({ id: user.values.id });
 ```
 
 ### 5. Raw SQL Queries
@@ -147,16 +152,16 @@ const users = await query.All<User>();
 ### 6. JOIN Operations
 
 ```typescript
-const results = await usersTable.Join<User, Post>({
-    joinTable: 'posts',
+const results = await usersTable.Join<User>({
+    fromTable: 'posts',
     joinType: 'INNER',
     on: 'users.id = posts.user_id',
     where: { 'posts.status': 'published' }
 });
 
-// Access joined data
-results.forEach(([user, post]) => {
-    console.log(`${user.values.name} wrote: ${post.values.title}`);
+// Access joined data - joined table columns are nested by table name
+results.forEach(record => {
+    console.log(`${record.values.name} - Post data:`, record.values.posts);
 });
 ```
 
@@ -166,11 +171,11 @@ Comprehensive documentation is available for each component:
 
 ### Core Classes
 
-- **[Query](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Query.md)** - Execute raw SQL queries with parameter binding
-- **[Table](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Table.md)** - High-level table interface for CRUD operations
-- **[Record](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/base/Wiki/Record.md)** - Represents a single database row with methods
-- **[QueryStatementBuilder](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/helpers/Wiki/QueryStatementBuilder.md)** - Build SQL queries programmatically
-- **[SchemaTableBuilder](https://github.com/iamkirbki/database-handler/blob/main/packages/core/src/abstract/Wiki/SchemaTableBuilder.md)** - Fluent API for table schema definition
+- **[Query](wiki/api/Query.md)** - Execute raw SQL queries with parameter binding
+- **[Table](wiki/api/Table.md)** - High-level table interface for CRUD operations
+- **[Record](wiki/api/Record.md)** - Represents a single database row with methods
+- **[QueryStatementBuilder](wiki/api/QueryStatementBuilder.md)** - Build SQL queries programmatically
+- **[SchemaTableBuilder](wiki/api/SchemaTableBuilder.md)** - Fluent API for table schema definition
 
 ### Key Concepts
 
@@ -210,8 +215,8 @@ Connect to multiple databases and specify which to use:
 
 ```typescript
 // Register multiple adapters
-Container.RegisterAdapter(mainDb, 'main', true); // Default
-Container.RegisterAdapter(analyticsDb, 'analytics');
+Container.getInstance().registerAdapter('main', mainDb, true); // Default
+Container.getInstance().registerAdapter('analytics', analyticsDb);
 
 // Use default adapter
 const users = await new Table('users').Records<User>();
@@ -231,7 +236,7 @@ import { PostgresAdapter } from '@iamkirbki/database-handler-pg';
 // Setup
 const db = new PostgresAdapter();
 await db.connect(config);
-Container.RegisterAdapter(db);
+Container.getInstance().registerAdapter('default', db, true);
 
 // Create table
 await db.createTable('posts', (table) => {
@@ -263,11 +268,16 @@ const posts = await postsTable.Records<Post>({
 const post = await postsTable.Record<Post>({ where: { id: 1 } });
 if (post) {
     post.values.title = 'Updated Title';
-    await post.Update();
+    await post.Update(
+        { title: post.values.title },
+        { id: post.values.id }
+    );
 }
 
 // Delete
-await post.Delete();
+if (post) {
+    await post.Delete({ id: post.values.id });
+}
 ```
 
 ### Pagination
