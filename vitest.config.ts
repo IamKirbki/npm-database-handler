@@ -8,9 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [tsConfigPaths()],
   test: {
+    ui: true,
     globals: true,
     environment: 'node',
-    include: ['packages/**/__tests__/**/*.test.ts'],
+    include: ['./packages/**/src/__tests__/**/*.test.ts', './packages/**/__tests__/**/*.test.ts', './__tests__/**/*.test.ts'],
     fileParallelism: false,
     coverage: {
       provider: 'v8',
@@ -22,6 +23,10 @@ export default defineConfig({
         'node_modules/**',
       ],
     },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
   },
   resolve: {
     alias: {

@@ -16,7 +16,7 @@ export default [
   {
     files: ['**/*.ts', '**/*.d.ts'],
     ignores: [
-      '**/__tests__/**', 
+      'packages/**/__tests__/**', 
       '**/*.disabled', 
       '**/interfaces/**', 
       '**/*.config.ts', 
