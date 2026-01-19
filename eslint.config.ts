@@ -9,17 +9,17 @@ export default [
       '**/node_modules/**',
       '**/.git/**',
       '**/coverage/**',
-      '**/*.config.js'
+      '**/*.config.js',
     ],
   },
   eslint.configs.recommended,
   {
     files: ['**/*.ts', '**/*.d.ts'],
     ignores: [
-      'packages/**/__tests__/**', 
-      '**/*.disabled', 
-      '**/interfaces/**', 
-      '**/*.config.ts', 
+      'packages/**/__tests__/**',
+      '**/*.disabled',
+      '**/interfaces/**',
+      '**/*.config.ts',
       'scripts/**/*.js',
       'packages/**/types/**',
       'packages/core/src/abstract/SchemaTableBuilder.ts',
@@ -64,4 +64,3 @@ export default [
     },
   },
 ];
-

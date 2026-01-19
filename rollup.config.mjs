@@ -8,17 +8,17 @@ export default {
     {
       file: 'dist/packages/core/src/index.esm.js',
       format: 'esm',
-    }
+    },
   ],
   plugins: [
     typescript({
       tsconfig: './tsconfig.json',
-      clean: true
+      clean: true,
     }),
     resolve({
-      extensions: ['.ts', '.js']
+      extensions: ['.ts', '.js'],
     }),
-    commonjs()
+    commonjs(),
   ],
-  external: ['better-sqlite3']
+  external: ['better-sqlite3'],
 };

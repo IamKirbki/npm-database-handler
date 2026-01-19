@@ -15,19 +15,19 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "24.x"
-          registry-url: "https://registry.npmjs.org/"
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org/'
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-      
+
       - name: Build bettersqlite3 package
         run: cd packages/bettersqlite3 && npm run build
-      
+
       - name: Publish bettersqlite3 package
         run: cd packages/bettersqlite3 && npm publish --access public
         env:

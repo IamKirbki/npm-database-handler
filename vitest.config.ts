@@ -11,7 +11,11 @@ export default defineConfig({
     ui: true,
     globals: true,
     environment: 'node',
-    include: ['./packages/**/src/__tests__/**/*.test.ts', './packages/**/__tests__/**/*.test.ts', './__tests__/**/*.test.ts'],
+    include: [
+      './packages/**/src/__tests__/**/*.test.ts',
+      './packages/**/__tests__/**/*.test.ts',
+      './__tests__/**/*.test.ts',
+    ],
     fileParallelism: false,
     coverage: {
       provider: 'v8',
@@ -31,6 +35,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@core': path.resolve(__dirname, './packages/core/src'),
-    }
-  }
+    },
+  },
 });

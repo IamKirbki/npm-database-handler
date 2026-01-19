@@ -17,11 +17,11 @@ A TypeScript-first, type-safe database handler library with support for multiple
 
 ## Packages
 
-| Package | Description | Version |
-|---------|-------------|---------|
-| [@kirbkis/database-handler-core](https://github.com/iamkirbki/database-handler/tree/main/packages/core) | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core) |
-| [@kirbkis/database-handler-better-sqlite3](https://github.com/iamkirbki/database-handler/tree/main/packages/bettersqlite3) | Better-sqlite3 adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-better-sqlite3) |
-| [@kirbkis/database-handler-pg](https://github.com/iamkirbki/database-handler/tree/main/packages/pg) | PostgreSQL adapter | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg) |
+| Package                                                                                                                    | Description                      | Version                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| [@kirbkis/database-handler-core](https://github.com/iamkirbki/database-handler/tree/main/packages/core)                    | Core abstractions and interfaces | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-core)           |
+| [@kirbkis/database-handler-better-sqlite3](https://github.com/iamkirbki/database-handler/tree/main/packages/bettersqlite3) | Better-sqlite3 adapter           | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-better-sqlite3) |
+| [@kirbkis/database-handler-pg](https://github.com/iamkirbki/database-handler/tree/main/packages/pg)                        | PostgreSQL adapter               | ![npm](https://img.shields.io/npm/v/@iamkirbki/database-handler-pg)             |
 
 ## Installation
 
@@ -41,17 +41,18 @@ npm install @iamkirbki/database-handler-pg
 ### 1. Connect to Database
 
 **PostgreSQL:**
+
 ```typescript
 import { PostgresAdapter } from '@iamkirbki/database-handler-pg';
 import { Container } from '@iamkirbki/database-handler-core';
 
 const db = new PostgresAdapter();
 await db.connect({
-    host: 'localhost',
-    port: 5432,
-    database: 'myapp',
-    user: 'postgres',
-    password: 'secret'
+  host: 'localhost',
+  port: 5432,
+  database: 'myapp',
+  user: 'postgres',
+  password: 'secret',
 });
 
 // Register as default adapter (required if not specifying adapter names elsewhere)
@@ -59,6 +60,7 @@ Container.getInstance().registerAdapter('default', db, true);
 ```
 
 **SQLite:**
+
 ```typescript
 import { BetterSqlite3Adapter } from '@iamkirbki/database-handler-bettersqlite3';
 import { Container } from '@iamkirbki/database-handler-core';
@@ -79,12 +81,12 @@ import { BetterSqlite3SchemaBuilder } from '@iamkirbki/database-handler-bettersq
 
 const schema = new PostgresSchemaBuilder(db); // or new BetterSqlite3SchemaBuilder(db)
 await schema.createTable('users', (table) => {
-    table.integer('id').primaryKey().increments();
-    table.string('name', 100);
-    table.string('email', 100).unique();
-    table.boolean('is_active').defaultTo(true);
-    table.timestamps();
-    table.softDeletes();
+  table.integer('id').primaryKey().increments();
+  table.string('name', 100);
+  table.string('email', 100).unique();
+  table.boolean('is_active').defaultTo(true);
+  table.timestamps();
+  table.softDeletes();
 });
 ```
 
@@ -97,20 +99,20 @@ const usersTable = new Table('users');
 
 // Fetch multiple records
 const activeUsers = await usersTable.Records<User>({
-    where: { is_active: true },
-    orderBy: 'created_at DESC',
-    limit: 10
+  where: { is_active: true },
+  orderBy: 'created_at DESC',
+  limit: 10,
 });
 
 // Fetch single record
 const user = await usersTable.Record<User>({
-    where: { email: 'alice@example.com' }
+  where: { email: 'alice@example.com' },
 });
 
 // Insert data
 await usersTable.Insert({
-    name: 'Bob',
-    email: 'bob@example.com'
+  name: 'Bob',
+  email: 'bob@example.com',
 });
 
 // Count records
@@ -124,16 +126,16 @@ import { Record } from '@iamkirbki/database-handler-core';
 
 // Create and insert
 const newUser = new Record<User>('users', {
-    name: 'Alice',
-    email: 'alice@example.com'
+  name: 'Alice',
+  email: 'alice@example.com',
 });
 await newUser.Insert();
 
 // Update
 const user = await usersTable.Record<User>({ where: { id: 1 } });
 if (user) {
-    // Note: user.values is read-only, use Update() to persist changes
-    await user.Update({ name: 'Alice Smith' }, { id: user.values.id });
+  // Note: user.values is read-only, use Update() to persist changes
+  await user.Update({ name: 'Alice Smith' }, { id: user.values.id });
 }
 
 // Delete
@@ -146,9 +148,9 @@ await user?.Delete({ id: user.values.id });
 import { Query } from '@iamkirbki/database-handler-core';
 
 const query = new Query({
-    tableName: 'users',
-    query: 'SELECT * FROM users WHERE age > @age',
-    parameters: { age: 18 }
+  tableName: 'users',
+  query: 'SELECT * FROM users WHERE age > @age',
+  parameters: { age: 18 },
 });
 
 const users = await query.All<User>();
@@ -157,17 +159,22 @@ const users = await query.All<User>();
 ### 6. JOIN Operations
 
 ```typescript
-const results = await usersTable.Join<User>([{
-    fromTable: 'posts',
-    joinType: 'INNER',
-    on: { user_id: 'id' }
-}], {
-    where: { 'posts.status': 'published' }
-});
+const results = await usersTable.Join<User>(
+  [
+    {
+      fromTable: 'posts',
+      joinType: 'INNER',
+      on: { user_id: 'id' },
+    },
+  ],
+  {
+    where: { 'posts.status': 'published' },
+  },
+);
 
 // Access joined data - joined table columns are nested by table name
-results.forEach(record => {
-    console.log(`${record.values.name} - Post data:`, record.values.posts);
+results.forEach((record) => {
+  console.log(`${record.values.name} - Post data:`, record.values.posts);
 });
 ```
 
@@ -191,12 +198,14 @@ Always use `@paramName` syntax for parameters (both PostgreSQL and SQLite):
 
 ```typescript
 // ✅ Correct
-query: 'SELECT * FROM users WHERE age > @age'
-parameters: { age: 25 }
+query: 'SELECT * FROM users WHERE age > @age';
+parameters: {
+  age: 25;
+}
 
 // ❌ Wrong - will not work
-query: 'SELECT * FROM users WHERE age > :age'  // Incorrect
-query: 'SELECT * FROM users WHERE age > ?'     // Incorrect
+query: 'SELECT * FROM users WHERE age > :age'; // Incorrect
+query: 'SELECT * FROM users WHERE age > ?'; // Incorrect
 ```
 
 #### Type Safety
@@ -205,10 +214,10 @@ All methods support TypeScript generics for type-safe results:
 
 ```typescript
 type User = {
-    id: number;
-    name: string;
-    email: string;
-    created_at: Date;
+  id: number;
+  name: string;
+  email: string;
+  created_at: Date;
 };
 
 const users = await usersTable.Records<User>();
@@ -237,7 +246,10 @@ const events = await new Table('events', 'analytics').Records<Event>();
 
 ```typescript
 import { Container, Table, Record } from '@iamkirbki/database-handler-core';
-import { PostgresAdapter, PostgresSchemaBuilder } from '@iamkirbki/database-handler-pg';
+import {
+  PostgresAdapter,
+  PostgresSchemaBuilder,
+} from '@iamkirbki/database-handler-pg';
 
 // Setup
 const db = new PostgresAdapter();
@@ -247,43 +259,40 @@ Container.getInstance().registerAdapter('default', db, true);
 // Create table
 const schema = new PostgresSchemaBuilder(db);
 await schema.createTable('posts', (table) => {
-    table.integer('id').primaryKey().increments();
-    table.string('title', 200);
-    table.text('content');
-    table.enum('status', ['draft', 'published']).defaultTo('draft');
-    table.integer('user_id').foreignKey('users', 'id');
-    table.timestamps();
+  table.integer('id').primaryKey().increments();
+  table.string('title', 200);
+  table.text('content');
+  table.enum('status', ['draft', 'published']).defaultTo('draft');
+  table.integer('user_id').foreignKey('users', 'id');
+  table.timestamps();
 });
 
 const postsTable = new Table('posts');
 
 // Create
 const newPost = new Record<Post>('posts', {
-    title: 'Hello World',
-    content: 'My first post',
-    user_id: 1
+  title: 'Hello World',
+  content: 'My first post',
+  user_id: 1,
 });
 await newPost.Insert();
 
 // Read
 const posts = await postsTable.Records<Post>({
-    where: { status: 'published' },
-    orderBy: 'created_at DESC'
+  where: { status: 'published' },
+  orderBy: 'created_at DESC',
 });
 
 // Update
 const post = await postsTable.Record<Post>({ where: { id: 1 } });
 if (post) {
-    // Note: post.values is read-only, use Update() to persist changes
-    await post.Update(
-        { title: 'Updated Title' },
-        { id: post.values.id }
-    );
+  // Note: post.values is read-only, use Update() to persist changes
+  await post.Update({ title: 'Updated Title' }, { id: post.values.id });
 }
 
 // Delete
 if (post) {
-    await post.Delete({ id: post.values.id });
+  await post.Delete({ id: post.values.id });
 }
 ```
 
@@ -294,9 +303,9 @@ const pageSize = 20;
 const pageNumber = 2;
 
 const posts = await postsTable.Records<Post>({
-    limit: pageSize,
-    offset: (pageNumber - 1) * pageSize,
-    orderBy: 'created_at DESC'
+  limit: pageSize,
+  offset: (pageNumber - 1) * pageSize,
+  orderBy: 'created_at DESC',
 });
 
 const totalPosts = await postsTable.RecordsCount();
@@ -307,12 +316,12 @@ const totalPages = Math.ceil(totalPosts / pageSize);
 
 ```typescript
 const results = await usersTable.Records<User>({
-    where: [
-        { column: 'name', operator: 'LIKE', value: '%John%' },
-        { column: 'age', operator: '>', value: 18 },
-        { column: 'status', operator: '=', value: 'active' }
-    ],
-    orderBy: 'name ASC'
+  where: [
+    { column: 'name', operator: 'LIKE', value: '%John%' },
+    { column: 'age', operator: '>', value: 18 },
+    { column: 'status', operator: '=', value: 'active' },
+  ],
+  orderBy: 'name ASC',
 });
 ```
 
@@ -320,33 +329,33 @@ const results = await usersTable.Records<User>({
 
 ### Table Methods
 
-| Method | Description |
-|--------|-------------|
-| `Records()` | Fetch multiple records with filtering/pagination |
-| `Record()` | Fetch a single record |
-| `RecordsCount()` | Count records matching criteria |
-| `Insert()` | Insert single or multiple records |
-| `Join()` | Perform JOIN operations |
-| `Drop()` | Drop the table |
+| Method           | Description                                      |
+| ---------------- | ------------------------------------------------ |
+| `Records()`      | Fetch multiple records with filtering/pagination |
+| `Record()`       | Fetch a single record                            |
+| `RecordsCount()` | Count records matching criteria                  |
+| `Insert()`       | Insert single or multiple records                |
+| `Join()`         | Perform JOIN operations                          |
+| `Drop()`         | Drop the table                                   |
 
 ### Record Methods
 
-| Method | Description |
-|--------|-------------|
-| `Insert()` | Insert record into database |
-| `Update()` | Update record in database |
-| `Delete()` | Delete record (hard or soft) |
-| `toJSON()` | Convert to plain object |
-| `toString()` | Convert to JSON string |
+| Method       | Description                  |
+| ------------ | ---------------------------- |
+| `Insert()`   | Insert record into database  |
+| `Update()`   | Update record in database    |
+| `Delete()`   | Delete record (hard or soft) |
+| `toJSON()`   | Convert to plain object      |
+| `toString()` | Convert to JSON string       |
 
 ### Query Methods
 
-| Method | Description |
-|--------|-------------|
-| `Run()` | Execute INSERT/UPDATE/DELETE |
-| `All()` | Execute SELECT, return all rows |
-| `Get()` | Execute SELECT, return first row |
-| `Count()` | Execute COUNT query |
+| Method    | Description                      |
+| --------- | -------------------------------- |
+| `Run()`   | Execute INSERT/UPDATE/DELETE     |
+| `All()`   | Execute SELECT, return all rows  |
+| `Get()`   | Execute SELECT, return first row |
+| `Count()` | Execute COUNT query              |
 
 ## License
 

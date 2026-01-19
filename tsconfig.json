@@ -27,12 +27,18 @@
     }
   },
   "include": [
-    "packages/**/src/**/*.ts", 
-    "packages/**/src/*.ts", 
-    "types/*.d.ts", 
-    "types/query.ts", 
-    "types/table.ts", 
-    "types/index.ts", 
+    "packages/**/src/**/*.ts",
+    "packages/**/src/*.ts",
+    "types/*.d.ts",
+    "types/query.ts",
+    "types/table.ts",
+    "types/index.ts"
   ],
-  "exclude": ["node_modules", "dist", "packages/**/__tests__/**", "**/*.test.ts", "scripts/**/*.js"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/**/__tests__/**",
+    "**/*.test.ts",
+    "scripts/**/*.js"
+  ]
 }
