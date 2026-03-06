@@ -95,22 +95,28 @@ await schema.createTable('users', (table) => {
 ```typescript
 import { Table } from '@iamkirbki/database-handler-core';
 
-const usersTable = new Table('users');
+const usersTable = new Table({ name: 'users' });
 
 // Fetch multiple records
-const activeUsers = await usersTable.Records<User>({
-  where: { is_active: true },
-  orderBy: 'created_at DESC',
-  limit: 10,
+const activeUsers = await usersTable.FetchRecords<User>({
+  base: {
+    where: { is_active: true },
+  },
+  final: {
+    orderBy: { column: 'created_at', direction: 'DESC' },
+    limit: 10,
+  },
 });
 
 // Fetch single record
-const user = await usersTable.Record<User>({
-  where: { email: 'alice@example.com' },
+const user = await usersTable.FetchSingleRecord<User>({
+  base: {
+    where: { email: 'alice@example.com' },
+  },
 });
 
 // Insert data
-await usersTable.Insert({
+await usersTable.CreateRecord({
   name: 'Bob',
   email: 'bob@example.com',
 });
@@ -119,243 +125,9 @@ await usersTable.Insert({
 const totalUsers = await usersTable.RecordsCount();
 ```
 
-### 4. Work with Records
-
-```typescript
-import { Record } from '@iamkirbki/database-handler-core';
-
-// Create and insert
-const newUser = new Record<User>('users', {
-  name: 'Alice',
-  email: 'alice@example.com',
-});
-await newUser.Insert();
-
-// Update
-const user = await usersTable.Record<User>({ where: { id: 1 } });
-if (user) {
-  // Note: user.values is read-only, use Update() to persist changes
-  await user.Update({ name: 'Alice Smith' }, { id: user.values.id });
-}
-
-// Delete
-await user?.Delete({ id: user.values.id });
-```
-
-### 5. Raw SQL Queries
-
-```typescript
-import { Query } from '@iamkirbki/database-handler-core';
-
-const query = new Query({
-  tableName: 'users',
-  query: 'SELECT * FROM users WHERE age > @age',
-  parameters: { age: 18 },
-});
-
-const users = await query.All<User>();
-```
-
-### 6. JOIN Operations
-
-```typescript
-const results = await usersTable.Join<User>(
-  [
-    {
-      fromTable: 'posts',
-      joinType: 'INNER',
-      on: { user_id: 'id' },
-    },
-  ],
-  {
-    where: { 'posts.status': 'published' },
-  },
-);
-
-// Access joined data - joined table columns are nested by table name
-results.forEach((record) => {
-  console.log(`${record.values.name} - Post data:`, record.values.posts);
-});
-```
-
 ## Documentation
 
-Comprehensive documentation is available for each component:
-
-### Core Classes
-
-- **[Query](wiki/api/Query.md)** - Execute raw SQL queries with parameter binding
-- **[Table](wiki/api/Table.md)** - High-level table interface for CRUD operations
-- **[Record](wiki/api/Record.md)** - Represents a single database row with methods
-- **[QueryStatementBuilder](wiki/api/QueryStatementBuilder.md)** - Build SQL queries programmatically
-- **[SchemaTableBuilder](wiki/api/SchemaTableBuilder.md)** - Fluent API for table schema definition
-
-### Key Concepts
-
-#### Parameter Binding
-
-Always use `@paramName` syntax for parameters (both PostgreSQL and SQLite):
-
-```typescript
-// ✅ Correct
-query: 'SELECT * FROM users WHERE age > @age';
-parameters: {
-  age: 25;
-}
-
-// ❌ Wrong - will not work
-query: 'SELECT * FROM users WHERE age > :age'; // Incorrect
-query: 'SELECT * FROM users WHERE age > ?'; // Incorrect
-```
-
-#### Type Safety
-
-All methods support TypeScript generics for type-safe results:
-
-```typescript
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  created_at: Date;
-};
-
-const users = await usersTable.Records<User>();
-// users is typed as Record<User>[]
-```
-
-#### Multiple Adapters
-
-Connect to multiple databases and specify which to use:
-
-```typescript
-// Register multiple adapters
-Container.getInstance().registerAdapter('main', mainDb, true); // Default
-Container.getInstance().registerAdapter('analytics', analyticsDb);
-
-// Use default adapter
-const users = await new Table('users').Records<User>();
-
-// Use named adapter
-const events = await new Table('events', 'analytics').Records<Event>();
-```
-
-## Examples
-
-### Complete CRUD Application
-
-```typescript
-import { Container, Table, Record } from '@iamkirbki/database-handler-core';
-import {
-  PostgresAdapter,
-  PostgresSchemaBuilder,
-} from '@iamkirbki/database-handler-pg';
-
-// Setup
-const db = new PostgresAdapter();
-await db.connect(config);
-Container.getInstance().registerAdapter('default', db, true);
-
-// Create table
-const schema = new PostgresSchemaBuilder(db);
-await schema.createTable('posts', (table) => {
-  table.integer('id').primaryKey().increments();
-  table.string('title', 200);
-  table.text('content');
-  table.enum('status', ['draft', 'published']).defaultTo('draft');
-  table.integer('user_id').foreignKey('users', 'id');
-  table.timestamps();
-});
-
-const postsTable = new Table('posts');
-
-// Create
-const newPost = new Record<Post>('posts', {
-  title: 'Hello World',
-  content: 'My first post',
-  user_id: 1,
-});
-await newPost.Insert();
-
-// Read
-const posts = await postsTable.Records<Post>({
-  where: { status: 'published' },
-  orderBy: 'created_at DESC',
-});
-
-// Update
-const post = await postsTable.Record<Post>({ where: { id: 1 } });
-if (post) {
-  // Note: post.values is read-only, use Update() to persist changes
-  await post.Update({ title: 'Updated Title' }, { id: post.values.id });
-}
-
-// Delete
-if (post) {
-  await post.Delete({ id: post.values.id });
-}
-```
-
-### Pagination
-
-```typescript
-const pageSize = 20;
-const pageNumber = 2;
-
-const posts = await postsTable.Records<Post>({
-  limit: pageSize,
-  offset: (pageNumber - 1) * pageSize,
-  orderBy: 'created_at DESC',
-});
-
-const totalPosts = await postsTable.RecordsCount();
-const totalPages = Math.ceil(totalPosts / pageSize);
-```
-
-### Search & Filter
-
-```typescript
-const results = await usersTable.Records<User>({
-  where: [
-    { column: 'name', operator: 'LIKE', value: '%John%' },
-    { column: 'age', operator: '>', value: 18 },
-    { column: 'status', operator: '=', value: 'active' },
-  ],
-  orderBy: 'name ASC',
-});
-```
-
-## API Reference
-
-### Table Methods
-
-| Method           | Description                                      |
-| ---------------- | ------------------------------------------------ |
-| `Records()`      | Fetch multiple records with filtering/pagination |
-| `Record()`       | Fetch a single record                            |
-| `RecordsCount()` | Count records matching criteria                  |
-| `Insert()`       | Insert single or multiple records                |
-| `Join()`         | Perform JOIN operations                          |
-| `Drop()`         | Drop the table                                   |
-
-### Record Methods
-
-| Method       | Description                  |
-| ------------ | ---------------------------- |
-| `Insert()`   | Insert record into database  |
-| `Update()`   | Update record in database    |
-| `Delete()`   | Delete record (hard or soft) |
-| `toJSON()`   | Convert to plain object      |
-| `toString()` | Convert to JSON string       |
-
-### Query Methods
-
-| Method    | Description                      |
-| --------- | -------------------------------- |
-| `Run()`   | Execute INSERT/UPDATE/DELETE     |
-| `All()`   | Execute SELECT, return all rows  |
-| `Get()`   | Execute SELECT, return first row |
-| `Count()` | Execute COUNT query              |
+For comprehensive documentation, guides, and API references, please visit our **[Wiki](wiki/Home.md)**.
 
 ## License
 
@@ -369,5 +141,4 @@ ISC License - see [LICENSE](LICENSE) file for details.
 
 - [GitHub Repository](https://github.com/iamkirbki/database-handler)
 - [npm Package](https://www.npmjs.com/package/@iamkirbki/database-handler-core)
-- [Documentation](https://github.com/iamkirbki/database-handler/tree/main/packages/core/src)
 - [Issues](https://github.com/iamkirbki/database-handler/issues)
